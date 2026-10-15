@@ -1,0 +1,221 @@
+import asyncio
+
+import pytest
+
+from fixmytutorial.ledger import BudgetExceeded, Ledger
+
+
+def make(settings, tmp_path, now=1_792_000_000.0, **caps):
+    s = settings.model_copy(update=caps)
+    clock = {"t": now}
+    led = Ledger(tmp_path / "l.db", s, clock=lambda: clock["t"])
+    return led, clock
+
+
+def test_price_math(settings, tmp_path):
+    led, _ = make(settings, tmp_path)
+    # Ultra: 1M in = $1, 1M out = $3
+    assert led.price_usd("repair", 1_000_000, 1_000_000) == pytest.approx(4.0)
+
+
+def test_commit_records_actual_usage(settings, tmp_path):
+    led, _ = make(settings, tmp_path)
+    r = led.reserve_llm("run1", True, "planner", 10_000, 2_000)
+    usd = led.commit_llm(r, "planner", "m", 10_000, 1_000)
+    assert usd == pytest.approx(10_000 / 1e6 * 0.30 + 1_000 / 1e6 * 0.90)
+    t = led.totals("run1")
+    assert t.run_usd == pytest.approx(usd) and t.lifetime_usd == pytest.approx(usd)
+
+
+def test_run_cap_blocks_reservation(settings, tmp_path):
+    led, _ = make(settings, tmp_path, cap_run_usd=0.01)
+    with pytest.raises(BudgetExceeded) as e:
+        led.reserve_llm("run1", True, "repair", 10_000, 4_000)  # ~$0.022
+    assert e.value.scope == "run"
+
+
+def test_daily_cap_applies_to_public_only(settings, tmp_path):
+    led, _ = make(settings, tmp_path, cap_daily_usd=0.001, cap_run_usd=10)
+    with pytest.raises(BudgetExceeded) as e:
+        led.reserve_llm("pub", True, "planner", 10_000, 2_000)
+    assert e.value.scope == "daily"
+    led.reserve_llm("batch", False, "planner", 10_000, 2_000)  # does not raise
+
+
+def test_lifetime_cap_counts_pending_reservations(settings, tmp_path):
+    led, _ = make(settings, tmp_path, cap_lifetime_usd=0.05, cap_run_usd=10, cap_daily_usd=10)
+    led.reserve_llm("a", False, "repair", 10_000, 4_000)  # ~0.022 pending
+    led.reserve_llm("b", False, "repair", 10_000, 4_000)  # ~0.044 pending
+    with pytest.raises(BudgetExceeded):
+        led.reserve_llm("c", False, "repair", 10_000, 4_000)
+
+
+def test_release_frees_reservation(settings, tmp_path):
+    led, _ = make(settings, tmp_path, cap_run_usd=0.03)
+    r = led.reserve_llm("run1", True, "repair", 10_000, 4_000)
+    led.release(r)
+    led.reserve_llm("run1", True, "repair", 10_000, 4_000)
+
+
+def test_daily_rollover(settings, tmp_path):
+    led, clock = make(settings, tmp_path, cap_daily_usd=0.01, cap_run_usd=10)
+    r = led.reserve_llm("x", True, "planner", 20_000, 2_000)
+    led.commit_llm(r, "planner", "m", 20_000, 2_000)  # ~0.0078
+    with pytest.raises(BudgetExceeded):
+        led.reserve_llm("y", True, "planner", 20_000, 2_000)
+    clock["t"] += 86_400
+    led.reserve_llm("y", True, "planner", 20_000, 2_000)
+
+
+def test_tavily_caps(settings, tmp_path):
+    led, _ = make(settings, tmp_path, cap_tavily_run_credits=3)
+    r = led.reserve_tavily("run1", True, 2)
+    led.commit_tavily(r, 2)
+    with pytest.raises(BudgetExceeded) as e:
+        led.reserve_tavily("run1", True, 2)
+    assert e.value.scope == "tavily_run"
+
+
+def test_public_runs_open_flips_when_daily_spent(settings, tmp_path):
+    led, _ = make(settings, tmp_path, cap_daily_usd=0.005, cap_run_usd=10)
+    assert led.public_runs_open()[0]
+    r = led.reserve_llm("x", True, "planner", 10_000, 2_000)
+    led.commit_llm(r, "planner", "m", 10_000, 5_000)
+    ok, why = led.public_runs_open()
+    assert not ok and "today" in why
+
+
+def test_export_import_round_trip(settings, tmp_path):
+    led, _ = make(settings, tmp_path)
+    r = led.reserve_llm("x", True, "planner", 1000, 100)
+    led.commit_llm(r, "planner", "m", 1000, 100)
+    rows = led.export_rows()
+    other = Ledger(tmp_path / "other.db", settings)
+    assert other.import_rows(rows) == 1
+    assert other.import_rows(rows) == 0
+    assert other.totals().lifetime_usd == pytest.approx(led.totals().lifetime_usd)
+
+
+async def test_concurrent_reservations_never_exceed_cap(settings, tmp_path):
+    led, _ = make(settings, tmp_path, cap_lifetime_usd=0.1, cap_run_usd=10, cap_daily_usd=10)
+    ok = 0
+
+    async def one(i):
+        nonlocal ok
+        try:
+            led.reserve_llm(f"r{i}", False, "repair", 10_000, 4_000)
+            ok += 1
+        except BudgetExceeded:
+            pass
+
+    await asyncio.gather(*(one(i) for i in range(20)))
+    assert ok == 4  # 4 * 0.022 = 0.088 <= 0.1; a 5th would exceed
+
+
+def test_charge_reserved_records_full_estimate(settings, tmp_path):
+    led, _ = make(settings, tmp_path)
+    r = led.reserve_llm("run1", True, "repair", 10_000, 4_000)
+    usd = led.charge_reserved(r, "repair", "m")
+    assert usd == pytest.approx(r.amount) and led.totals("run1").run_usd == pytest.approx(r.amount)
+
+
+def test_commit_never_records_less_than_zero(settings, tmp_path):
+    led, _ = make(settings, tmp_path)
+    r = led.reserve_llm("run1", True, "planner", 100, 100)
+    assert led.commit_llm(r, "planner", "m", 0, 0) == 0
+
+
+def test_unverified_ledger_closes_public_runs(settings, tmp_path):
+    led, _ = make(settings, tmp_path)
+    led.mark_unverified("Spend history could not be loaded.")
+    ok, why = led.public_runs_open()
+    assert not ok and "could not be loaded" in why
+
+
+def test_daily_cap_covers_all_runs_not_just_public(settings, tmp_path):
+    led, clock = make(settings, tmp_path, cap_daily_all_usd=0.01, cap_daily_usd=10, cap_run_usd=10)
+    r = led.reserve_llm("batch", False, "planner", 20_000, 2_000)
+    led.commit_llm(r, "planner", "m", 20_000, 2_000)  # ~0.0078, a private batch run
+    with pytest.raises(BudgetExceeded) as e:
+        led.reserve_llm("batch2", False, "planner", 20_000, 2_000)
+    assert e.value.scope == "daily_all"
+    clock["t"] += 86_400
+    led.reserve_llm("batch2", False, "planner", 20_000, 2_000)
+
+
+def test_pause_reasons_are_cleared_independently(settings, tmp_path):
+    led = Ledger(tmp_path / "l.db", settings)
+    led.mark_unverified("restore failed")
+    led.mark_unverified("save failed")
+    led.clear_unverified("save failed")
+    assert led.public_runs_open() == (False, "Public runs are paused: restore failed")
+    led.clear_unverified("restore failed")
+    assert led.public_runs_open()[0]
+
+
+def test_public_runs_close_when_a_whole_run_no_longer_fits(settings, tmp_path):
+    led, _ = make(settings, tmp_path, cap_daily_usd=3.0, cap_daily_all_usd=3.0, cap_run_usd=0.5)
+    row = {"id": "x", "ts": 1.0, "day": led._day(), "run_id": "old", "public": 1, "kind": "llm", "role": "repair",
+           "model": "m", "prompt_tokens": 0, "completion_tokens": 0, "credits": 0, "usd": 2.4}
+    led.import_rows([row])
+    assert led.public_runs_open()[0]
+    led.import_rows([dict(row, id="y", usd=0.2)])  # $0.40 left: less than one run may cost
+    assert not led.public_runs_open()[0]
+
+
+DEC1 = 1_796_083_200.0  # 2026-12-01 00:00 UTC
+
+
+def _spend(led, usd, public=False, run="spent"):
+    r = led.reserve_llm(run, public, "repair", int(usd * 1e6), 0)  # repair input costs $1 per 1M tokens
+    led.commit_llm(r, "repair", "m", int(usd * 1e6), 0)
+
+
+def _demo(settings, tmp_path, now=1_792_000_000.0):
+    return make(settings, tmp_path, now=now, public_demo=True, cap_lifetime_usd=15.0, demo_reserve_usd=7.5,
+                demo_reserve_until=__import__("datetime").date(2026, 12, 1), cap_daily_usd=100, cap_daily_all_usd=100, cap_run_usd=100)
+
+
+def test_demo_holds_the_reserve_until_december(settings, tmp_path):
+    led, _ = _demo(settings, tmp_path)
+    assert led.public_cap_usd() == pytest.approx(7.5)
+    _spend(led, 1.0)
+    assert led.public_runs_open() == (True, "")
+    _spend(led, 6.4)
+    ok, why = led.public_runs_open()
+    assert not ok and why == ("Public runs are paused until 1 December. "
+                              "You can still browse the Rot Index and open past reports.")
+
+
+def test_reserve_opens_on_the_unlock_date(settings, tmp_path):
+    led, clock = _demo(settings, tmp_path, now=DEC1 - 1)
+    assert led.public_cap_usd() == pytest.approx(7.5)
+    clock["t"] = DEC1
+    assert led.public_cap_usd() == pytest.approx(15.0)
+    _spend(led, 7.4)
+    assert led.public_runs_open() == (True, "")
+
+
+def test_laptop_has_no_reserve(settings, tmp_path):
+    led, _ = make(settings, tmp_path, public_demo=False, cap_lifetime_usd=11.0, demo_reserve_usd=7.5)
+    assert led.public_cap_usd() == pytest.approx(11.0)
+
+
+def test_public_calls_cannot_spend_the_reserve(settings, tmp_path):
+    led, _ = _demo(settings, tmp_path)
+    _spend(led, 7.4)
+    with pytest.raises(BudgetExceeded) as e:
+        led.reserve_llm("pub", True, "repair", 200_000, 0)  # $0.20 would cross $7.50
+    assert e.value.scope == "reserve"
+    led.release(led.reserve_llm("laptop", False, "repair", 200_000, 0))  # the reserve only holds back public runs
+
+
+def test_the_reserve_date_is_a_real_date():
+    from datetime import date
+
+    from pydantic import ValidationError
+
+    from fixmytutorial.config import Settings
+    assert Settings(_env_file=None, demo_reserve_until="2026-12-01").demo_reserve_until == date(2026, 12, 1)
+    with pytest.raises(ValidationError):
+        Settings(_env_file=None, demo_reserve_until="2026-12-1x")

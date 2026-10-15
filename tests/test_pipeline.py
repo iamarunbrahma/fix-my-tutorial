@@ -1,0 +1,315 @@
+import asyncio
+import json
+
+from fixmytutorial.events import EventBus
+from fixmytutorial.ingest import Source
+from fixmytutorial.ledger import Ledger
+from fixmytutorial.llm import LLM
+from fixmytutorial.models import RunRecord, RunStatus, StepStatus, Verdict, utcnow
+from fixmytutorial.pipeline import Pipeline
+from fixmytutorial.search import SearchClient
+from fixmytutorial.store import Store
+from tests.fakes import FakeBackend, FakeTavily, RoutingChatClient, cells_handler
+
+MD = ("# Pandas rows\n\n```bash\npip install pandas\n```\n\n```python\nimport pandas as pd\ndf = pd.DataFrame()\n"
+      "df = df.append({'a': 1}, ignore_index=True)\n```\n")
+PLAN = json.dumps({"language": "python", "runnable": True, "steps": [
+    {"id": "a", "title": "Install pandas", "kind": "shell", "content": "pip install pandas"},
+    {"id": "b", "title": "Make frame", "kind": "run_code", "content": "import pandas as pd\ndf = pd.DataFrame()"},
+    {"id": "c", "title": "Append a row", "kind": "run_code", "content": "df = df.append({'a': 1}, ignore_index=True)"},
+]})
+SIG = json.dumps({"category": "removed_api", "error_type": "AttributeError", "package": "pandas",
+                  "symbol": "DataFrame.append", "key_line": "AttributeError: 'DataFrame' object has no attribute 'append'",
+                  "search_queries": ["pandas DataFrame.append removed 2.0"]})
+FIX = json.dumps({"candidates": [{"strategy": "migrate", "rationale": "use concat", "edits": [
+    {"op": "replace", "step_id": "s3", "new_content": "df = pd.concat([df, pd.DataFrame([{'a': 1}])])",
+     "reason": "pandas 2.0 removed DataFrame.append", "evidence_ids": ["r1e1"]}]}]})
+BAD_FIX = FIX.replace("pd.concat", "df.append")
+SUMMARY = json.dumps({"summary": "Ran with pandas 2. DataFrame.append was removed, so we switched to pd.concat."})
+TAVILY = FakeTavily([{"url": "https://pandas.pydata.org/whatsnew/v2.0.0", "title": "What's new in 2.0.0",
+                      "content": "Removed DataFrame.append; use concat", "score": 0.9}],
+                    {"https://pandas.pydata.org/whatsnew/v2.0.0": "DataFrame.append was removed. Use pandas.concat."})
+
+
+def needs_append(cell):
+    return "df.append(" in cell["code"]
+
+
+class NoRegistry:
+    """No package registry: the break finder finds nothing, and tests never touch the network."""
+
+    async def releases(self, language, package):
+        return []
+
+
+def build(settings, tmp_path, by_model, handler=None, registry=None, **overrides):
+    s = settings.model_copy(update=overrides)
+    store = Store(tmp_path / "s.db")
+    ledger = Ledger(tmp_path / "l.db", s)
+    bus = EventBus(store, ping_s=0.05)
+    llm = LLM(s, ledger, client=RoutingChatClient(by_model))
+    search = SearchClient(s, ledger, store, client=TAVILY)
+    backend = FakeBackend(handler or cells_handler(fail_cell=needs_append))
+    p = Pipeline(settings=s, llm=llm, search=search, backend=backend, store=store, ledger=ledger, bus=bus,
+                 registry=registry or NoRegistry())
+    return p, store, backend, s
+
+
+def new_record():
+    return RunRecord(id="run1", source="pasted-markdown", created_at=utcnow())
+
+
+def events(store):
+    return [e for _, e in store.events_after("run1", 0)]
+
+
+async def test_pipeline_fixes_and_replays(settings, tmp_path):
+    p, store, backend, s = build(settings, tmp_path, {
+        settings.model_planner: [PLAN, SUMMARY], settings.model_triage: [SIG], settings.model_repair: [FIX]})
+    rec = await p.run(new_record(), Source(markdown=MD))
+    assert rec.verdict == Verdict.FIXED and rec.status == RunStatus.DONE
+    assert "pd.concat" in next(st.content for st in rec.final_plan.steps if st.id == "s3")
+    assert rec.repairs[0].winner.strategy == "migrate" and rec.repairs[0].evidence[0].id == "r1e1"
+    assert rec.outcomes["s3"].status == StepStatus.REPAIRED
+    assert rec.summary.startswith("Ran with pandas 2") and rec.cost_usd > 0 and rec.tavily_credits >= 2
+    types = [e["type"] for e in events(store)]
+    for t in ["plan", "diagnosis", "evidence", "candidates", "candidate_result"]:
+        assert t in types
+    assert {"type": "stage", "stage": "replaying"} in events(store)
+    assert types[-2:] == ["verdict", "done"]
+    assert store.get_run("run1").verdict == Verdict.FIXED
+
+
+async def test_pipeline_still_works(settings, tmp_path):
+    p, store, backend, _ = build(settings, tmp_path, {settings.model_planner: [PLAN, SUMMARY]},
+                                 handler=cells_handler())
+    rec = await p.run(new_record(), Source(markdown=MD))
+    assert rec.verdict == Verdict.STILL_WORKS and rec.repairs == [] and rec.final_plan is not None
+    assert all(o.status == StepStatus.PASSED for o in rec.outcomes.values())
+
+
+async def test_pipeline_could_not_fix(settings, tmp_path):
+    p, store, _, _ = build(settings, tmp_path, {
+        settings.model_planner: [PLAN, SUMMARY], settings.model_triage: [SIG], settings.model_repair: [BAD_FIX]},
+        repair_rounds=1)
+    rec = await p.run(new_record(), Source(markdown=MD))
+    assert rec.verdict == Verdict.COULD_NOT_FIX and "append" in rec.reason
+    assert rec.status == RunStatus.DONE
+
+
+async def test_pipeline_not_runnable(settings, tmp_path):
+    plan = json.dumps({"language": "python", "runnable": False, "not_runnable_reason": "Needs a GPU.", "steps": []})
+    p, store, backend, _ = build(settings, tmp_path, {settings.model_planner: [plan]})
+    rec = await p.run(new_record(), Source(markdown=MD))
+    assert rec.verdict == Verdict.NOT_RUNNABLE and rec.reason == "Needs a GPU." and backend.calls == []
+
+
+async def test_pipeline_ingest_failure_is_friendly(settings, tmp_path):
+    p, store, _, _ = build(settings, tmp_path, {})
+    rec = await p.run(new_record(), Source(url="file:///etc/passwd"))
+    assert rec.verdict == Verdict.ERROR and rec.status == RunStatus.FAILED
+    assert rec.reason == "Only http and https links are supported."
+    assert [e["type"] for e in events(store)][-2:] == ["verdict", "done"]
+
+
+async def test_pipeline_budget_exceeded_mid_run(settings, tmp_path):
+    p, store, _, _ = build(settings, tmp_path, {
+        settings.model_planner: [PLAN], settings.model_triage: [SIG], settings.model_repair: [FIX]},
+        cap_run_usd=0.015)
+    rec = await p.run(new_record(), Source(markdown=MD))
+    assert rec.verdict == Verdict.ERROR and "spending limit" in rec.reason
+    assert rec.outcomes["s1"].status == StepStatus.PASSED
+    last = {}
+    for _, ev in store.events_after(rec.id, 0):
+        if ev["type"] == "step":
+            last[ev["step_id"]] = ev["status"]
+    assert "repairing" not in last.values()  # the page must not leave a step spinning after the run stopped
+
+
+async def test_wall_clock_limit(settings, tmp_path):
+    p, store, backend, _ = build(settings, tmp_path, {settings.model_planner: [PLAN]}, run_wall_clock_s=0.2)
+    original = backend.run
+
+    async def slow(*a, **kw):
+        await asyncio.sleep(1)
+        return await original(*a, **kw)
+
+    backend.run = slow
+    rec = await p.run(new_record(), Source(markdown=MD))
+    assert rec.verdict == Verdict.ERROR and "longer than" in rec.reason
+
+
+async def test_a_step_that_fails_once_is_retried_before_repair(settings, tmp_path):
+    state = {"failed": False}
+
+    def flaky(cell):
+        if needs_append(cell) and not state["failed"]:
+            state["failed"] = True
+            return True
+        return False
+
+    p, store, _, _ = build(settings, tmp_path, {settings.model_planner: [PLAN, SUMMARY]},
+                           handler=cells_handler(fail_cell=flaky))
+    rec = await p.run(new_record(), Source(markdown=MD))
+    assert rec.verdict == Verdict.STILL_WORKS and rec.repairs == []
+
+
+async def test_no_time_for_a_repair_round_ends_as_could_not_fix(settings, tmp_path):
+    p, store, _, _ = build(settings, tmp_path, {
+        settings.model_planner: [PLAN, SUMMARY], settings.model_triage: [SIG], settings.model_repair: [FIX]},
+        run_wall_clock_s=100, step_timeout_s=180)
+    rec = await p.run(new_record(), Source(markdown=MD))
+    assert rec.verdict == Verdict.COULD_NOT_FIX and "time" in rec.reason
+
+
+async def test_verdict_event_carries_the_partial_note(settings, tmp_path):
+    partial = json.loads(PLAN)
+    partial["steps"][1]["content"] = "import pandas as pd"  # drops a line of the page's code, twice
+    partial = json.dumps(partial)
+    p, store, _, _ = build(settings, tmp_path, {settings.model_planner: [partial, partial, SUMMARY]},
+                           handler=cells_handler())
+    rec = await p.run(new_record(), Source(markdown=MD))
+    verdict = next(e for e in events(store) if e["type"] == "verdict")
+    assert verdict["note"].startswith("Partly checked") and rec.plan.coverage < 1.0
+
+
+COUNTER_MD = ("# Counting words\n\n```python\nfrom collections import Counter\n\nwords = 'the fox the'.split()\n"
+              "print(Counter(words).most_common(1))\n```\n")
+GOOD = "from collections import Counter\n\nwords = 'the fox the'.split()\nprint(Counter(words).most_common(1))"
+MISREAD = json.dumps({"language": "python", "runnable": True, "steps": [
+    {"id": "a", "title": "Count", "kind": "run_code", "content": GOOD[:-1]}]})  # the planner dropped a ")"
+TYPO = json.dumps({"category": "tutorial_typo", "error_type": "SyntaxError", "key_line": "SyntaxError: '(' was never closed",
+                   "search_queries": ["python SyntaxError was never closed"]})
+RESTORE = json.dumps({"candidates": [{"strategy": "workaround", "rationale": "close the call", "edits": [
+    {"op": "replace", "step_id": "s1", "new_content": GOOD, "reason": "a parenthesis was missing",
+     "evidence_ids": []}]}]})
+
+
+async def test_undoing_our_own_misreading_is_not_a_fix(settings, tmp_path):
+    def handler(script, files, image):
+        cells = json.loads(files["/opt/fmt/cells.json"])
+        ok = all(c["code"].count("(") == c["code"].count(")") for c in cells)
+        marker = json.dumps({"cell": "s1", "status": "ok" if ok else "error"})
+        return (0 if ok else 1), f"@@FMT {marker}\n" + ("[('the', 2)]\n" if ok else ""), \
+            "" if ok else "SyntaxError: '(' was never closed"
+    p, store, _, _ = build(settings, tmp_path, {
+        settings.model_planner: [MISREAD, MISREAD, SUMMARY], settings.model_triage: [TYPO],
+        settings.model_repair: [RESTORE]}, handler=handler)
+    rec = await p.run(new_record(), Source(markdown=COUNTER_MD))
+    assert rec.verdict == Verdict.STILL_WORKS
+    from fixmytutorial.report import build_changes
+    assert build_changes(rec) == []
+
+
+async def test_every_step_a_fix_edited_is_marked_repaired(settings, tmp_path):
+    two_step_fix = json.dumps({"candidates": [{"strategy": "migrate", "rationale": "use concat", "edits": [
+        {"op": "replace", "step_id": "s2", "new_content": "import pandas as pd\ndf = pd.DataFrame()\nprint('ready')",
+         "reason": "r", "evidence_ids": ["r1e1"]},
+        {"op": "replace", "step_id": "s3", "new_content": "df = pd.concat([df, pd.DataFrame([{'a': 1}])])",
+         "reason": "pandas 2.0 removed DataFrame.append", "evidence_ids": ["r1e1"]}]}]})
+    p, store, _, _ = build(settings, tmp_path, {
+        settings.model_planner: [PLAN, SUMMARY], settings.model_triage: [SIG], settings.model_repair: [two_step_fix]})
+    rec = await p.run(new_record(), Source(markdown=MD))
+    assert rec.verdict == Verdict.FIXED
+    assert rec.outcomes["s2"].status == StepStatus.REPAIRED and rec.outcomes["s3"].status == StepStatus.REPAIRED
+
+
+async def test_the_page_publish_date_is_kept_on_the_run(settings, tmp_path, monkeypatch):
+    from fixmytutorial import pipeline as pipeline_mod
+    from fixmytutorial.ingest import ingest as real_ingest
+
+    async def dated(source, search, **kw):
+        doc = await real_ingest(source, search, **kw)
+        return doc.model_copy(update={"published": "2022-03-14"})
+
+    monkeypatch.setattr(pipeline_mod, "ingest", dated)
+    p, store, _, _ = build(settings, tmp_path, {settings.model_planner: [PLAN, SUMMARY]}, handler=cells_handler())
+    rec = await p.run(new_record(), Source(markdown=MD))
+    assert rec.published == "2022-03-14" and store.get_run("run1").published == "2022-03-14"
+
+
+
+class PandasRegistry:
+    def __init__(self, error=None):
+        self.error = error
+
+    async def releases(self, language, package):
+        from datetime import date
+
+        from fixmytutorial.breakage import Release
+        if self.error:
+            raise self.error
+        return [Release(version="1.5.3", date=date(2023, 1, 19)), Release(version="2.0.0", date=date(2023, 4, 3)),
+                Release(version="2.2.3", date=date(2024, 9, 20))]
+
+
+def versioned_pandas():
+    """pandas >= 2 has no DataFrame.append. `pip install -q pandas==X` sets the version for the image it saves."""
+    by_image: dict[str, str] = {}
+    backend_ref: dict = {}
+
+    def other(script, files):
+        if "pip list --format=freeze" in script:
+            return (0, "numpy==2.1.0\npandas==2.2.3\n", "")
+        if "pip install -q pandas==" in script:
+            by_image[f"img-{backend_ref['b']._n + 1}"] = script.split("pandas==")[1].split()[0]
+        return (0, "ok", "")
+
+    def handler(script, files, image):
+        if "run_cells.py" in script:
+            version = by_image.get(image.ref, "2.2.3")
+            return cells_handler(fail_cell=needs_append if version >= "2" else None)(script, files, image)
+        return other(script, files)
+
+    return handler, backend_ref
+
+
+GUESS = json.dumps({"package": "pandas", "version": "", "evidence_id": ""})
+
+
+async def test_pipeline_finds_the_release_that_broke_the_tutorial(settings, tmp_path):
+    handler, ref = versioned_pandas()
+    p, store, backend, _ = build(settings, tmp_path, {
+        settings.model_planner: [PLAN, SUMMARY], settings.model_triage: [SIG, GUESS], settings.model_repair: [FIX]},
+        handler=handler, registry=PandasRegistry())
+    ref["b"] = backend
+    rec = await p.run(new_record(), Source(markdown=MD))
+    assert rec.verdict == Verdict.FIXED
+    b = rec.broke_in
+    assert (b.package, b.first_bad, b.last_good, b.how, b.step_id) == ("pandas", "2.0.0", "1.5.3", "ran", "s3")
+    assert store.get_run("run1").broke_in == b
+    evs = events(store)
+    assert {"type": "stage", "stage": "dating"} in evs
+    found = next(e for e in evs if e["type"] == "broke_in")
+    assert found["text"].startswith("Broke in pandas 2.0.0, released 3 Apr 2023.")
+    assert [e["type"] for e in evs][-2:] == ["verdict", "done"]
+    summary_call = [c for c in p.llm.client.calls if c["model"] == settings.model_planner][-1]
+    assert "Broke in pandas 2.0.0" in summary_call["messages"][-1]["content"]  # the summary and the card agree
+
+
+async def test_the_break_finder_never_changes_the_verdict(settings, tmp_path):
+    handler, ref = versioned_pandas()
+    p, store, backend, _ = build(settings, tmp_path, {
+        settings.model_planner: [PLAN, SUMMARY], settings.model_triage: [SIG, GUESS], settings.model_repair: [FIX]},
+        handler=handler, registry=PandasRegistry(error=RuntimeError("registry down")))
+    ref["b"] = backend
+    rec = await p.run(new_record(), Source(markdown=MD))
+    assert rec.verdict == Verdict.FIXED and rec.broke_in is None and rec.reason == ""
+
+
+async def test_no_dating_when_the_tutorial_still_works(settings, tmp_path):
+    p, store, _, _ = build(settings, tmp_path, {settings.model_planner: [PLAN, SUMMARY]}, handler=cells_handler(),
+                           registry=PandasRegistry())
+    rec = await p.run(new_record(), Source(markdown=MD))
+    assert rec.verdict == Verdict.STILL_WORKS and rec.broke_in is None
+    assert {"type": "stage", "stage": "dating"} not in events(store)
+
+
+async def test_the_break_finder_can_be_switched_off(settings, tmp_path):
+    handler, ref = versioned_pandas()
+    p, store, backend, _ = build(settings, tmp_path, {
+        settings.model_planner: [PLAN, SUMMARY], settings.model_triage: [SIG], settings.model_repair: [FIX]},
+        handler=handler, registry=PandasRegistry(), break_finder=False)
+    ref["b"] = backend
+    rec = await p.run(new_record(), Source(markdown=MD))
+    assert rec.verdict == Verdict.FIXED and rec.broke_in is None

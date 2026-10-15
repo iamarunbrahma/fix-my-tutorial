@@ -1,0 +1,78 @@
+{% extends "base.html" %}
+{% block title %}Rot Index · Fix My Tutorial{% endblock %}
+{% block main %}
+<div class="flex max-w-3xl flex-col gap-3">
+  <span class="eyebrow">Rot Index{% if generated_at %} · updated {{ generated_at }}{% endif %}</span>
+  <h1 class="page-title">How many popular tutorials still work?</h1>
+  {% if total %}
+  <p class="lead">We ran {{ total }} popular Python and JavaScript tutorials step by step in fresh sandboxes with today's package versions. Here is what still works, what broke, and the fix for each.</p>
+  {% else %}
+  <p class="lead">We are running popular Python and JavaScript tutorials step by step in fresh sandboxes with today's package versions, to see what still works, what broke, and how to fix it.</p>
+  {% endif %}
+</div>
+{% if total %}
+<div class="mt-8 grid grid-cols-2 gap-3 lg:grid-cols-4">
+  {% for key, label in [("still_works", "still work"), ("fixed", "broke, and we fixed them"), ("could_not_fix", "broke, could not fix"), ("not_runnable", "could not run here")] %}
+  <div class="card gap-1 p-5">
+    <span class="text-3xl font-semibold tracking-tight tabular-nums">{{ pct[key] }}%</span>
+    <span class="text-muted-foreground text-sm">{{ label }}</span>
+  </div>
+  {% endfor %}
+</div>
+{% if causes %}
+<section class="mt-10">
+  <h2 class="section-title">Why tutorials break</h2>
+  <ul class="mt-4 flex flex-col gap-3">
+    {% set top = causes[0][1] %}
+    {% for cat, n in causes %}
+    <li class="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-x-4 gap-y-1.5 text-sm">
+      <span>{{ cat_label(cat) }}</span><span class="text-muted-foreground tabular-nums">{{ n }}</span>
+      <div class="progress col-span-2 h-1.5"><span style="width: {{ (100 * n / top)|round|int }}%"></span></div>
+    </li>
+    {% endfor %}
+  </ul>
+</section>
+{% endif %}
+{% if breaks.releases %}
+<section class="mt-10">
+  <h2 class="section-title">Releases that broke the most tutorials</h2>
+  {% if breaks.median_months is not none %}<p class="text-muted-foreground mt-1 text-sm">A typical tutorial here broke {{ breaks.median_months }} month{{ "s" if breaks.median_months != 1 }} after it was published.</p>{% endif %}
+  {% if breaks.already_out_of_date %}<p class="text-muted-foreground mt-1 text-sm">{{ breaks.already_out_of_date }} {{ "was" if breaks.already_out_of_date == 1 else "were" }} already out of date on the day {{ "it was" if breaks.already_out_of_date == 1 else "they were" }} published.</p>{% endif %}
+  <ul class="mt-4 flex flex-col text-sm">
+    {% for r in breaks.releases %}
+    <li class="flex items-baseline justify-between gap-4 border-b py-2.5">
+      <span><span class="font-medium">{{ r.package }} {{ r.version }}</span> <span class="text-muted-foreground">· released {{ r.month }}</span></span>
+      <span class="text-muted-foreground tabular-nums">{{ r.count }} tutorial{{ "s" if r.count != 1 }}</span>
+    </li>
+    {% endfor %}
+  </ul>
+</section>
+{% endif %}
+<section class="mt-10">
+  <h2 class="section-title">Every tutorial we checked</h2>
+  <div class="table-container mt-4 rounded-lg border">
+    <table class="table">
+      <thead><tr><th>Tutorial</th><th>Language</th><th>Year</th><th>Result</th><th><span class="sr-only">Report</span></th></tr></thead>
+      <tbody>
+      {% for e in entries %}
+      <tr>
+        <td class="max-w-md"><a class="font-medium underline-offset-4 hover:underline" href="{{ e.url }}" target="_blank" rel="noopener">{{ e.title }}</a><div class="text-muted-foreground text-xs">{{ e.source }}</div></td>
+        <td>{{ {"python": "Python", "javascript": "JavaScript"}.get(e.language, e.language) }}</td>
+        <td class="tabular-nums">{{ e.year }}</td>
+        <td><span class="status" data-status="{{ e.verdict }}">{{ verdict_label(e.verdict) }}</span>{% if e.broke_in %}<div class="text-muted-foreground mt-1 text-xs">Broke in {{ e.broke_in.package }} {{ e.broke_in.version }}</div>{% endif %}</td>
+        <td class="text-right">{% if e.run_id %}<a class="btn" data-variant="ghost" data-size="sm" href="/r/{{ e.run_id }}">Report</a>{% endif %}</td>
+      </tr>
+      {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</section>
+{% else %}
+<div class="empty mt-10 rounded-lg border border-dashed">
+  <header>
+    <h2>The index is being built</h2>
+    <p>We are checking a list of popular tutorials. Check back soon.</p>
+  </header>
+</div>
+{% endif %}
+{% endblock %}
