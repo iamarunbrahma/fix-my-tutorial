@@ -18,7 +18,7 @@ class FakeChatClient:
     async def _create(self, **kw):
         self.calls.append(kw)
         item = self._responses.pop(0)
-        if isinstance(item, Exception):
+        if isinstance(item, BaseException):
             raise item
         usage = None if self._usage is None else SimpleNamespace(
             prompt_tokens=self._usage[0], completion_tokens=self._usage[1])

@@ -86,7 +86,7 @@ class LLM:
                     model=model, messages=messages, max_tokens=max_tokens, temperature=temperature,
                     response_format=self._response_format(role, schema),
                 )
-            except Exception as e:
+            except BaseException as e:  # includes cancellation by the run's wall clock: may still be billed
                 if isinstance(e, UNBILLED):
                     self.ledger.release(res)
                 else:
@@ -95,10 +95,14 @@ class LLM:
                     await asyncio.sleep(self._backoff[attempt])
                     continue
                 raise
-            content = resp.choices[0].message.content or ""
-            usage = getattr(resp, "usage", None)
-            pt = getattr(usage, "prompt_tokens", None) or prompt_est
-            ct = getattr(usage, "completion_tokens", None) or estimate_tokens(content)
+            try:
+                content = resp.choices[0].message.content or ""
+                usage = getattr(resp, "usage", None)
+                pt = getattr(usage, "prompt_tokens", None) or prompt_est
+                ct = getattr(usage, "completion_tokens", None) or estimate_tokens(content)
+            except BaseException:
+                self.ledger.charge_reserved(res, role, model)
+                raise
             self.ledger.commit_llm(res, role, model, pt, ct)
             return content
         raise RuntimeError("unreachable")

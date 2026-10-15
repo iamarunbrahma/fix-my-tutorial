@@ -72,3 +72,25 @@ async def test_search_can_restrict_domains_and_caches_per_domain_set(settings, t
     await sc.search("pandas tutorial", run_id="r", public=False)
     assert fake.search_calls[0]["include_domains"] == ["realpython.com"]
     assert "include_domains" not in fake.search_calls[1]
+
+
+async def test_cancelled_search_is_charged(settings, tmp_path):
+    import asyncio
+
+    class Cancelled(FakeTavily):
+        async def search(self, query, **kw):
+            raise asyncio.CancelledError()
+    sc, led = make(settings, tmp_path, Cancelled())
+    with pytest.raises(asyncio.CancelledError):
+        await sc.search("q", run_id="r", public=True)
+    assert [row["credits"] for row in led.export_rows()] == [1]
+
+
+async def test_malformed_extract_reply_is_charged(settings, tmp_path):
+    class Weird(FakeTavily):
+        async def extract(self, urls, **kw):
+            return {"results": [{"no_url": True}]}
+    sc, led = make(settings, tmp_path, Weird())
+    with pytest.raises(KeyError):
+        await sc.extract(["https://a.example"], run_id="r", public=True)
+    assert [row["credits"] for row in led.export_rows()] == [1]

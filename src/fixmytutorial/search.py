@@ -38,8 +38,8 @@ class SearchClient:
         try:
             extra = {"include_domains": include_domains} if include_domains else {}
             resp = await self.client.search(query=query, search_depth="basic", max_results=max_results, **extra)
-        except Exception:
-            self.ledger.charge_reserved(res, "search", "tavily")  # may have been billed; fail closed
+        except BaseException:
+            self.ledger.charge_reserved(res, "search", "tavily")  # may have been billed (or cancelled); fail closed
             raise
         self.ledger.commit_tavily(res, 1)
         results = [{"url": r["url"], "title": r.get("title", ""), "content": r.get("content", ""),
@@ -62,10 +62,14 @@ class SearchClient:
             kwargs.update(query=query, chunks_per_source=3)
         try:
             resp = await self.client.extract(urls=urls, **kwargs)
-        except Exception:
-            self.ledger.charge_reserved(res, "search", "tavily")  # may have been billed; fail closed
+        except BaseException:
+            self.ledger.charge_reserved(res, "search", "tavily")  # may have been billed (or cancelled); fail closed
             raise
-        ok = [{"url": r["url"], "raw_content": r.get("raw_content") or ""} for r in resp.get("results", [])]
+        try:
+            ok = [{"url": r["url"], "raw_content": r.get("raw_content") or ""} for r in resp.get("results", [])]
+        except BaseException:
+            self.ledger.charge_reserved(res, "search", "tavily")
+            raise
         self.ledger.commit_tavily(res, extract_credits(max(1, len(ok)), depth))
         self.store.cache_put(key, ok, CACHE_TTL_S)
         return ok

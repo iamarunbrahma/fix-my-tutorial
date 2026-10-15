@@ -139,3 +139,28 @@ def test_extract_json_ignores_trailing_text_after_first_object():
 def test_extract_json_skips_a_broken_brace_before_the_real_object():
     raw = 'Note {not json} then {"ok": false, "n": 1} done'
     assert extract_json(raw) == '{"ok": false, "n": 1}'
+
+
+async def test_cancelled_call_is_charged_and_saved(settings, tmp_path):
+    import asyncio
+    llm, _, led = make_llm(settings, tmp_path, [asyncio.CancelledError()])
+    with pytest.raises(asyncio.CancelledError):
+        await llm.call("repair", "sys", "u", Out, run_id="r", public=True)
+    assert [row["run_id"] for row in led.export_rows()] == ["r"]
+    assert led.totals("r").run_usd == pytest.approx(sum(row["usd"] for row in led.export_rows()))
+
+
+async def test_malformed_reply_is_charged(settings, tmp_path):
+    from types import SimpleNamespace
+
+    class NoChoices:
+        def __init__(self):
+            self.chat = SimpleNamespace(completions=SimpleNamespace(create=self.create))
+
+        async def create(self, **kw):
+            return SimpleNamespace(choices=[], usage=None)
+
+    led = Ledger(tmp_path / "l.db", settings)
+    with pytest.raises(IndexError):
+        await LLM(settings, led, client=NoChoices()).call("triage", "sys", "u", Out, run_id="r", public=True)
+    assert len(led.export_rows()) == 1 and led.totals("r").run_usd > 0
