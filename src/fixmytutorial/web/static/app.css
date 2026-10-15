@@ -1,3 +1,4 @@
+[hidden]{display:none!important}
 :root{--bg:#f7f8fa;--panel:#fff;--ink:#14171c;--muted:#5d6675;--line:#e3e6eb;--accent:#4f46e5;--ok:#2e7d32;--fix:#1565c0;--warn:#b26a00;--bad:#9e2a2b;--code:#0f1115;--codeink:#e6e9ef;--radius:14px}
 @media (prefers-color-scheme:dark){:root{--bg:#0d0f13;--panel:#151922;--ink:#eef1f6;--muted:#9aa4b2;--line:#252b36;--accent:#8b85ff;--code:#0a0c10}}
 *{box-sizing:border-box}
@@ -48,6 +49,8 @@ button:disabled,input:disabled,textarea:disabled{opacity:.5;cursor:not-allowed}
 .cand ul{padding-left:18px;margin:6px 0}
 .cand.passed{border-color:var(--ok);box-shadow:0 0 0 2px color-mix(in srgb,var(--ok) 35%,transparent)}
 .cand.failed{opacity:.6}
+.cand.winner{border-color:var(--ok);box-shadow:0 0 0 3px var(--ok)}
+.cand.winner .result{color:var(--ok);font-weight:700;opacity:1}
 .cand .strategy{font-weight:800;text-transform:capitalize}
 .verdict{display:flex;gap:14px;align-items:center;flex-wrap:wrap;padding:16px;border-radius:var(--radius);margin-top:16px;border:1px solid var(--line);background:var(--panel)}
 .verdict .big{font-size:22px;font-weight:800}

@@ -120,6 +120,7 @@ async def test_repair_step_second_round_after_failures(settings, tmp_path):
     assert "BAD" in client.calls[1]["messages"][1]["content"]  # previous attempt is shown to the model
     assert client.calls[0]["model"] == settings.model_repair
     assert [e["type"] for e in events].count("candidates") == 2
+    assert {"type": "winner", "step_id": "s3", "round": 2, "index": 0} in events
 
 
 async def test_repair_step_gives_up_after_rounds(settings, tmp_path):

@@ -107,6 +107,13 @@
     n.querySelector(".result").textContent = ev.passed ? "Passed" : `Failed: ${ev.error || ""}`;
   }
 
+  function onWinner(ev) {
+    const n = document.getElementById(`cand-${ev.index}`);
+    if (!n) return;
+    n.classList.add("winner");
+    n.querySelector(".result").textContent = "Passed · applied to the tutorial";
+  }
+
   function onVerdict(ev) {
     setStage(ev.verdict === "error" ? "failed" : "done");
     const v = $("#verdict");
@@ -130,6 +137,7 @@
   on("evidence", onEvidence);
   on("candidates", onCandidates);
   on("candidate_result", onCandidateResult);
+  on("winner", onWinner);
   on("verdict", onVerdict);
   on("done", () => es.close());
 })();
