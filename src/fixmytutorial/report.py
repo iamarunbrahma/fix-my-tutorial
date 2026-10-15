@@ -120,7 +120,7 @@ def broke_in_text(rec: RunRecord) -> str:
     else:
         text = (f"Broke in {b.package} {b.first_bad}, released {_day(b.first_bad_date)}, according to the cited "
                 "release notes. " + (f"{b.package} {b.last_good} still runs this step." if b.last_good
-                                     else "Older releases can't be installed here to check."))
+                                     else "Older releases couldn't be run here to check."))
     try:
         published = date.fromisoformat(rec.published) if rec.published else None
     except ValueError:
@@ -141,7 +141,7 @@ def broke_in_source(rec: RunRecord) -> Evidence | None:
     b = rec.broke_in
     if b is None or not b.evidence_id:
         return None
-    return next((e for r in rec.repairs for e in r.evidence if e.id == b.evidence_id), None)
+    return b.source or next((e for r in rec.repairs for e in r.evidence if e.id == b.evidence_id), None)
 
 
 def break_stats(entries: list[dict]) -> dict:

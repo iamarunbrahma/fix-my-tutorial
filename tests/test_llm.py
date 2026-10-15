@@ -164,3 +164,8 @@ async def test_malformed_reply_is_charged(settings, tmp_path):
     with pytest.raises(IndexError):
         await LLM(settings, led, client=NoChoices()).call("triage", "sys", "u", Out, run_id="r", public=True)
     assert len(led.export_rows()) == 1 and led.totals("r").run_usd > 0
+
+
+def test_extract_json_prefers_the_object_over_an_echoed_list():
+    raw = 'Installed: ["pandas==3.0.6"]. Answer: {"package": "pandas", "version": "2.0.0"}'
+    assert extract_json(raw) == '{"package": "pandas", "version": "2.0.0"}'

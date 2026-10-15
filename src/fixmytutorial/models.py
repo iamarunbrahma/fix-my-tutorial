@@ -209,6 +209,7 @@ class BreakPoint(BaseModel):
     last_good_date: date | None = None
     how: Literal["ran", "release_notes"]
     evidence_id: str | None = None
+    source: Evidence | None = None  # the cited release note, when one names first_bad
 
 
 class StepOutcome(BaseModel):

@@ -101,7 +101,7 @@ def test_broke_in_text_from_the_release_notes():
     from fixmytutorial.report import broke_in_text
     assert broke_in_text(_broken(how="release_notes", last_good=None, published=None)) == (
         "Broke in pandas 2.0.0, released 3 Apr 2023, according to the cited release notes. Older releases "
-        "can't be installed here to check.")
+        "couldn't be run here to check.")
     assert broke_in_text(_broken(how="release_notes", published=None)) == (
         "Broke in pandas 2.0.0, released 3 Apr 2023, according to the cited release notes. pandas 1.5.3 still "
         "runs this step.")
@@ -118,3 +118,7 @@ def test_no_break_text_without_a_break():
     from fixmytutorial.report import broke_in_text, broke_in_source
     assert broke_in_text(record()) == "" and broke_in_source(record()) is None
     assert broke_in_source(_broken()).url == "https://pandas.pydata.org/x"
+    searched = EV.model_copy(update={"id": "b1", "url": "https://numpy.org/doc/stable/release/1.24.0-notes.html"})
+    rec = _broken()
+    rec.broke_in = rec.broke_in.model_copy(update={"evidence_id": "b1", "source": searched})
+    assert broke_in_source(rec).url.endswith("1.24.0-notes.html")  # found by the finder's own search

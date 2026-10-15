@@ -283,6 +283,8 @@ async def test_pipeline_finds_the_release_that_broke_the_tutorial(settings, tmp_
     found = next(e for e in evs if e["type"] == "broke_in")
     assert found["text"].startswith("Broke in pandas 2.0.0, released 3 Apr 2023.")
     assert [e["type"] for e in evs][-2:] == ["verdict", "done"]
+    summary_call = [c for c in p.llm.client.calls if c["model"] == settings.model_planner][-1]
+    assert "Broke in pandas 2.0.0" in summary_call["messages"][-1]["content"]  # the summary and the card agree
 
 
 async def test_the_break_finder_never_changes_the_verdict(settings, tmp_path):

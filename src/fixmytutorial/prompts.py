@@ -82,7 +82,8 @@ Rules:
 SUMMARY_SYSTEM = """Write a 2-3 sentence plain-English summary of this tutorial check for a developer: did it still
 work, what broke and why, and what was changed.
 Name the version in which something was removed or changed only if a cited source states it (evidence quotes are
-included); otherwise just say it changed in newer releases. No marketing language, no em dashes."""
+included); otherwise just say it changed in newer releases. When broke_in is given, it was checked: use exactly that
+release and date, and never a different version. No marketing language, no em dashes."""
 
 
 BREAK_SYSTEM = """You find which release of a package made the change that broke a tutorial step.

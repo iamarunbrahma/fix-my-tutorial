@@ -57,7 +57,7 @@ class Pipeline:
         try:
             async with asyncio.timeout(self.s.run_wall_clock_s):
                 await self._run(record, source, emit, executor)
-                await self._date_break(record, emit, executor)
+                await self._date_break(record, emit, executor)  # Could not fix ends before the summary
         except (BudgetExceeded, IngestError) as e:
             record.verdict, record.reason = Verdict.ERROR, str(e)
         except TimeoutError:
@@ -130,6 +130,7 @@ class Pipeline:
             else:
                 record.verdict = Verdict.COULD_NOT_FIX
                 record.reason = f"The repaired tutorial did not pass a clean re-run (step {replay.failing_step_id})."
+        await self._date_break(record, emit, executor)  # before the summary, so it can say which release broke it
         record.summary = await self._summary(record)
 
     @staticmethod
@@ -217,7 +218,7 @@ class Pipeline:
         record.broke_in = await find_break(
             target, language=lang, llm=self.llm, registry=self.registry,
             probe_for=lambda pkg: make_probe(executor, target, lang, pkg, run_id=rid, public=pub),
-            max_probes=self.s.break_max_probes, time_s=time_s, run_id=rid, public=pub)
+            max_probes=self.s.break_max_probes, time_s=time_s, run_id=rid, public=pub, search=self.search)
         if record.broke_in is not None:
             await emit({"type": "broke_in", **record.broke_in.model_dump(mode="json"), "text": broke_in_text(record)})
 
@@ -238,7 +239,8 @@ class Pipeline:
                               "fix": r.winner.rationale if r.winner else None,
                               "strategy": r.winner.strategy if r.winner else None,
                               "evidence": [f"{e.title}: {e.quote[:300]}" for e in r.evidence[:3]]}
-                             for r in record.repairs]}
+                             for r in record.repairs],
+                 "broke_in": broke_in_text(record) or None}
         try:
             out = await self.llm.call("summary", SUMMARY_SYSTEM, json.dumps(facts), Summary, run_id=record.id,
                                       public=record.public, max_tokens=400)
