@@ -108,8 +108,16 @@ class Repairer:
         prop = await self.llm.call("repair", REPAIR_SYSTEM, user, RepairProposal, run_id=run_id, public=public,
                                    max_tokens=6000, temperature=0.3)
         ids = {e.id for e in evidence}
-        return [c for c in prop.candidates[: self.s.candidates_per_round]
-                if validate_candidate(c, plan, ids, signature.category) is None]
+        valid = []
+        for c in prop.candidates[: self.s.candidates_per_round]:
+            why = validate_candidate(c, plan, ids, signature.category)
+            if why is None:
+                valid.append(c)
+            else:  # tell the next round why, so it does not repeat the mistake
+                attempts.append({"strategy": c.strategy,
+                                 "edits": [f"{e.op} {e.step_id}: {e.new_content[:300]}" for e in c.edits],
+                                 "error": f"rejected before running: {why}"})
+        return valid
 
     async def race(self, *, plan, trace, candidates, failing_step_id, run_id, public) -> list[RaceResult]:
         async def one(c: Candidate) -> RaceResult:

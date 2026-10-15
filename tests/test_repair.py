@@ -136,3 +136,25 @@ async def test_repair_step_gives_up_after_rounds(settings, tmp_path):
     record, win = await Repairer(llm, ex, settings.model_copy(update={"repair_rounds": 2})).repair_step(
         plan=PLAN, trace=trace, signature=SIG, evidence=EVID, versions="", run_id="r", public=True, emit=emit)
     assert win is None and len(record.rounds) == 2
+
+
+async def test_rejected_candidates_are_explained_to_the_next_round(settings, tmp_path):
+    backend = FakeBackend(cells_handler(fail_cell=bad_append))
+    ex = Executor(backend, settings, Judge(None))
+    trace = await failing_trace(ex)
+    uncited = {"candidates": [{"strategy": "migrate", "rationale": "a", "edits": [
+        {"op": "replace", "step_id": "s3", "new_content": "df = pd.concat([df])\nprint(1)", "reason": "r",
+         "evidence_ids": []}]}]}
+    cited = {"candidates": [{"strategy": "migrate", "rationale": "b", "edits": [
+        {"op": "replace", "step_id": "s3", "new_content": "df = pd.concat([df])\nprint(1)", "reason": "r",
+         "evidence_ids": ["r1e1"]}]}]}
+    client = FakeChatClient([json.dumps(uncited), json.dumps(cited)])
+    llm = LLM(settings, Ledger(tmp_path / "l.db", settings), client=client)
+
+    async def emit(e):
+        pass
+
+    record, win = await Repairer(llm, ex, settings).repair_step(
+        plan=PLAN, trace=trace, signature=SIG, evidence=EVID, versions="", run_id="r", public=True, emit=emit)
+    assert win is not None and len(record.rounds) == 2
+    assert "edit has no citation" in client.calls[1]["messages"][1]["content"]
