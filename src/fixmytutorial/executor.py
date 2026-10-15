@@ -136,8 +136,8 @@ class Executor:
                     "kill $SERVER_PID 2>/dev/null; sleep 0.5\necho '--- server log ---'\n"
                     "tail -n 60 /tmp/serve.log\nexit $RC")
             timeout += 45
-        else:
-            body = step.content
+        else:  # a failing command anywhere (including inside a pipe) fails the step, as a reader would notice
+            body = f"set -eo pipefail\n{step.content}"
         r = await self.backend.run(state.image, f"{PRELUDE}\n{body}\n", files=files or None,
                                    timeout_s=timeout, save=True)
         if r.timed_out:

@@ -9,6 +9,9 @@ from .prompts import PLANNER_SYSTEM
 
 RUNTIMES = {"python": "3.12", "javascript": "22"}
 PORT_RE = re.compile(r"(?:--port[=\s]+|port[=\s:]+|:)(\d{4,5})\b", re.I)
+FRAMEWORK_PORTS = [(re.compile(r"\bflask\b", re.I), 5000), (re.compile(r"\bstreamlit\b", re.I), 8501),
+                   (re.compile(r"\bgradio\b", re.I), 7860), (re.compile(r"\bvite\b", re.I), 5173),
+                   (re.compile(r"\b(uvicorn|fastapi|runserver|http\.server)\b", re.I), 8000)]
 CODE_LANGS = {"python", "py", "python3", "ipython", "javascript", "js", "node", "mjs", "cjs", "jsx",
               "bash", "sh", "shell", "zsh"}
 PROMPT_RE = re.compile(r"^(?:>>>|\.\.\.|\$|!)\s?")
@@ -19,6 +22,15 @@ MIN_COVERAGE = 0.5
 def safe_path(path: str | None) -> str | None:
     parts = [p for p in (path or "").replace("\\", "/").split("/") if p not in ("", ".", "..")]
     return "/".join(parts) or None
+
+
+def default_probe(content: str, language: str) -> Probe:
+    """The port a server command listens on: an explicit port, else the framework's default."""
+    m = PORT_RE.search(content)
+    if m:
+        return Probe(port=int(m.group(1)))
+    port = next((p for rx, p in FRAMEWORK_PORTS if rx.search(content)), 8000 if language == "python" else 3000)
+    return Probe(port=port)
 
 
 def render_planner_input(doc: TutorialDoc, max_chars: int) -> str:
@@ -40,8 +52,7 @@ def normalize_plan(out: PlannerOutput, max_steps: int = 40, source_text: str | N
             ext = "py" if out.language == "python" else "js"
             s.path = safe_path(s.path) or f"file_{len(steps) + 1}.{ext}"
         if s.kind == "serve" and s.probe is None:
-            m = PORT_RE.search(s.content)
-            s.probe = Probe(port=int(m.group(1)) if m else (8000 if out.language == "python" else 3000))
+            s.probe = default_probe(s.content, out.language)
         if shown is not None:  # only literals the tutorial actually shows may gate a step
             s.expect.stdout_contains = [x for x in s.expect.stdout_contains if squash(x) and squash(x) in shown]
         s.source_excerpt = s.source_excerpt[:1200]

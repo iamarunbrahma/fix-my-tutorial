@@ -144,3 +144,11 @@ async def test_setup_only_plan_is_retried_even_without_language_labels(settings,
     plan = await plan_tutorial(unlabeled, llm, settings, run_id="r", public=True)
     assert len(client.calls) == 2 and "never ran the tutorial's code" in client.calls[1]["messages"][1]["content"]
     assert plan.runnable
+
+
+def test_prompts_explain_that_cd_does_not_carry_over_and_forbid_hiding_failures():
+    from fixmytutorial.prompts import PLANNER_SYSTEM, REPAIR_SYSTEM
+    for prompt in (PLANNER_SYSTEM, REPAIR_SYSTEM):
+        assert "A `cd` does not carry over" in prompt
+    assert "Never hide a failure" in REPAIR_SYSTEM
+    assert "new_kind to change the step's kind" in REPAIR_SYSTEM

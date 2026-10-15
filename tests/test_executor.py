@@ -111,3 +111,17 @@ async def test_quiet_mode_emits_nothing(settings):
     ex, _ = make(cells_handler(), settings, events)
     await ex.execute(plan(S("s1", "shell", "a")), BASE, run_id="r", public=True, quiet=True)
     assert events == []
+
+
+async def test_shell_steps_fail_when_any_command_fails(settings):
+    ex, backend = make(lambda s, f, i: (0, "", ""), settings)
+    await ex.execute(plan(S("s1", "shell", "curl -fsSL https://dead.example/install.sh | bash")), BASE,
+                     run_id="r", public=True)
+    script = backend.calls[0]["script"]
+    assert "set -eo pipefail" in script and script.index("set -eo pipefail") < script.index("curl")
+
+
+def test_bash_really_fails_a_dead_pipe_with_these_options():
+    import subprocess
+    r = subprocess.run(["bash", "-c", "set -eo pipefail\nfalse | cat\necho reached"], capture_output=True, text=True)
+    assert r.returncode != 0 and "reached" not in r.stdout

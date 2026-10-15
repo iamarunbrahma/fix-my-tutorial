@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import asyncio
+import re
 from dataclasses import dataclass
 from typing import Awaitable, Callable
 
@@ -18,12 +19,16 @@ from .models import (
     RunPlan,
     Step,
 )
-from .planner import safe_path
+from .judge import squash
+from .planner import default_probe, safe_path
 from .prompts import REPAIR_SYSTEM
 from .triage import failure_output, key_line
 
 STRATEGY_RANK = {"migrate": 0, "pin": 1, "workaround": 2}
 UNCITED_OK = {"tutorial_typo", "timeout", "environment"}
+# Ways a "fix" can make a step pass without making it work.
+HIDE_RES = [re.compile(r"\|\|\s*(?:true\b|:(?=\s|$)|exit\s+0\b)", re.M), re.compile(r";\s*exit\s+0\b"),
+            re.compile(r"except[^\n:]*:\s*pass\b")]
 Emit = Callable[[dict], Awaitable[None]]
 
 
@@ -35,9 +40,17 @@ def apply_edits(plan: RunPlan, edits: list[Edit]) -> RunPlan:
             raise ValueError(f"Edit targets unknown step {e.step_id!r}")
         if e.op == "replace":
             s = steps[idx]
+            kind = e.new_kind or s.kind  # a fix may change the kind, e.g. a blocking command into a server step
+            path = (safe_path(e.new_path) or s.path or "file.txt") if kind == "write_file" else None
+            probe = None
+            if kind == "serve":
+                probe = s.probe if s.kind == "serve" and s.probe else default_probe(e.new_content, plan.language)
             steps[idx] = s.model_copy(
                 update={
                     "content": e.new_content,
+                    "kind": kind,
+                    "path": path,
+                    "probe": probe,
                     "fix_reason": "; ".join(x for x in (s.fix_reason, e.reason) if x),
                     "fix_evidence_ids": s.fix_evidence_ids
                     + [i for i in e.evidence_ids if i not in s.fix_evidence_ids],
@@ -65,15 +78,27 @@ def apply_edits(plan: RunPlan, edits: list[Edit]) -> RunPlan:
 def validate_candidate(c: Candidate, plan: RunPlan, evidence_ids: set[str], category: str) -> str | None:
     if not c.edits:
         return "no edits"
-    ids = {s.id for s in plan.steps}
+    by_id = {s.id: s for s in plan.steps}
     for e in c.edits:
-        if e.step_id not in ids:
+        if e.step_id not in by_id:
             return f"unknown step {e.step_id}"
         if not e.new_content.strip():
             return "empty edit"
         if evidence_ids and category not in UNCITED_OK and not any(i in evidence_ids for i in e.evidence_ids):
             return "edit has no citation"
+        old = by_id[e.step_id].content if e.op == "replace" else ""
+        if e.op == "replace" and squash(e.new_content) == squash(old) and e.new_kind in (None, by_id[e.step_id].kind):
+            return "edit changes nothing"
+        if _hidden_failures(e.new_content) > _hidden_failures(old):
+            return "edit hides failures"
+        old_lines = [ln for ln in old.splitlines() if ln.strip()]
+        if len(old_lines) >= 4 and len([ln for ln in e.new_content.splitlines() if ln.strip()]) < len(old_lines) / 2:
+            return "edit removes most of the step"
     return None
+
+
+def _hidden_failures(text: str) -> int:
+    return sum(len(rx.findall(text)) for rx in HIDE_RES)
 
 
 def _sig(unit: list[Step]) -> list[tuple]:

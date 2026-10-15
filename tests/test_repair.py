@@ -159,3 +159,45 @@ async def test_rejected_candidates_are_explained_to_the_next_round(settings, tmp
         plan=PLAN, trace=trace, signature=SIG, evidence=EVID, versions="", run_id="r", public=True, emit=emit)
     assert win is not None and len(record.rounds) == 2
     assert "edit has no citation" in client.calls[1]["messages"][1]["content"]
+
+
+def test_validate_rejects_edits_that_change_nothing():
+    same = Candidate(strategy="workaround", rationale="r", edits=[
+        edit("s3", "df = df.append({'a': 1},  ignore_index=True)\n\nprint(len(df))\n")])
+    assert validate_candidate(same, PLAN, {"r1e1"}, "removed_api") == "edit changes nothing"
+
+
+def test_validate_rejects_edits_that_hide_failures():
+    hidden = [
+        edit("s1", "pip install pandas || true"),
+        edit("s1", "timeout 10 pip install pandas; exit 0"),
+        edit("s3", "try:\n    df = df.append({'a': 1}, ignore_index=True)\nexcept Exception:\n    pass\nprint(len(df))"),
+        edit("s3", "try:\n    df = df.append({'a': 1}, ignore_index=True)\nexcept:\n    pass\nprint(len(df))"),
+    ]
+    for e in hidden:
+        c = Candidate(strategy="workaround", rationale="r", edits=[e])
+        assert validate_candidate(c, PLAN, {"r1e1"}, "removed_api") == "edit hides failures", e.new_content
+
+
+def test_validate_rejects_edits_that_delete_most_of_a_step():
+    long = RunPlan(language="python", runtime="3.12", steps=[S("s1", "run_code", "\n".join(
+        ["import pandas as pd", "df = pd.read_csv('a.csv')", "df = df.dropna()", "df['b'] = df.a * 2",
+         "df = df.append({'a': 1}, ignore_index=True)", "print(df.describe())"]))])
+    gutted = Candidate(strategy="workaround", rationale="r", edits=[edit("s1", "import pandas as pd\nprint('ok')")])
+    assert validate_candidate(gutted, long, {"r1e1"}, "removed_api") == "edit removes most of the step"
+
+
+def test_replace_can_turn_a_blocking_command_into_a_server_step():
+    plan = RunPlan(language="python", runtime="3.12", steps=[S("s1", "shell", "flask --app app run")])
+    new = apply_edits(plan, [Edit(op="replace", step_id="s1", new_kind="serve", new_content="flask --app app run",
+                                  reason="it starts a server", evidence_ids=[])])
+    assert new.steps[0].kind == "serve" and new.steps[0].probe.port == 5000
+
+
+def test_server_ports_default_to_the_framework_default():
+    from fixmytutorial.planner import default_probe
+    assert default_probe("flask --app app run", "python").port == 5000
+    assert default_probe("streamlit run app.py", "python").port == 8501
+    assert default_probe("uvicorn main:app --reload", "python").port == 8000
+    assert default_probe("npm run dev", "javascript").port == 3000
+    assert default_probe("python app.py --port 7000", "python").port == 7000
