@@ -38,7 +38,7 @@ class Settings(BaseSettings):
     model_repair: str = "nvidia/Nemotron-3-Ultra-550b-a55b"
     json_object_roles: str = ""  # comma list of roles that need json_object instead of json_schema
 
-    cap_lifetime_usd: float = 35.0
+    cap_lifetime_usd: float = 28.0  # real credits: $29.50 Builders + $1 trial; keep a margin
     cap_daily_usd: float = 3.0
     cap_run_usd: float = 0.50
     cap_tavily_run_credits: int = 30

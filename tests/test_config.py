@@ -11,7 +11,7 @@ def test_defaults_have_model_and_price_for_every_role():
 
 def test_caps_match_spec():
     s = Settings(_env_file=None)
-    assert (s.cap_lifetime_usd, s.cap_daily_usd, s.cap_run_usd) == (35.0, 3.0, 0.5)
+    assert (s.cap_lifetime_usd, s.cap_daily_usd, s.cap_run_usd) == (28.0, 3.0, 0.5)
     assert (s.cap_tavily_run_credits, s.cap_tavily_lifetime_credits) == (30, 1500)
 
 
