@@ -43,7 +43,7 @@ class Settings(BaseSettings):
     cap_daily_usd: float = 3.0
     cap_run_usd: float = 0.50
     cap_tavily_run_credits: int = 30
-    cap_tavily_lifetime_credits: int = 1500
+    cap_tavily_lifetime_credits: int = 5000  # 9,000 Tavily credits available (free plan + BBDEVPOST coupon)
 
     rate_limit_runs_per_hour: int = 3
     max_concurrent_runs: int = 4

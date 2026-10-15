@@ -25,7 +25,7 @@ short_description: Run any coding tutorial, find what broke, fix it with sources
 ---
 
 """
-SECRETS = ["NEBIUS_API_KEY", "NEBIUS_PROJECT_ID", "TAVILY_API_KEY", "HF_TOKEN", "ADMIN_TOKEN",
+SECRETS = ["NEBIUS_API_KEY", "NEBIUS_PROJECT_ID", "TAVILY_API_KEY", "ADMIN_TOKEN",
            "CONTREE_PYTHON_IMAGE", "CONTREE_NODE_IMAGE"]
 
 
@@ -36,6 +36,8 @@ def main() -> None:
     for key in SECRETS:
         if env.get(key):
             api.add_space_secret(SPACE, key, env[key])
+    # The Space only gets a fine-grained token that can write to the private dataset, never the deploy token.
+    api.add_space_secret(SPACE, "HF_TOKEN", env["SPACE_HF_TOKEN"])
     api.add_space_variable(SPACE, "SANDBOX_BACKEND", env.get("PROD_SANDBOX_BACKEND", "contree"))
     api.add_space_variable(SPACE, "PUBLIC_BASE_URL", URL)
     with tempfile.TemporaryDirectory() as d:
