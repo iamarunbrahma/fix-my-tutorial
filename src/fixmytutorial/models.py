@@ -185,6 +185,7 @@ class RepairRecord(BaseModel):
     evidence: list[Evidence] = Field(default_factory=list)
     rounds: list[RoundRecord] = Field(default_factory=list)
     winner: Candidate | None = None
+    stopped: str = ""  # "time" when the run's clock left no room for another round
 
 
 class StepOutcome(BaseModel):

@@ -151,7 +151,7 @@ class Executor:
     async def _cells(self, unit: list[Step], state: ExecState, run_id: str, public: bool) -> UnitResult:
         cells = state.cells + unit
         payload = json.dumps([{"id": c.id, "code": c.content} for c in cells]).encode()
-        timeout = min(600, self.s.step_timeout_s + 60 * (len(cells) - 1))
+        timeout = min(2 * self.s.step_timeout_s, self.s.step_timeout_s + 60 * (len(cells) - 1))  # leave time to repair
         body = f"python3 /opt/fmt/run_cells.py /opt/fmt/cells.json --report-from {unit[0].id}"
         r = await self.backend.run(state.image, f"{PRELUDE}\n{body}\n", files={"/opt/fmt/cells.json": payload},
                                    timeout_s=timeout, save=True)

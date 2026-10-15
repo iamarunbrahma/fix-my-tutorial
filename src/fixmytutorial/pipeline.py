@@ -13,7 +13,7 @@ from .llm import LLMOutputError
 from .models import RunPlan, RunRecord, RunStatus, Step, StepOutcome, StepStatus, Summary, Verdict, utcnow
 from .planner import plan_tutorial
 from .prompts import SUMMARY_SYSTEM
-from .repair import Repairer
+from .repair import Repairer, run_deadline
 from .research import research
 from .sandbox import PRELUDE
 from .triage import triage
@@ -49,6 +49,7 @@ class Pipeline:
             await self.bus.publish(record.id, ev)
 
         executor = Executor(self.backend, self.s, self.judge, emit)
+        run_deadline.set(asyncio.get_running_loop().time() + self.s.run_wall_clock_s)
         try:
             async with asyncio.timeout(self.s.run_wall_clock_s):
                 await self._run(record, source, emit, executor)
@@ -130,8 +131,15 @@ class Pipeline:
                                   limit: int) -> RunPlan | None:
         rid, pub = record.id, record.public
         repaired = 0
+        retried: set[str] = set()
         while trace.failed_unit is not None:
             failing = trace.failing_step_id
+            first = trace.results.get(failing)
+            if failing not in retried and first is not None and not first.timed_out:
+                retried.add(failing)  # a flaky download or install gets one more try before anything is "fixed"
+                trace = await executor.execute(plan, trace.states, from_unit=trace.failed_unit, run_id=rid,
+                                               public=pub)
+                continue
             if repaired >= limit:
                 record.verdict, record.final_plan = Verdict.COULD_NOT_FIX, plan
                 record.reason = f"Too many steps needed repairs (limit {self.s.max_repaired_steps})."
@@ -158,7 +166,8 @@ class Pipeline:
             if win is None:
                 await emit({"type": "step", "step_id": failing, "status": "failed", "phase": "run"})
                 record.verdict, record.final_plan = Verdict.COULD_NOT_FIX, plan
-                record.reason = f"Couldn't repair step {failing}: {sig.key_line}"
+                record.reason = (f"We ran out of time to try more fixes for step {failing}." if rec.stopped == "time"
+                                 else f"Couldn't repair step {failing}: {sig.key_line}")
                 return None
             repaired += 1
             plan = win.plan

@@ -128,3 +128,26 @@ async def test_wall_clock_limit(settings, tmp_path):
     backend.run = slow
     rec = await p.run(new_record(), Source(markdown=MD))
     assert rec.verdict == Verdict.ERROR and "longer than" in rec.reason
+
+
+async def test_a_step_that_fails_once_is_retried_before_repair(settings, tmp_path):
+    state = {"failed": False}
+
+    def flaky(cell):
+        if needs_append(cell) and not state["failed"]:
+            state["failed"] = True
+            return True
+        return False
+
+    p, store, _, _ = build(settings, tmp_path, {settings.model_planner: [PLAN, SUMMARY]},
+                           handler=cells_handler(fail_cell=flaky))
+    rec = await p.run(new_record(), Source(markdown=MD))
+    assert rec.verdict == Verdict.STILL_WORKS and rec.repairs == []
+
+
+async def test_no_time_for_a_repair_round_ends_as_could_not_fix(settings, tmp_path):
+    p, store, _, _ = build(settings, tmp_path, {
+        settings.model_planner: [PLAN, SUMMARY], settings.model_triage: [SIG], settings.model_repair: [FIX]},
+        run_wall_clock_s=100, step_timeout_s=180)
+    rec = await p.run(new_record(), Source(markdown=MD))
+    assert rec.verdict == Verdict.COULD_NOT_FIX and "time" in rec.reason

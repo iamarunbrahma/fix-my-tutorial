@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import asyncio
 import re
+from contextvars import ContextVar
 from dataclasses import dataclass
 from typing import Awaitable, Callable
 
@@ -30,6 +31,8 @@ UNCITED_OK = {"tutorial_typo", "timeout", "environment"}
 HIDE_RES = [re.compile(r"\|\|\s*(?:true\b|:(?=\s|$)|exit\s+0\b)", re.M), re.compile(r";\s*exit\s+0\b"),
             re.compile(r"except[^\n:]*:\s*pass\b")]
 Emit = Callable[[dict], Awaitable[None]]
+# Event-loop time when the current run must end (set by the pipeline for each run).
+run_deadline: ContextVar[float | None] = ContextVar("run_deadline", default=None)
 
 
 def apply_edits(plan: RunPlan, edits: list[Edit]) -> RunPlan:
@@ -225,6 +228,10 @@ class Repairer:
         output = failure_output(trace.results[failing])
         attempts: list[dict] = []
         for rnd in range(1, self.s.repair_rounds + 1):
+            deadline = run_deadline.get()
+            if deadline is not None and asyncio.get_running_loop().time() + self.s.step_timeout_s + 60 > deadline:
+                record.stopped = "time"  # end as "could not fix" rather than be cut off mid-round
+                break
             cands = await self.propose(
                 plan=plan,
                 failing_step_id=failing,

@@ -125,3 +125,10 @@ def test_bash_really_fails_a_dead_pipe_with_these_options():
     import subprocess
     r = subprocess.run(["bash", "-c", "set -eo pipefail\nfalse | cat\necho reached"], capture_output=True, text=True)
     assert r.returncode != 0 and "reached" not in r.stdout
+
+
+async def test_cell_groups_leave_time_for_repair(settings):
+    ex, backend = make(cells_handler(), settings)
+    cells = [S(f"s{i}", "run_code", f"x{i} = {i}") for i in range(1, 12)]
+    await ex.execute(plan(*cells), BASE, run_id="r", public=True)
+    assert max(c["timeout_s"] for c in backend.calls) <= 2 * settings.step_timeout_s
