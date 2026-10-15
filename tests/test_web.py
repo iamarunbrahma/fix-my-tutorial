@@ -253,3 +253,11 @@ def test_snapshots_only_run_inside_the_space(tmp_path):
     assert snapshot_for(laptop, store, ledger) is None
     snap = snapshot_for(space, store, ledger)
     assert snap.enabled and snap.owns_ledger
+
+
+def test_server_leaves_forwarded_headers_to_the_app():
+    """uvicorn's own proxy handling trusts the leftmost (client-written) X-Forwarded-For entry, which would undo
+    client_ip's rate-limit keying, so the container must not enable it."""
+    from pathlib import Path
+    cmd = next(ln for ln in (Path(__file__).parents[1] / "Dockerfile").read_text().splitlines() if ln.startswith("CMD"))
+    assert "--no-proxy-headers" in cmd and "--forwarded-allow-ips" not in cmd
