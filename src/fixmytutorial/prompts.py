@@ -11,6 +11,8 @@ Rules:
 2. Keep the tutorial's order. Set language to "python" or "javascript".
 3. Add the implicit steps a reader would do, and set implicit=true on them: installing imported third-party packages
    (pip install / npm install, unpinned unless the tutorial pins them), creating folders, `npm init -y`.
+   Include commands mentioned only in the text (for example "run it with `node log.js`"): every file the reader
+   writes must be run or used by a later step.
 4. Step kinds:
    - write_file: the tutorial tells the reader to create or save a file. Put the file body in content and the
      relative path in path.

@@ -212,3 +212,46 @@ def test_real_escapes_in_code_are_left_alone():
     out = PlannerOutput.model_validate_json(planner_json([{"id": "a", "title": "t", "kind": "run_code",
                                                            "content": 'print("a\\nb")'}]))
     assert normalize_plan(out, source_text=page).steps[0].content == 'print("a\\nb")'
+
+
+CHALK_DOC = TutorialDoc(source="fixture", title="chalk", content_hash="h",
+                        text="Create log.js, then run it with `node log.js`.", code_blocks=[
+    CodeBlock(lang="bash", code="npm init -y\nnpm install chalk\n"),
+    CodeBlock(lang="js", code="const chalk = require('chalk');\n\nconsole.log(chalk.green('Success!'));\n")])
+WRITES_ONLY = json.dumps({"language": "javascript", "runnable": True, "steps": [
+    {"id": "a", "title": "init", "kind": "shell", "content": "npm init -y\nnpm install chalk"},
+    {"id": "b", "title": "file", "kind": "write_file", "path": "log.js", "content": CHALK_DOC.code_blocks[1].code}]})
+WRITES_AND_RUNS = json.dumps({"language": "javascript", "runnable": True, "steps": [
+    *json.loads(WRITES_ONLY)["steps"], {"id": "c", "title": "run", "kind": "shell", "content": "node log.js"}]})
+
+
+def test_a_written_file_that_never_runs_is_not_covered():
+    from fixmytutorial.planner import code_coverage
+    assert code_coverage(CHALK_DOC, PlannerOutput.model_validate_json(WRITES_ONLY))[0] < 1.0
+    assert code_coverage(CHALK_DOC, PlannerOutput.model_validate_json(WRITES_AND_RUNS))[0] == 1.0
+
+
+def test_files_used_by_module_name_count_as_run():
+    from fixmytutorial.planner import code_coverage
+    doc = TutorialDoc(source="x", title="t", text="", content_hash="h", code_blocks=[
+        CodeBlock(lang="python", code="def add(a, b):\n    return a + b\n"),
+        CodeBlock(lang="python", code="from helpers import add\nprint(add(1, 2))\n")])
+    out = PlannerOutput.model_validate_json(planner_json([
+        {"id": "a", "title": "h", "kind": "write_file", "path": "helpers.py", "content": doc.code_blocks[0].code},
+        {"id": "b", "title": "m", "kind": "write_file", "path": "main.py", "content": doc.code_blocks[1].code},
+        {"id": "c", "title": "run", "kind": "shell", "content": "python main.py"}]))
+    assert code_coverage(doc, out)[0] == 1.0
+
+
+async def test_planner_is_told_when_it_never_runs_a_file(settings, tmp_path):
+    client = FakeChatClient([WRITES_ONLY, WRITES_AND_RUNS])
+    llm = LLM(settings, Ledger(tmp_path / "l.db", settings), client=client)
+    plan = await plan_tutorial(CHALK_DOC, llm, settings, run_id="r", public=True)
+    assert "log.js" in client.calls[1]["messages"][1]["content"]
+    assert "never runs" in client.calls[1]["messages"][1]["content"]
+    assert plan.coverage == 1.0 and plan.steps[-1].content == "node log.js"
+
+
+def test_planner_prompt_asks_for_commands_mentioned_only_in_text():
+    from fixmytutorial.prompts import PLANNER_SYSTEM
+    assert "mentioned only in the text" in PLANNER_SYSTEM

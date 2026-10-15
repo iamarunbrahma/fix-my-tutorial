@@ -16,6 +16,7 @@ CODE_LANGS = {"python", "py", "python3", "ipython", "javascript", "js", "node", 
               "bash", "sh", "shell", "zsh"}
 PROMPT_RE = re.compile(r"^(?:>>>|\.\.\.|\$|!)\s?")
 MAX_BLOCKS = 80
+CODE_EXTS = (".py", ".js", ".mjs", ".cjs", ".ts", ".jsx", ".tsx")
 MIN_COVERAGE = 0.5
 
 
@@ -93,9 +94,13 @@ async def plan_tutorial(doc: TutorialDoc, llm, settings, *, run_id: str, public:
                          max_tokens=12000, temperature=0.1)
     ratio, missing = code_coverage(doc, out)
     if out.runnable and ratio < 1.0:  # dropped or quietly "modernized" code would hide the rot: ask once more
-        gap = (f"left out these code blocks: {', '.join(f'[block {i}]' for i in missing)}" if missing
-               else "only set things up and never ran the tutorial's code" if ratio == 0
-               else "changed or left out some of the tutorial's code")
+        unrun = unrun_files(out)
+        parts = [f"left out these code blocks: {', '.join(f'[block {i}]' for i in missing)}" if missing
+                 else "only set things up and never ran the tutorial's code" if ratio == 0 and not unrun else ""]
+        if unrun:
+            parts.append(f"writes {', '.join(unrun)} but never runs them (add the command the tutorial uses, even "
+                         "when it is only mentioned in the text)")
+        gap = "; ".join(x for x in parts if x) or "changed or left out some of the tutorial's code"
         lines = "\n".join(f"  {ln}" for ln in missing_lines(doc, out))
         retry = (f"{user}\n\n=== CHECK ===\nYour previous plan {gap}. Every block a reader runs must become a step, "
                  "unless rule 5 applies, with its code exactly as written."
@@ -131,9 +136,25 @@ def missing_lines(doc: TutorialDoc, plan, limit: int = 12) -> list[str]:
     return out[:limit]
 
 
+def unrun_files(plan) -> list[str]:
+    """Code files the plan writes that no other step runs or imports (by file name or module name)."""
+    out = []
+    for i, s in enumerate(plan.steps):
+        if s.kind != "write_file" or not s.path or not s.path.lower().endswith(CODE_EXTS):
+            continue
+        base = s.path.replace("\\", "/").split("/")[-1]
+        stem = base.rsplit(".", 1)[0]
+        others = "\n".join(o.content for j, o in enumerate(plan.steps) if j != i)
+        if base not in others and not (len(stem) >= 3 and re.search(rf"\b{re.escape(stem)}\b", others)):
+            out.append(s.path)
+    return out
+
+
 def code_coverage(doc: TutorialDoc, plan) -> tuple[float, list[int]]:
-    """Share of the tutorial's code lines that appear in the plan, and the (1-based) blocks left out entirely."""
-    planned = squash("\n".join(s.content for s in plan.steps))
+    """Share of the tutorial's code lines that the plan runs, and the (1-based) blocks left out entirely. Code in a
+    file that nothing ever runs does not count: writing it proves nothing."""
+    unrun = set(unrun_files(plan))
+    planned = squash("\n".join(s.content for s in plan.steps if not (s.kind == "write_file" and s.path in unrun)))
     total = covered = 0
     missing: list[int] = []
     for i, b in enumerate(doc.code_blocks[:MAX_BLOCKS], 1):
