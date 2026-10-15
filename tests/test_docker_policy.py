@@ -74,3 +74,72 @@ async def test_created_network_blocks_container_to_container_traffic(settings):
     await b.base_image("python")
     create = next(c for c in calls if c[:2] == ("network", "create"))
     assert "com.docker.network.bridge.enable_icc=false" in create
+
+
+def run_backend(settings, exit_code="0", start_delay=0.0, **overrides):
+    import asyncio
+    b = DockerBackend(settings.model_copy(update=overrides))
+    calls, live = [], {"now": 0, "max": 0}
+
+    async def fake_docker(*args, timeout=None):
+        calls.append(args)
+        if args[0] == "create":
+            return 0, "cid123\n", ""
+        if args[0] == "start":
+            live["now"] += 1
+            live["max"] = max(live["max"], live["now"])
+            await asyncio.sleep(start_delay)
+            live["now"] -= 1
+            return 0, "out", ""
+        if args[0] == "inspect":
+            return 0, exit_code, ""
+        if args[0] == "commit":
+            return 0, "sha256:new\n", ""
+        return 0, "", ""
+
+    b._docker = fake_docker
+    return b, calls, live
+
+
+async def test_failed_steps_are_not_saved_as_checkpoints(settings):
+    from fixmytutorial.models import ImageRef
+    b, calls, _ = run_backend(settings, exit_code="1")
+    r = await b.run(ImageRef(backend="docker", ref="base"), "false", save=True)
+    assert r.image is None and not any(c[0] == "commit" for c in calls)
+
+
+async def test_checkpoints_are_labelled_so_old_ones_can_be_pruned(settings):
+    from fixmytutorial.models import ImageRef
+    b, calls, _ = run_backend(settings)
+    r = await b.run(ImageRef(backend="docker", ref="base"), "true", save=True)
+    commit = next(c for c in calls if c[0] == "commit")
+    assert "LABEL fmt.checkpoint=1" in commit and r.image.ref == "sha256:new"
+    await b.prune_checkpoints()
+    prune = next(c for c in calls if c[:2] == ("image", "prune"))
+    assert "label=fmt.checkpoint=1" in prune and any(a.startswith("until=") for a in prune)
+
+
+async def test_concurrent_sandbox_runs_are_bounded(settings):
+    import asyncio
+    from fixmytutorial.models import ImageRef
+    b, _, live = run_backend(settings, start_delay=0.05, max_sandbox_ops=2)
+    await asyncio.gather(*(b.run(ImageRef(backend="docker", ref="base"), "true", save=False) for _ in range(6)))
+    assert live["max"] == 2
+
+
+async def test_a_cancelled_docker_command_is_killed():
+    import asyncio
+    import time
+    from fixmytutorial.sandbox.docker_backend import run_capped
+    import random
+    secs = f"{30 + random.random():.6f}"  # unique, so a stray process from elsewhere can't confuse the check
+    task = asyncio.create_task(run_capped(["sleep", secs]))
+    await asyncio.sleep(0.3)
+    t0 = time.monotonic()
+    task.cancel()
+    with pytest.raises(asyncio.CancelledError):
+        await task
+    assert time.monotonic() - t0 < 5
+    out = (await asyncio.create_subprocess_exec("pgrep", "-f", f"^sleep {secs}$", stdout=asyncio.subprocess.PIPE))
+    stdout, _ = await out.communicate()
+    assert stdout.strip() == b""

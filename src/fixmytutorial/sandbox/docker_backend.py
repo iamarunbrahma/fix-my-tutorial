@@ -31,9 +31,10 @@ async def run_capped(args: list[str], timeout: float | None = None, cap: int = O
     try:
         out, err = await asyncio.wait_for(asyncio.gather(drain(proc.stdout), drain(proc.stderr)), timeout)
         await proc.wait()
-    except TimeoutError:
-        proc.kill()
-        await proc.wait()
+    except BaseException:  # timeout or cancellation: never leave the docker command running
+        if proc.returncode is None:
+            proc.kill()
+            await proc.wait()
         raise
     return proc.returncode, out, err
 
@@ -90,6 +91,10 @@ def private_egress_open(probe_output: str) -> bool:
 # Untrusted tutorial code: no Linux capabilities, no privilege escalation, bounded processes, memory and logs.
 HARDENING = ["--memory", "4g", "--memory-swap", "4g", "--cpus", "2", "--pids-limit", "512", "--cap-drop", "ALL",
              "--security-opt", "no-new-privileges", "--log-opt", "max-size=10m"]
+# Checkpoint images carry this label. No run lasts more than a few minutes, so older ones are safe to delete.
+CHECKPOINT_LABEL = "fmt.checkpoint=1"
+PRUNE_AFTER = "2h"
+PRUNE_EVERY_S = 600
 
 
 class DockerBackend:
@@ -100,6 +105,8 @@ class DockerBackend:
         self._ready: set[str] = set()
         self._build_lock = asyncio.Lock()
         self._network_checked = False
+        self._ops = asyncio.Semaphore(settings.max_sandbox_ops)  # bounds containers (memory) across all runs
+        self._last_prune = 0.0
 
     async def _docker(self, *args: str, timeout: float | None = None) -> tuple[int, str, str]:
         return await run_capped(["docker", *args], timeout)
@@ -128,7 +135,15 @@ class DockerBackend:
                             raise RuntimeError(f"docker build failed: {err[-2000:]}")
                 self._ready.add(tag)
             await self._check_network(tag)
+        if time.monotonic() - self._last_prune > PRUNE_EVERY_S:
+            await self.prune_checkpoints()
         return ImageRef(backend="docker", ref=tag)
+
+    async def prune_checkpoints(self) -> None:
+        """Delete checkpoint images left by finished runs, so the disk never fills up."""
+        self._last_prune = time.monotonic()
+        await self._docker("image", "prune", "-a", "-f", "--filter", f"label={CHECKPOINT_LABEL}",
+                           "--filter", f"until={PRUNE_AFTER}", timeout=300)
 
     async def _check_network(self, image: str) -> None:
         if self._network_checked:
@@ -151,6 +166,11 @@ class DockerBackend:
 
     async def run(self, image: ImageRef, script: str, *, files: dict[str, bytes] | None = None,
                   timeout_s: int = 180, save: bool = True, env: dict[str, str] | None = None) -> StepResult:
+        async with self._ops:
+            return await self._run(image, script, files=files, timeout_s=timeout_s, save=save, env=env)
+
+    async def _run(self, image: ImageRef, script: str, *, files: dict[str, bytes] | None, timeout_s: int,
+                   save: bool, env: dict[str, str] | None) -> StepResult:
         args = ["create", *HARDENING, "--network", self.s.docker_network]
         for k, v in (env or {}).items():
             args += ["-e", f"{k}={v}"]
@@ -180,8 +200,8 @@ class DockerBackend:
             _, code, _ = await self._docker("inspect", "-f", "{{.State.ExitCode}}", cid)
             exit_code = 124 if timed_out else int(code.strip() or 1)
             new_image = None
-            if save:
-                rc, img, _ = await self._docker("commit", cid)
+            if save and exit_code == 0:  # a failed step's filesystem is never resumed from
+                rc, img, _ = await self._docker("commit", "--change", f"LABEL {CHECKPOINT_LABEL}", cid)
                 if rc == 0:
                     new_image = ImageRef(backend="docker", ref=img.strip())
             return StepResult(exit_code=exit_code, stdout=sout, stderr=serr,
