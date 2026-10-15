@@ -64,6 +64,19 @@
   </section>
   {% endif %}
 
+  {% if author %}
+  <section class="card mt-8 gap-4 p-6">
+    <div>
+      <h2 class="section-title text-base">Tell the author</h2>
+      <p class="text-muted-foreground text-sm">Send them what broke{% if changes %} and the fix{% endif %}, so the next reader doesn't hit the same error.{% if author.repo %} The issue opens on GitHub under your own account, filled in for you to review.{% endif %}</p>
+    </div>
+    <div class="flex flex-wrap gap-2">
+      {% if author.issue_url %}<a class="btn" href="{{ author.issue_url }}" target="_blank" rel="noopener">Open an issue on {{ author.repo }}</a>{% endif %}
+      <button type="button" class="btn copy" data-variant="{{ 'outline' if author.issue_url else 'primary' }}" data-copy="{{ author.note }}">Copy note for the author</button>
+    </div>
+  </section>
+  {% endif %}
+
   {% if rec.verdict.value not in ("error", "not_runnable") %}
   <section class="card mt-8 gap-4 p-6">
     <div>
@@ -92,10 +105,11 @@
 {% block scripts %}
 <script>
   for (const b of document.querySelectorAll("button.copy")) {
+    const label = b.textContent;
     b.addEventListener("click", async () => {
       try { await navigator.clipboard.writeText(b.dataset.copy); b.textContent = "Copied"; }
-      catch (_) { b.textContent = "Select and copy"; }
-      setTimeout(() => { b.textContent = "Copy"; }, 1800);
+      catch (_) { b.textContent = "Couldn't copy"; }
+      setTimeout(() => { b.textContent = label; }, 1800);
     });
   }
 </script>

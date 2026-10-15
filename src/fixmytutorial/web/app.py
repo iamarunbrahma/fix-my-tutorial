@@ -20,6 +20,7 @@ from fastapi.templating import Jinja2Templates
 from starlette.background import BackgroundTask
 from sse_starlette.sse import EventSourceResponse
 
+from ..author import author_note, github_repo_for, issue_url
 from ..config import Settings, get_settings
 from ..events import EventBus
 from ..ingest import Source
@@ -400,11 +401,18 @@ def create_app(deps: Deps | None = None) -> FastAPI:
         if rec.status not in (RunStatus.DONE, RunStatus.FAILED):
             return RedirectResponse(f"/run/{run_id}", status_code=303)
         base = d.settings.public_base_url.rstrip("/")
+        author = None
+        if rec.verdict in (Verdict.FIXED, Verdict.COULD_NOT_FIX):
+            title, body = author_note(rec, f"{base}/r/{rec.id}")
+            repo = github_repo_for(rec.source)
+            author = {"note": f"**{title}**\n\n{body}", "repo": "/".join(repo) if repo else None,
+                      "issue_url": issue_url(*repo, title, body, f"{base}/r/{rec.id}") if repo else None}
         return templates.TemplateResponse(
             request,
             "report.html",
             {
                 "rec": rec,
+                "author": author,
                 "changes": build_changes(rec),
                 "verdict_text": verdict_label(rec.verdict),
                 "base": base,

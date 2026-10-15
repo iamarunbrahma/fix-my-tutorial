@@ -391,3 +391,21 @@ def test_home_offers_the_bookmark(env):
     base = deps.settings.public_base_url.rstrip("/")
     r = client.get("/")
     assert f"javascript:location.href=&#39;{base}/?url=&#39;+encodeURIComponent(location.href)" in r.text
+
+
+def test_report_offers_an_issue_for_tutorials_on_github(env):
+    client, deps = env
+    deps.store.save_run(done_record().model_copy(update={
+        "id": "gh1", "source": "https://github.com/owner/repo/blob/main/guide.md"}))
+    r = client.get("/r/gh1")
+    assert "Tell the author" in r.text and "Open an issue on owner/repo" in r.text
+    assert 'href="https://github.com/owner/repo/issues/new?title=' in r.text
+
+
+def test_report_offers_a_note_elsewhere_and_only_for_broken_tutorials(env):
+    client, deps = env
+    deps.store.save_run(done_record())  # a.example: no GitHub repo
+    r = client.get("/r/done1")
+    assert "Copy note for the author" in r.text and "Open an issue" not in r.text
+    deps.store.save_run(done_record().model_copy(update={"id": "ok1", "verdict": Verdict.STILL_WORKS}))
+    assert "Tell the author" not in client.get("/r/ok1").text
