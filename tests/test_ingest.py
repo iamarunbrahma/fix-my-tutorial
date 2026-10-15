@@ -149,3 +149,36 @@ async def test_oversized_stream_without_length_is_cut_off(monkeypatch):
     with pytest.raises(IngestError, match="too large"):
         await ingest(Source(url="https://ex.com/stream"), None, run_id="r", public=True, resolver=public_resolver)
     assert len(consumed) <= 12  # stopped right after crossing the cap, not after reading everything
+
+
+@respx.mock
+async def test_requests_uncompressed_pages():
+    route = respx.get("https://raw.githubusercontent.com/o/r/main/t.md").mock(
+        return_value=httpx.Response(200, text="# T\n\n```python\nprint(1)\n```\n"))
+    await ingest(Source(url="https://github.com/o/r/blob/main/t.md"), None, run_id="r", public=True,
+                 resolver=public_resolver)
+    assert route.calls.last.request.headers["accept-encoding"] == "identity"
+
+
+@respx.mock
+async def test_gzip_page_is_decoded():
+    import gzip
+    body = gzip.compress(b"# Gz\n\n```python\nprint(1)\n```\n")
+    respx.get("https://raw.githubusercontent.com/o/r/main/g.md").mock(
+        return_value=httpx.Response(200, headers={"content-encoding": "gzip"}, content=body))
+    doc = await ingest(Source(url="https://github.com/o/r/blob/main/g.md"), None, run_id="r", public=True,
+                       resolver=public_resolver)
+    assert doc.title == "Gz"
+
+
+@respx.mock
+async def test_gzip_bomb_is_rejected(monkeypatch):
+    import gzip
+    monkeypatch.setattr("fixmytutorial.ingest.MAX_BYTES", 1000)
+    bomb = gzip.compress(b"0" * 500_000)
+    assert len(bomb) < 1000
+    respx.get("https://raw.githubusercontent.com/o/r/main/b.md").mock(
+        return_value=httpx.Response(200, headers={"content-encoding": "gzip"}, content=bomb))
+    with pytest.raises(IngestError, match="too large"):
+        await ingest(Source(url="https://github.com/o/r/blob/main/b.md"), None, run_id="r", public=True,
+                     resolver=public_resolver)

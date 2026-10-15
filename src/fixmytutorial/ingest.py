@@ -7,6 +7,7 @@ import ipaddress
 import json
 import re
 import socket
+import zlib
 from contextlib import asynccontextmanager
 from dataclasses import dataclass
 from typing import Callable
@@ -153,12 +154,30 @@ def _safe_client(resolver: Callable[[str], list[str]]) -> httpx.AsyncClient:
     return httpx.AsyncClient(transport=transport, trust_env=False)  # no env proxies: they would skip the pinning
 
 
+def _decode_body(raw: bytes, content_encoding: str, charset: str | None) -> str:
+    """Decode a response body, decompressing with a hard output limit so a small gzip bomb cannot expand."""
+    enc = (content_encoding or "identity").lower().strip()
+    if enc in ("gzip", "x-gzip", "deflate"):
+        try:
+            d = zlib.decompressobj(wbits=47)  # gzip or zlib header
+            data = d.decompress(raw, MAX_BYTES + 1)
+        except zlib.error:
+            raise IngestError("Couldn't read that page (bad compression).") from None
+        if len(data) > MAX_BYTES or d.unconsumed_tail:
+            raise IngestError("That page is too large to read.")
+    elif enc in ("identity", ""):
+        data = raw
+    else:
+        raise IngestError("Couldn't read that page (unsupported compression).")
+    return data.decode(charset or "utf-8", errors="replace")
+
+
 async def _safe_get(url: str, client: httpx.AsyncClient, resolver) -> str:
     for _ in range(4):
         await _check_public(url, resolver)
         try:
             async with client.stream("GET", url, follow_redirects=False, timeout=20,
-                                     headers={"User-Agent": USER_AGENT}) as r:
+                                     headers={"User-Agent": USER_AGENT, "Accept-Encoding": "identity"}) as r:
                 if r.is_redirect and "location" in r.headers:
                     url = urljoin(url, r.headers["location"])
                     continue
@@ -167,12 +186,12 @@ async def _safe_get(url: str, client: httpx.AsyncClient, resolver) -> str:
                 declared = r.headers.get("content-length", "")
                 if declared.isdigit() and int(declared) > MAX_BYTES:
                     raise IngestError("That page is too large to read.")
-                body = bytearray()
-                async for chunk in r.aiter_bytes():
-                    body.extend(chunk)
-                    if len(body) > MAX_BYTES:
+                raw = bytearray()
+                async for chunk in r.aiter_raw():  # wire bytes; decompression happens below, bounded
+                    if len(raw) + len(chunk) > MAX_BYTES:
                         raise IngestError("That page is too large to read.")
-                return body.decode(r.encoding or "utf-8", errors="replace")
+                    raw.extend(chunk)
+                return _decode_body(bytes(raw), r.headers.get("content-encoding", ""), r.encoding)
         except httpx.HTTPError:
             raise IngestError("Couldn't read that page (the site did not respond).") from None
     raise IngestError("Couldn't read that page (too many redirects).")

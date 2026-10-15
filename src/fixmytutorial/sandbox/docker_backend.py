@@ -3,6 +3,7 @@ from __future__ import annotations
 
 import asyncio
 import hashlib
+import json
 import shutil
 import tempfile
 import time
@@ -37,6 +38,46 @@ async def run_capped(args: list[str], timeout: float | None = None, cap: int = O
     return proc.returncode, out, err
 
 
+class SandboxPolicyError(RuntimeError):
+    pass
+
+
+# Runs inside a sandbox container: can it reach the network gateway (stand-in for the LAN/host) or the cloud
+# metadata address? "refused" means the packet got there, so it counts as reachable.
+EGRESS_PROBE = """
+import json, socket, struct
+def gateway():
+    for line in open("/proc/net/route").read().splitlines()[1:]:
+        f = line.split()
+        if f[1] == "00000000":
+            return socket.inet_ntoa(struct.pack("<L", int(f[2], 16)))
+res = {}
+for host, port in [(gateway(), 1), ("169.254.169.254", 80)]:
+    if not host:
+        continue
+    s = socket.socket()
+    s.settimeout(2)
+    try:
+        s.connect((host, port))
+        res[host] = "open"
+    except ConnectionRefusedError:
+        res[host] = "refused"
+    except OSError:
+        res[host] = "blocked"
+    finally:
+        s.close()
+print(json.dumps(res))
+"""
+
+
+def private_egress_open(probe_output: str) -> bool:
+    try:
+        res = json.loads(probe_output.strip().splitlines()[-1])
+    except (ValueError, IndexError):
+        return True
+    return not isinstance(res, dict) or any(v in ("open", "refused") for v in res.values())
+
+
 # Untrusted tutorial code: no Linux capabilities, no privilege escalation, bounded processes, memory and logs.
 HARDENING = ["--memory", "4g", "--memory-swap", "4g", "--cpus", "2", "--pids-limit", "512", "--cap-drop", "ALL",
              "--security-opt", "no-new-privileges", "--log-opt", "max-size=10m"]
@@ -49,6 +90,7 @@ class DockerBackend:
         self.s = settings
         self._ready: set[str] = set()
         self._build_lock = asyncio.Lock()
+        self._network_checked = False
 
     async def _docker(self, *args: str, timeout: float | None = None) -> tuple[int, str, str]:
         return await run_capped(["docker", *args], timeout)
@@ -76,7 +118,26 @@ class DockerBackend:
                         if rc != 0:
                             raise RuntimeError(f"docker build failed: {err[-2000:]}")
                 self._ready.add(tag)
+            await self._check_network(tag)
         return ImageRef(backend="docker", ref=tag)
+
+    async def _check_network(self, image: str) -> None:
+        if self._network_checked:
+            return
+        net = self.s.docker_network
+        rc, _, _ = await self._docker("network", "inspect", net)
+        if rc != 0:
+            rc, _, err = await self._docker("network", "create", "--driver", "bridge", net)
+            if rc != 0:
+                raise SandboxPolicyError(f"Could not create the sandbox network {net}: {err.strip()}")
+        rc, out, _ = await self._docker("run", "--rm", *HARDENING, "--network", net, image, "python3", "-c",
+                                        EGRESS_PROBE, timeout=60)
+        if private_egress_open(out) and not self.s.docker_allow_private_egress:
+            raise SandboxPolicyError(
+                f"The Docker sandbox network '{net}' can reach private addresses ({out.strip()}). Run tutorials on "
+                "Token Factory Sandboxes, or firewall this network (see the deploy notes). Set "
+                "DOCKER_ALLOW_PRIVATE_EGRESS=true only for trusted local fixtures.")
+        self._network_checked = True
 
     async def run(self, image: ImageRef, script: str, *, files: dict[str, bytes] | None = None,
                   timeout_s: int = 180, save: bool = True, env: dict[str, str] | None = None) -> StepResult:

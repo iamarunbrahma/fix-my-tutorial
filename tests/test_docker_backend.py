@@ -10,12 +10,12 @@ from tests.sandbox_contract import ALL_CHECKS, DOCKER_ONLY_CHECKS
 @pytest.mark.docker
 @pytest.mark.parametrize("check", ALL_CHECKS + DOCKER_ONLY_CHECKS, ids=lambda c: c.__name__)
 async def test_docker_contract(check, settings):
-    await check(DockerBackend(settings.model_copy(update={"sandbox_backend": "docker"})))
+    await check(DockerBackend(settings.model_copy(update={"sandbox_backend": "docker", "docker_allow_private_egress": True})))
 
 
 @pytest.mark.docker
 async def test_executor_on_docker_runs_real_cells(settings):
-    s = settings.model_copy(update={"sandbox_backend": "docker"})
+    s = settings.model_copy(update={"sandbox_backend": "docker", "docker_allow_private_egress": True})
     backend = DockerBackend(s)
     plan = RunPlan(language="python", runtime="3.12", steps=[
         Step(id="s1", title="a", kind="run_code", content="x = 20"),

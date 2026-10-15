@@ -60,7 +60,11 @@ class Settings(BaseSettings):
 
     python_base_image: str = "docker.io/library/python:3.12-slim"
     node_base_image: str = "docker.io/library/node:22"
-    docker_network: str = "bridge"  # production fallback uses a firewalled network (no private/metadata ranges)
+    # Dedicated network for the Docker sandbox. Before the first run the backend probes it from inside a container
+    # and refuses to run tutorials if private addresses or the cloud metadata IP are reachable, unless
+    # docker_allow_private_egress is set (only for our own trusted fixture tutorials on a dev laptop).
+    docker_network: str = "fmt-sandbox"
+    docker_allow_private_egress: bool = False
     contree_python_image: str = ""  # UUID from `python -m fixmytutorial.sandbox.prepare`
     contree_node_image: str = ""
 
