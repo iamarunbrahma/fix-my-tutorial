@@ -30,6 +30,6 @@ sudo iptables -I INPUT -i fmt0 -j DROP
 sudo apt-get install -y iptables-persistent && sudo netfilter-persistent save
 ```
 
-Run the app with `SANDBOX_BACKEND=docker`, `DOCKER_NETWORK=fmt-sandbox`, and **without** `DOCKER_ALLOW_PRIVATE_EGRESS`. On the first tutorial run, the backend probes the network from inside a container and refuses to continue if any private address answers.
+Run the app with `SANDBOX_BACKEND=docker`, `DOCKER_NETWORK=fmt-sandbox`, and **without** `DOCKER_ALLOW_PRIVATE_EGRESS`. The container image sets `PUBLIC_DEMO=true`, so it uses the demo budget and keeps its spend ledger in the Hub dataset: pass the dataset-scoped `HF_TOKEN`, or public runs stay paused. On the first tutorial run, the backend probes the network from inside a container and refuses to continue if any private address answers.
 
 `DOCKER_ALLOW_PRIVATE_EGRESS=true` exists only for running our own fixture tutorials on a developer laptop. The Rot Index batch refuses to run with it set.

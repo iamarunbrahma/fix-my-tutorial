@@ -48,7 +48,7 @@ class Snapshotter:
         self.ledger = ledger
         self.api = api if api is not None else (HubAdapter(settings.hf_token) if settings.hf_token else None)
         self.enabled = self.api is not None
-        self.owns_ledger = bool(settings.space_id) if owns_ledger is None else owns_ledger
+        self.owns_ledger = bool(settings.public_demo) if owns_ledger is None else owns_ledger
         self.restore_ok = True  # False after a restore that could not load the remote ledger
         self.last_restore_error = ""  # "", "unreachable", "missing" or "corrupt"
         self._merged = False  # True once this process has loaded the remote ledger (safe to upload ours)
@@ -158,12 +158,14 @@ class Snapshotter:
         elif SAVE_FAILED in reasons:
             self.save_ledger()
 
-    def _remote_ledger_exists(self) -> bool | None:
+    def _remote_state(self) -> tuple[bool, bool] | None:
+        """(ledger.json exists, any run exists) in the remote dataset, or None if it can't be read."""
         try:
-            return (self._download(["ledger.json"]) / "ledger.json").exists()
+            local = self._download(["ledger.json", "runs/*.json"])
         except Exception:
-            log.exception("could not check the remote ledger")
+            log.exception("could not read the remote dataset")
             return None
+        return (local / "ledger.json").exists(), any(local.glob("runs/*.json"))
 
     def save_all(self, records: list[RunRecord], bootstrap: bool = False) -> bool:
         """Upload runs and events in one commit. The Space also uploads its ledger, after loading the remote one
@@ -178,10 +180,14 @@ class Snapshotter:
                 log.error("refusing to upload: remote ledger is %s", self.last_restore_error)
                 return False
         elif bootstrap:
-            exists = self._remote_ledger_exists()
-            if exists is None:
+            state = self._remote_state()
+            if state is None:
                 return False
-            if not exists:
+            has_ledger, has_runs = state
+            if not has_ledger:
+                if has_runs:  # the demo's ledger went missing: an empty one would reset its spend to zero
+                    log.error("refusing to bootstrap: the dataset has runs but no ledger.json")
+                    return False
                 ledger_rows = []
         with self._lock:
             try:

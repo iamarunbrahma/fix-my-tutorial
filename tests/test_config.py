@@ -29,11 +29,17 @@ def test_json_object_roles_parse_from_env(monkeypatch):
     assert s.uses_json_object("triage") and not s.uses_json_object("planner")
 
 
-def test_space_and_laptop_have_separate_budgets_that_fit_the_credits():
+def test_demo_and_laptop_have_separate_budgets_that_fit_the_credits():
     from fixmytutorial.config import ACCOUNT_CREDITS_USD
     laptop = Settings(_env_file=None)
-    space = Settings(_env_file=None, space_id="heliosbrahma/fix-my-tutorial")
-    assert space.cap_lifetime_usd == space.cap_lifetime_space_usd == 15.0
-    # in-flight runs lost on a Space restart are covered by the margin
-    margin = space.max_concurrent_runs * space.cap_run_usd
-    assert laptop.cap_lifetime_usd + space.cap_lifetime_usd + margin <= ACCOUNT_CREDITS_USD
+    demo = Settings(_env_file=None, public_demo=True)
+    assert demo.cap_lifetime_usd == demo.cap_lifetime_demo_usd == 15.0
+    # in-flight runs lost on a demo restart are covered by the margin
+    margin = demo.max_concurrent_runs * demo.cap_run_usd
+    assert laptop.cap_lifetime_usd + demo.cap_lifetime_usd + margin <= ACCOUNT_CREDITS_USD
+
+
+def test_the_container_image_is_a_public_demo():
+    from pathlib import Path
+    dockerfile = (Path(__file__).parents[1] / "Dockerfile").read_text()
+    assert "PUBLIC_DEMO=true" in dockerfile

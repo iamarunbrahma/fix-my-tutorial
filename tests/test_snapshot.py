@@ -309,3 +309,12 @@ def test_heal_retries_a_failed_ledger_save(settings, tmp_path):
     snap.heal()
     assert ledger.public_runs_open()[0]
     assert {row["run_id"] for row in json.loads((tmp_path / "hub" / "ledger.json").read_text())} == {"pub1"}
+
+
+def test_bootstrap_never_recreates_a_ledger_for_a_dataset_that_has_runs(settings, tmp_path):
+    hub = FakeHub(tmp_path / "hub")
+    (tmp_path / "hub" / "runs").mkdir(parents=True)
+    (tmp_path / "hub" / "runs" / "r1.json").write_text(rec(1).model_dump_json())
+    l_store, l_ledger = deps(settings, tmp_path, "laptop")
+    assert Snapshotter(settings, l_store, l_ledger, api=hub).save_all([], bootstrap=True) is False
+    assert not (tmp_path / "hub" / "ledger.json").exists()

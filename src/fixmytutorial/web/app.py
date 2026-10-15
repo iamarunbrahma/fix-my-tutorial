@@ -84,9 +84,9 @@ def build_deps(settings: Settings) -> Deps:
 
 
 def snapshot_for(settings: Settings, store: Store, ledger: Ledger):
-    """Only the Space persists to the Hub dataset (and owns the remote ledger). A laptop server keeps everything
-    local, so a test run can never upload runs or touch the Space's spend records."""
-    if not settings.space_id:
+    """Only the public demo persists to the Hub dataset (and owns the remote ledger). A laptop server keeps
+    everything local, so a test run can never upload runs or touch the demo's spend records."""
+    if not settings.public_demo:
         return None
     from ..snapshot import Snapshotter
     return Snapshotter(settings, store, ledger, owns_ledger=True)
@@ -159,7 +159,7 @@ def create_app(deps: Deps | None = None) -> FastAPI:
             restored = await asyncio.to_thread(d.snapshot.restore)
             log.info("restored %d runs from snapshot", restored)
             heal = asyncio.create_task(heal_loop(d))
-        elif d.settings.space_id:  # without snapshots the Space would forget its spend on every restart
+        elif d.settings.public_demo:  # without snapshots the demo would forget its spend on every restart
             d.ledger.mark_unverified(NOT_CONFIGURED)
         await recover_unfinished(d)
         app.state.deps = d

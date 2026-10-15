@@ -7,6 +7,6 @@ RUN uv sync --frozen --no-dev --no-install-project
 COPY src ./src
 COPY rot_index ./rot_index
 RUN uv sync --frozen --no-dev && mkdir -p /data && chmod 777 /data
-ENV DATA_DIR=/data SANDBOX_BACKEND=contree PATH="/app/.venv/bin:$PATH"
+ENV DATA_DIR=/data SANDBOX_BACKEND=contree PUBLIC_DEMO=true PATH="/app/.venv/bin:$PATH"
 EXPOSE 7860
 CMD ["uvicorn", "fixmytutorial.web.app:app", "--host", "0.0.0.0", "--port", "7860", "--no-proxy-headers"]

@@ -41,12 +41,13 @@ class Settings(BaseSettings):
     model_repair: str = "nvidia/Nemotron-3-Ultra-550b-a55b"
     json_object_roles: str = ""  # comma list of roles that need json_object instead of json_schema
 
-    # The laptop (evals, Rot Index batch) and the public Space each keep their own ledger and budget. The budgets
-    # plus a margin for in-flight runs lost on a Space restart add up to less than ACCOUNT_CREDITS_USD, so neither
-    # process needs to know what the other spent.
-    space_id: str = ""  # set by Hugging Face inside a Space
-    cap_lifetime_usd: float = 11.0  # laptop budget; replaced by cap_lifetime_space_usd inside the Space
-    cap_lifetime_space_usd: float = 15.0
+    # The laptop (evals, Rot Index batch) and the public demo each keep their own ledger and budget. The budgets
+    # plus a margin for in-flight runs lost on a demo restart add up to less than ACCOUNT_CREDITS_USD, so neither
+    # process needs to know what the other spent. The container image sets PUBLIC_DEMO=true wherever it runs
+    # (the Space or a fallback VM): the demo budget applies and spend must persist to the Hub dataset.
+    public_demo: bool = False
+    cap_lifetime_usd: float = 11.0  # laptop budget; replaced by cap_lifetime_demo_usd in the public demo
+    cap_lifetime_demo_usd: float = 15.0
     cap_daily_usd: float = 3.0  # public runs per day
     cap_daily_all_usd: float = 3.0  # all runs per day (local evals and batches too), so credits last to judging
     cap_run_usd: float = 0.50
@@ -81,9 +82,9 @@ class Settings(BaseSettings):
     snapshot_heal_s: int = 300  # while public runs are paused by a Hub error, retry loading or saving this often
 
     @model_validator(mode="after")
-    def _space_budget(self):
-        if self.space_id:
-            self.cap_lifetime_usd = self.cap_lifetime_space_usd
+    def _demo_budget(self):
+        if self.public_demo:
+            self.cap_lifetime_usd = self.cap_lifetime_demo_usd
         return self
 
     def model_for(self, role: str) -> str:

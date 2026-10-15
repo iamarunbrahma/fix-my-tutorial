@@ -204,9 +204,9 @@ def test_failed_restore_pauses_public_runs_on_boot(settings, tmp_path):
         assert r.status_code == 503 and deps.queue.submitted == []
 
 
-def test_space_without_spend_snapshots_keeps_public_runs_closed(tmp_path):
+def test_demo_without_spend_snapshots_keeps_public_runs_closed(tmp_path):
     from fixmytutorial.config import Settings
-    s = Settings(_env_file=None, data_dir=tmp_path, sandbox_backend="fake", space_id="owner/space")
+    s = Settings(_env_file=None, data_dir=tmp_path, sandbox_backend="fake", public_demo=True)
     store = Store(tmp_path / "s3.db")
     ledger = Ledger(tmp_path / "l3.db", s)
     deps = Deps(settings=s, store=store, ledger=ledger, bus=EventBus(store, ping_s=0.05),
@@ -244,11 +244,11 @@ def test_heal_loop_reopens_public_runs_after_a_hub_error(settings, tmp_path):
         assert "paused" not in client.get("/").text
 
 
-def test_snapshots_only_run_inside_the_space(tmp_path):
+def test_snapshots_only_run_in_the_public_demo(tmp_path):
     from fixmytutorial.config import Settings
     from fixmytutorial.web.app import snapshot_for
     laptop = Settings(_env_file=None, data_dir=tmp_path, hf_token="hf_x")
-    space = Settings(_env_file=None, data_dir=tmp_path, hf_token="hf_x", space_id="owner/space")
+    space = Settings(_env_file=None, data_dir=tmp_path, hf_token="hf_x", public_demo=True)
     store, ledger = Store(tmp_path / "s5.db"), Ledger(tmp_path / "l5.db", laptop)
     assert snapshot_for(laptop, store, ledger) is None
     snap = snapshot_for(space, store, ledger)
