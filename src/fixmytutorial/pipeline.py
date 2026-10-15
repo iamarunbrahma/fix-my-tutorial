@@ -184,7 +184,9 @@ class Pipeline:
                  "language": plan.language if plan else None, "runtime": plan.runtime if plan else None,
                  "repairs": [{"step": r.step_id, "error": r.signature.key_line, "category": r.signature.category,
                               "fix": r.winner.rationale if r.winner else None,
-                              "strategy": r.winner.strategy if r.winner else None} for r in record.repairs]}
+                              "strategy": r.winner.strategy if r.winner else None,
+                              "evidence": [f"{e.title}: {e.quote[:300]}" for e in r.evidence[:3]]}
+                             for r in record.repairs]}
         try:
             out = await self.llm.call("summary", SUMMARY_SYSTEM, json.dumps(facts), Summary, run_id=record.id,
                                       public=record.public, max_tokens=400)

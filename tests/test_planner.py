@@ -66,3 +66,9 @@ async def test_no_code_blocks_skips_llm(settings, tmp_path):
     llm = LLM(settings, Ledger(tmp_path / "l.db", settings), client=client)
     plan = await plan_tutorial(doc(blocks=0), llm, settings, run_id="r", public=True)
     assert not plan.runnable and client.calls == []
+
+
+def test_prompts_forbid_unsourced_version_claims():
+    from fixmytutorial.prompts import REPAIR_SYSTEM, SUMMARY_SYSTEM
+    assert "only if a cited source states it" in REPAIR_SYSTEM
+    assert "only if a cited source states it" in SUMMARY_SYSTEM
