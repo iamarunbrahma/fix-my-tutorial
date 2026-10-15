@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import json as _json
 from types import SimpleNamespace
 
 from fixmytutorial.models import ImageRef, StepResult
@@ -67,3 +68,28 @@ class FakeBackend:
         self._n += 1
         return StepResult(exit_code=exit_code, stdout=stdout, stderr=stderr, timed_out=timed_out, duration_s=0.01,
                           image=ImageRef(backend="fake", ref=f"img-{self._n}") if save else None)
+
+
+def cells_handler(fail_cell=None, outputs=None, other=None):
+    """FakeBackend handler: emulates run_cells.py markers; `other(script, files)` handles non-cell steps."""
+    outputs = outputs or {}
+
+    def handler(script, files, image):
+        if "run_cells.py" in script:
+            cells = _json.loads(files["/opt/fmt/cells.json"])
+            report_from = script.split("--report-from ")[1].split()[0]
+            lines, reporting = [], False
+            for c in cells:
+                reporting = reporting or c["id"] == report_from
+                if not reporting:
+                    continue
+                lines.append(f'@@FMT {{"cell": "{c["id"]}", "status": "start"}}')
+                if c["id"] == fail_cell or (callable(fail_cell) and fail_cell(c)):
+                    lines.append(f'@@FMT {{"cell": "{c["id"]}", "status": "error"}}')
+                    return (1, "\n".join(lines), "Traceback (most recent call last):\nAttributeError: boom")
+                lines.append(outputs.get(c["id"], ""))
+                lines.append(f'@@FMT {{"cell": "{c["id"]}", "status": "ok"}}')
+            return (0, "\n".join(lines), "")
+        return other(script, files) if other else (0, "ok", "")
+
+    return handler
