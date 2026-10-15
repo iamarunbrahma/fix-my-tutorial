@@ -151,3 +151,13 @@ def test_pause_reasons_are_cleared_independently(settings, tmp_path):
     assert led.public_runs_open() == (False, "Public runs are paused: restore failed")
     led.clear_unverified("restore failed")
     assert led.public_runs_open()[0]
+
+
+def test_public_runs_close_when_a_whole_run_no_longer_fits(settings, tmp_path):
+    led, _ = make(settings, tmp_path, cap_daily_usd=3.0, cap_daily_all_usd=3.0, cap_run_usd=0.5)
+    row = {"id": "x", "ts": 1.0, "day": led._day(), "run_id": "old", "public": 1, "kind": "llm", "role": "repair",
+           "model": "m", "prompt_tokens": 0, "completion_tokens": 0, "credits": 0, "usd": 2.4}
+    led.import_rows([row])
+    assert led.public_runs_open()[0]
+    led.import_rows([dict(row, id="y", usd=0.2)])  # $0.40 left: less than one run may cost
+    assert not led.public_runs_open()[0]

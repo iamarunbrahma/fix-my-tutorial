@@ -110,6 +110,11 @@ async def test_pipeline_budget_exceeded_mid_run(settings, tmp_path):
     rec = await p.run(new_record(), Source(markdown=MD))
     assert rec.verdict == Verdict.ERROR and "spending limit" in rec.reason
     assert rec.outcomes["s1"].status == StepStatus.PASSED
+    last = {}
+    for _, ev in store.events_after(rec.id, 0):
+        if ev["type"] == "step":
+            last[ev["step_id"]] = ev["status"]
+    assert "repairing" not in last.values()  # the page must not leave a step spinning after the run stopped
 
 
 async def test_wall_clock_limit(settings, tmp_path):

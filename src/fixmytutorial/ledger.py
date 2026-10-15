@@ -179,9 +179,13 @@ class Ledger:
         if self._unverified:
             return False, f"Public runs are paused: {self._unverified[0]}"
         t = self.totals()
-        if t.lifetime_usd >= self._s.cap_lifetime_usd * 0.98:
+
+        def full(spent: float, cap: float) -> bool:  # a new run must be able to spend up to its own cap
+            return spent >= cap or cap - spent < min(self._s.cap_run_usd, cap / 2)
+
+        if full(t.lifetime_usd, self._s.cap_lifetime_usd):
             return False, "Public runs are paused: the project's model budget is used up."
-        if t.today_public_usd >= self._s.cap_daily_usd or t.today_all_usd >= self._s.cap_daily_all_usd:
+        if full(t.today_public_usd, self._s.cap_daily_usd) or full(t.today_all_usd, self._s.cap_daily_all_usd):
             return False, "Public runs are paused for today. Browse the Rot Index or come back tomorrow."
         if t.lifetime_credits >= self._s.cap_tavily_lifetime_credits:
             return False, "Public runs are paused: the web search budget is used up."

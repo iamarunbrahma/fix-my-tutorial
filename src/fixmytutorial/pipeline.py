@@ -139,17 +139,21 @@ class Pipeline:
             await self._stage(record, RunStatus.REPAIRING, emit)
             await emit({"type": "step", "step_id": failing, "status": "repairing", "phase": "run"})
             step = next(s for s in plan.steps if s.id == failing)
-            sig = await triage(step, trace.results[failing], language=plan.language, llm=self.llm, run_id=rid,
-                               public=pub)
-            await emit({"type": "diagnosis", "step_id": failing, "category": sig.category, "key_line": sig.key_line,
-                        "package": sig.package, "symbol": sig.symbol})
-            evidence = await research(sig, search=self.search, run_id=rid, public=pub,
-                                      id_prefix=f"r{len(record.repairs) + 1}e")
-            await emit({"type": "evidence", "step_id": failing, "items": [e.model_dump() for e in evidence]})
-            versions = await self._versions(plan.language, trace.states[trace.failed_unit])
-            rec, win = await Repairer(self.llm, executor, self.s).repair_step(
-                plan=plan, trace=trace, signature=sig, evidence=evidence, versions=versions, run_id=rid,
-                public=pub, emit=emit)
+            try:
+                sig = await triage(step, trace.results[failing], language=plan.language, llm=self.llm, run_id=rid,
+                                   public=pub)
+                await emit({"type": "diagnosis", "step_id": failing, "category": sig.category,
+                            "key_line": sig.key_line, "package": sig.package, "symbol": sig.symbol})
+                evidence = await research(sig, search=self.search, run_id=rid, public=pub,
+                                          id_prefix=f"r{len(record.repairs) + 1}e")
+                await emit({"type": "evidence", "step_id": failing, "items": [e.model_dump() for e in evidence]})
+                versions = await self._versions(plan.language, trace.states[trace.failed_unit])
+                rec, win = await Repairer(self.llm, executor, self.s).repair_step(
+                    plan=plan, trace=trace, signature=sig, evidence=evidence, versions=versions, run_id=rid,
+                    public=pub, emit=emit)
+            except BaseException:  # budget, wall clock or model error: don't leave the step spinning on the page
+                await emit({"type": "step", "step_id": failing, "status": "failed", "phase": "run"})
+                raise
             record.repairs.append(rec)
             if win is None:
                 await emit({"type": "step", "step_id": failing, "status": "failed", "phase": "run"})
