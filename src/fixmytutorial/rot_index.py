@@ -105,8 +105,12 @@ async def run_batch(force: bool, concurrency: int) -> None:
     check_batch_backend(s)
     store, ledger = _core(s)
     bus = EventBus(store)
+    backend = make_backend(s)
+    # Runs the sandbox safety probe once, up front: an unsafe sandbox stops the batch before any tutorial is
+    # downloaded or planned, instead of after every one of them has been paid for.
+    await backend.base_image("python")
     pipeline = Pipeline(settings=s, llm=LLM(s, ledger), search=SearchClient(s, ledger, store),
-                        backend=make_backend(s), store=store, ledger=ledger, bus=bus)
+                        backend=backend, store=store, ledger=ledger, bus=bus)
     entries = yaml.safe_load(LIST.read_text())["tutorials"]
     done = {r.source for r in store.list_runs(limit=5000)
             if not r.public and r.status == RunStatus.DONE}

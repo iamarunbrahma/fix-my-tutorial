@@ -46,3 +46,34 @@ def test_batch_refuses_third_party_code_on_docker_with_private_egress(settings):
                                                         "docker_allow_private_egress": True}))
     check_batch_backend(settings.model_copy(update={"sandbox_backend": "contree"}))
     check_batch_backend(settings.model_copy(update={"sandbox_backend": "docker"}))  # probe still guards it
+
+
+async def test_batch_checks_the_sandbox_before_spending_anything(settings, monkeypatch):
+    import pytest
+
+    import fixmytutorial.rot_index as ri
+    from fixmytutorial.sandbox.docker_backend import SandboxPolicyError
+
+    class Refusing:
+        name = "docker"
+
+        async def base_image(self, language):
+            raise SandboxPolicyError("the sandbox network can reach private addresses")
+
+    started = []
+
+    class Recorder:
+        def __init__(self, **kw):
+            pass
+
+        async def run(self, rec, source):
+            started.append(rec)
+            return rec
+
+    monkeypatch.setattr(ri, "get_settings", lambda: settings.model_copy(update={"sandbox_backend": "docker"}))
+    monkeypatch.setattr(ri, "make_backend", lambda s: Refusing())
+    monkeypatch.setattr(ri, "Pipeline", Recorder)
+    monkeypatch.setattr(ri, "SearchClient", lambda *a, **k: None)
+    with pytest.raises(SandboxPolicyError):
+        await ri.run_batch(force=True, concurrency=1)
+    assert started == []

@@ -181,10 +181,12 @@ class Pipeline:
                                  else f"Couldn't repair step {failing}: {sig.key_line}")
                 return None
             repaired += 1
+            before = {s.id: s.content for s in plan.steps}
             plan = win.plan
             await self._emit_plan(plan, record, emit)
+            edited = {s.id for s in plan.steps if before.get(s.id) != s.content}
             for sid, r in win.trace.results.items():
-                status = "repaired" if sid == failing else "passed"
+                status = "repaired" if sid == failing or sid in edited else "passed"
                 await emit({"type": "step", "step_id": sid, "status": status, "phase": "run",
                             "output": (r.stdout + ("\n" + r.stderr if r.stderr else ""))[-4000:],
                             "duration_s": r.duration_s})

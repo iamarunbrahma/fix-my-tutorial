@@ -85,3 +85,10 @@ async def test_only_web_links_become_evidence(settings, tmp_path):
          "content": "DataFrame.append was removed; use pandas.concat instead."}]})
     ev = await research(APPEND_SIG, search=sc(settings, tmp_path, fake), run_id="r", public=True)
     assert [e.url for e in ev] == ["https://pandas.pydata.org/whatsnew/v2.0"]
+
+
+def test_headings_and_markdown_markers_never_become_the_quote():
+    text = ("# DataFrame.append was removed in pandas 2.0 - #14\n\n"
+            "> Note: As of pandas 2.0, DataFrame.append() has been removed. Use pandas.concat() instead.")
+    assert best_passage(text, APPEND_SIG) == ("Note: As of pandas 2.0, DataFrame.append() has been removed. "
+                                              "Use pandas.concat() instead.")

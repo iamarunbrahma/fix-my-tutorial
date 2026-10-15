@@ -191,3 +191,16 @@ async def test_undoing_our_own_misreading_is_not_a_fix(settings, tmp_path):
     assert rec.verdict == Verdict.STILL_WORKS
     from fixmytutorial.report import build_changes
     assert build_changes(rec) == []
+
+
+async def test_every_step_a_fix_edited_is_marked_repaired(settings, tmp_path):
+    two_step_fix = json.dumps({"candidates": [{"strategy": "migrate", "rationale": "use concat", "edits": [
+        {"op": "replace", "step_id": "s2", "new_content": "import pandas as pd\ndf = pd.DataFrame()\nprint('ready')",
+         "reason": "r", "evidence_ids": ["r1e1"]},
+        {"op": "replace", "step_id": "s3", "new_content": "df = pd.concat([df, pd.DataFrame([{'a': 1}])])",
+         "reason": "pandas 2.0 removed DataFrame.append", "evidence_ids": ["r1e1"]}]}]})
+    p, store, _, _ = build(settings, tmp_path, {
+        settings.model_planner: [PLAN, SUMMARY], settings.model_triage: [SIG], settings.model_repair: [two_step_fix]})
+    rec = await p.run(new_record(), Source(markdown=MD))
+    assert rec.verdict == Verdict.FIXED
+    assert rec.outcomes["s2"].status == StepStatus.REPAIRED and rec.outcomes["s3"].status == StepStatus.REPAIRED

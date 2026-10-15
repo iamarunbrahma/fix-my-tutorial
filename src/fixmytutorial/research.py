@@ -20,6 +20,8 @@ def domain_rank(url: str) -> int:
     return 0 if any(host == d or host.endswith("." + d) for d in PREFERRED_DOMAINS) else 1
 
 
+HEADING_RE = re.compile(r"^#{1,6}\s")
+MARKER_RE = re.compile(r"^[ \t]*(?:#{1,6}[ \t]+|>[ \t]?)", re.M)  # Markdown heading and quote markers
 MIGRATION_WORDS = ("removed", "deprecat", "instead", "replac", "renamed", "migrat", "no longer", "use ")
 
 
@@ -36,14 +38,15 @@ def best_passage(text: str, sig: FailureSignature, limit: int = 600) -> str:
     paras = [p.strip() for p in re.split(r"\n\s*\n", text) if p.strip()]
     if not paras:
         return re.sub(r"\s+", " ", text)[:limit]
+    paras = [p for p in paras if not HEADING_RE.match(p)] or paras  # a heading alone explains nothing
 
     def score(p: str) -> int:  # distinct terms present, plus a bonus for saying what changed
         low = p.lower()
         hits = sum(t in low for t in terms if t)
         return hits + (2 if hits and any(w in low for w in MIGRATION_WORDS) else 0)
 
-    best = max(paras, key=score)
-    return re.sub(r"\s+", " ", best)[:limit]
+    best = MARKER_RE.sub("", max(paras, key=score))
+    return re.sub(r"\s+", " ", best).strip()[:limit]
 
 
 async def research(sig: FailureSignature, *, search, run_id: str, public: bool, id_prefix: str = "e",
