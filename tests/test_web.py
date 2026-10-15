@@ -97,6 +97,22 @@ def test_rate_limit_ignores_spoofed_forwarded_for(env):
                         headers={"X-Forwarded-For": f"10.0.0.{i}, 203.0.113.7"})
     assert r.status_code == 429
 
+
+def post_from(deps, peer, forwarded, n=3):
+    with TestClient(create_app(deps), client=(peer, 5000)) as c:
+        return [c.post("/runs", data={"url": f"https://{peer}-{i}.example/t"}, follow_redirects=False,
+                       headers={"X-Forwarded-For": forwarded(i)}).status_code for i in range(n)]
+
+
+def test_direct_public_peer_cannot_spoof_forwarded_for(env):
+    _, deps = env
+    assert post_from(deps, "8.8.4.4", lambda i: f"203.0.113.{i}")[-1] == 429
+
+
+def test_users_behind_private_proxy_get_separate_limits(env):
+    _, deps = env
+    assert post_from(deps, "10.1.2.3", lambda i: f"1.1.1.1, 203.0.113.{i}") == [303, 303, 303]
+
 def test_run_page_and_404(env):
     client, deps = env
     deps.store.save_run(done_record())

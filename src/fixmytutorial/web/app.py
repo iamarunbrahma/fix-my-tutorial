@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import ipaddress
 import json
 import logging
 import secrets
@@ -60,11 +61,25 @@ def build_deps(settings: Settings) -> Deps:
     ledger = Ledger(settings.ledger_db_path, settings)
     bus = EventBus(store)
     snapshot = Snapshotter(settings, store, ledger)
-    pipeline = Pipeline(settings=settings, llm=LLM(settings, ledger), search=SearchClient(settings, ledger, store),
-                        backend=make_backend(settings), store=store, ledger=ledger, bus=bus, snapshot=snapshot)
-    return Deps(settings=settings, store=store, ledger=ledger, bus=bus,
-                queue=JobQueue(pipeline, store, bus, settings),
-                limiter=RateLimiter(settings.rate_limit_runs_per_hour), snapshot=snapshot)
+    pipeline = Pipeline(
+        settings=settings,
+        llm=LLM(settings, ledger),
+        search=SearchClient(settings, ledger, store),
+        backend=make_backend(settings),
+        store=store,
+        ledger=ledger,
+        bus=bus,
+        snapshot=snapshot,
+    )
+    return Deps(
+        settings=settings,
+        store=store,
+        ledger=ledger,
+        bus=bus,
+        queue=JobQueue(pipeline, store, bus, settings),
+        limiter=RateLimiter(settings.rate_limit_runs_per_hour),
+        snapshot=snapshot,
+    )
 
 
 def load_index(settings: Settings) -> dict:
@@ -88,8 +103,16 @@ async def recover_unfinished(d: Deps) -> None:
             rec.reason = "The server restarted during this run. Please run it again."
             rec.finished_at = utcnow()
             d.store.save_run(rec)
-            await d.bus.publish(rec.id, {"type": "verdict", "verdict": "error", "reason": rec.reason,
-                                         "summary": "", "cost_usd": rec.cost_usd})
+            await d.bus.publish(
+                rec.id,
+                {
+                    "type": "verdict",
+                    "verdict": "error",
+                    "reason": rec.reason,
+                    "summary": "",
+                    "cost_usd": rec.cost_usd,
+                },
+            )
             await d.bus.publish(rec.id, {"type": "done"})
 
 
@@ -99,6 +122,7 @@ def create_app(deps: Deps | None = None) -> FastAPI:
         d = deps or build_deps(get_settings())
         if d.snapshot is not None and getattr(d.snapshot, "enabled", False):
             import asyncio
+
             restored = await asyncio.to_thread(d.snapshot.restore)
             log.info("restored %d runs from snapshot", restored)
         await recover_unfinished(d)
@@ -108,24 +132,42 @@ def create_app(deps: Deps | None = None) -> FastAPI:
     app = FastAPI(title="Fix My Tutorial", lifespan=lifespan, docs_url=None, redoc_url=None)
     app.mount("/static", StaticFiles(directory=HERE / "static"), name="static")
     templates = Jinja2Templates(directory=HERE / "templates")
-    templates.env.globals.update(verdict_label=verdict_label, cat_label=lambda c: CATEGORY_TEXT.get(c, c),
-                                 diff_lines=diff_lines)
+    templates.env.globals.update(
+        verdict_label=verdict_label, cat_label=lambda c: CATEGORY_TEXT.get(c, c), diff_lines=diff_lines
+    )
 
     def D(request: Request) -> Deps:
         return request.app.state.deps
 
     def client_ip(request: Request) -> str:
+        peer = request.client.host if request.client else "unknown"
+        try:
+            behind_proxy = ipaddress.ip_address(peer).is_private
+        except ValueError:
+            behind_proxy = False
+        if not behind_proxy:  # a direct client writes the whole header, so ignore it
+            return peer
         # The rightmost entry is the one our proxy appended; anything left of it is client-supplied.
         hops = [h.strip() for h in request.headers.get("x-forwarded-for", "").split(",") if h.strip()]
-        return hops[-1] if hops else (request.client.host if request.client else "unknown")
+        return hops[-1] if hops else peer
 
     def home_ctx(request: Request, **extra) -> dict:
         d = D(request)
         ok, why = d.ledger.public_runs_open()
-        featured = [dict(e, verdict_label=verdict_label(e.get("verdict")))
-                    for e in load_index(d.settings).get("entries", []) if e.get("featured") and e.get("run_id")][:3]
-        return {"paused": None if ok else why, "per_hour": d.settings.rate_limit_runs_per_hour,
-                "examples": featured, "error": None, "url": "", "markdown": "", **extra}
+        featured = [
+            dict(e, verdict_label=verdict_label(e.get("verdict")))
+            for e in load_index(d.settings).get("entries", [])
+            if e.get("featured") and e.get("run_id")
+        ][:3]
+        return {
+            "paused": None if ok else why,
+            "per_hour": d.settings.rate_limit_runs_per_hour,
+            "examples": featured,
+            "error": None,
+            "url": "",
+            "markdown": "",
+            **extra,
+        }
 
     def not_found(request: Request) -> HTMLResponse:
         return templates.TemplateResponse(request, "notfound.html", {}, status_code=404)
@@ -139,27 +181,43 @@ def create_app(deps: Deps | None = None) -> FastAPI:
         d = D(request)
         url, markdown = url.strip(), markdown.strip()
         if not url and not markdown:
-            return templates.TemplateResponse(request, "home.html",
-                                              home_ctx(request, error="Paste a tutorial link or its Markdown."),
-                                              status_code=400)
+            return templates.TemplateResponse(
+                request,
+                "home.html",
+                home_ctx(request, error="Paste a tutorial link or its Markdown."),
+                status_code=400,
+            )
         if len(markdown) > d.settings.max_tutorial_chars:
-            return templates.TemplateResponse(request, "home.html", home_ctx(
-                request, markdown=markdown[:2000], error="That Markdown is too long (limit 60,000 characters)."),
-                status_code=400)
+            return templates.TemplateResponse(
+                request,
+                "home.html",
+                home_ctx(
+                    request,
+                    markdown=markdown[:2000],
+                    error="That Markdown is too long (limit 60,000 characters).",
+                ),
+                status_code=400,
+            )
         ok, _ = d.ledger.public_runs_open()
         if not ok:
-            return templates.TemplateResponse(request, "home.html", home_ctx(request, url=url, markdown=markdown),
-                                              status_code=503)
+            return templates.TemplateResponse(
+                request, "home.html", home_ctx(request, url=url, markdown=markdown), status_code=503
+            )
         if url:
             cached = d.store.find_recent_run(url, d.settings.cache_ttl_s)
             if cached is not None:
                 return RedirectResponse(f"/run/{cached.id}", status_code=303)
         if not d.limiter.allow(client_ip(request)):
-            msg = (f"You've started {d.settings.rate_limit_runs_per_hour} runs in the last hour. "
-                   "Try again a little later, or browse the Rot Index.")
-            return templates.TemplateResponse(request, "home.html",
-                                              home_ctx(request, url=url, markdown=markdown, error=msg),
-                                              status_code=429)
+            msg = (
+                f"You've started {d.settings.rate_limit_runs_per_hour} runs in the last hour. "
+                "Try again a little later, or browse the Rot Index."
+            )
+            return templates.TemplateResponse(
+                request,
+                "home.html",
+                home_ctx(request, url=url, markdown=markdown, error=msg),
+                status_code=429,
+            )
         source = Source(url=url or None, markdown=None if url else markdown)
         rec = RunRecord(id=secrets.token_urlsafe(8), source=source.label(), public=True, created_at=utcnow())
         d.queue.submit(rec, source)
@@ -201,11 +259,18 @@ def create_app(deps: Deps | None = None) -> FastAPI:
         if rec.status not in (RunStatus.DONE, RunStatus.FAILED):
             return RedirectResponse(f"/run/{run_id}", status_code=303)
         base = d.settings.public_base_url.rstrip("/")
-        return templates.TemplateResponse(request, "report.html", {
-            "rec": rec, "changes": build_changes(rec), "verdict_text": verdict_label(rec.verdict), "base": base,
-            "badge_md": f"[![Fix My Tutorial]({base}/badge/{rec.id}.svg)]({base}/r/{rec.id})",
-            "badge_html": f'<a href="{base}/r/{rec.id}"><img src="{base}/badge/{rec.id}.svg" alt="Fix My Tutorial"></a>',
-        })
+        return templates.TemplateResponse(
+            request,
+            "report.html",
+            {
+                "rec": rec,
+                "changes": build_changes(rec),
+                "verdict_text": verdict_label(rec.verdict),
+                "base": base,
+                "badge_md": f"[![Fix My Tutorial]({base}/badge/{rec.id}.svg)]({base}/r/{rec.id})",
+                "badge_html": f'<a href="{base}/r/{rec.id}"><img src="{base}/badge/{rec.id}.svg" alt="Fix My Tutorial"></a>',
+            },
+        )
 
     @app.get("/badge/{run_id}.svg")
     async def badge(request: Request, run_id: str):
@@ -227,11 +292,22 @@ def create_app(deps: Deps | None = None) -> FastAPI:
         entries = data.get("entries", [])
         total = len(entries)
         counts = Counter(e.get("verdict") for e in entries)
-        pct = {v: round(100 * counts.get(v, 0) / total) if total else 0
-               for v in ("still_works", "fixed", "could_not_fix", "not_runnable")}
+        pct = {
+            v: round(100 * counts.get(v, 0) / total) if total else 0
+            for v in ("still_works", "fixed", "could_not_fix", "not_runnable")
+        }
         causes = Counter(c for e in entries for c in e.get("categories", [])).most_common()
-        return templates.TemplateResponse(request, "index.html", {
-            "entries": entries, "total": total, "pct": pct, "causes": causes, "generated_at": data.get("generated_at")})
+        return templates.TemplateResponse(
+            request,
+            "index.html",
+            {
+                "entries": entries,
+                "total": total,
+                "pct": pct,
+                "causes": causes,
+                "generated_at": data.get("generated_at"),
+            },
+        )
 
     @app.get("/healthz")
     async def healthz():
@@ -244,10 +320,18 @@ def create_app(deps: Deps | None = None) -> FastAPI:
             return JSONResponse({"error": "not found"}, status_code=404)
         t = d.ledger.totals()
         ok, why = d.ledger.public_runs_open()
-        return {"lifetime_usd": round(t.lifetime_usd, 4), "today_public_usd": round(t.today_public_usd, 4),
-                "lifetime_tavily_credits": t.lifetime_credits, "public_runs_open": ok, "reason": why,
-                "caps": {"lifetime": d.settings.cap_lifetime_usd, "daily": d.settings.cap_daily_usd,
-                         "run": d.settings.cap_run_usd}}
+        return {
+            "lifetime_usd": round(t.lifetime_usd, 4),
+            "today_public_usd": round(t.today_public_usd, 4),
+            "lifetime_tavily_credits": t.lifetime_credits,
+            "public_runs_open": ok,
+            "reason": why,
+            "caps": {
+                "lifetime": d.settings.cap_lifetime_usd,
+                "daily": d.settings.cap_daily_usd,
+                "run": d.settings.cap_run_usd,
+            },
+        }
 
     return app
 
