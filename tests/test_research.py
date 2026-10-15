@@ -55,3 +55,24 @@ async def test_search_errors_are_tolerated(settings, tmp_path):
         async def search(self, query, **kw):
             raise RuntimeError("tavily down")
     assert await research(SIG, search=sc(settings, tmp_path, Boom()), run_id="r", public=True) == []
+
+
+APPEND_SIG = FailureSignature(category="removed_api", error_type="AttributeError", symbol="DataFrame.append",
+                              key_line="AttributeError: 'DataFrame' object has no attribute 'append'",
+                              search_queries=["pandas DataFrame.append removed"])
+
+
+def test_best_passage_prefers_the_migration_note_over_repeated_mentions():
+    text = ("Bug in DataFrame.append() failing to retain dtypes (GH 43392). Bug in DataFrame.append() with "
+            "duplicate DataFrame columns.\n\nDataFrame.append was removed; use pandas.concat instead.")
+    assert best_passage(text, APPEND_SIG).startswith("DataFrame.append was removed")
+
+
+async def test_quotes_that_never_mention_the_symbol_are_dropped(settings, tmp_path):
+    fake = FakeTavily(search_results={"pandas DataFrame.append removed": [
+        {"url": "https://pandas.pydata.org/whatsnew/v2.0", "title": "2.0", "score": 0.9,
+         "content": "DataFrame.append was removed; use pandas.concat instead."},
+        {"url": "https://tutorials.example/pandas", "title": "Pandas DataFrame", "score": 0.8,
+         "content": "+ Adding New Column to Existing DataFrame in Pandas 6 min read + Python | DataFrame.drop"}]})
+    ev = await research(APPEND_SIG, search=sc(settings, tmp_path, fake), run_id="r", public=True)
+    assert [e.url for e in ev] == ["https://pandas.pydata.org/whatsnew/v2.0"]

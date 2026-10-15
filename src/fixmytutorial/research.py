@@ -20,15 +20,29 @@ def domain_rank(url: str) -> int:
     return 0 if any(host == d or host.endswith("." + d) for d in PREFERRED_DOMAINS) else 1
 
 
+MIGRATION_WORDS = ("removed", "deprecat", "instead", "replac", "renamed", "migrat", "no longer", "use ")
+
+
+def symbol_term(sig: FailureSignature) -> str | None:
+    term = sig.symbol.split(".")[-1].lower() if sig.symbol else ""
+    return term if len(term) >= 3 else None
+
+
 def best_passage(text: str, sig: FailureSignature, limit: int = 600) -> str:
     if not text:
         return ""
-    terms = [t.split(".")[-1].lower() for t in (sig.symbol, sig.package) if t]
-    terms += [w.split(".")[-1].lower() for w in re.findall(r"[A-Za-z_][\w\.]{3,}", sig.key_line)[:5]]
+    terms = {t.split(".")[-1].lower() for t in (sig.symbol, sig.package) if t}
+    terms |= {w.split(".")[-1].lower() for w in re.findall(r"[A-Za-z_][\w\.]{3,}", sig.key_line)[:5]}
     paras = [p.strip() for p in re.split(r"\n\s*\n", text) if p.strip()]
     if not paras:
         return re.sub(r"\s+", " ", text)[:limit]
-    best = max(paras, key=lambda p: sum(p.lower().count(t) for t in terms if t))
+
+    def score(p: str) -> int:  # distinct terms present, plus a bonus for saying what changed
+        low = p.lower()
+        hits = sum(t in low for t in terms if t)
+        return hits + (2 if hits and any(w in low for w in MIGRATION_WORDS) else 0)
+
+    best = max(paras, key=score)
     return re.sub(r"\s+", " ", best)[:limit]
 
 
@@ -60,9 +74,10 @@ async def research(sig: FailureSignature, *, search, run_id: str, public: bool, 
             ex = []
         extracted = {e["url"]: e["raw_content"] for e in ex}
     items: list[Evidence] = []
+    sym = symbol_term(sig)
     for r in ranked[:max_items]:
         quote = best_passage(extracted.get(r["url"]) or r.get("content", ""), sig)
-        if quote:
+        if quote and (sym is None or sym in quote.lower()):  # a quote that never names the symbol proves nothing
             items.append(Evidence(id=f"{id_prefix}{len(items) + 1}", url=r["url"],
                                   title=(r.get("title") or r["url"])[:200], quote=quote))
     return items
