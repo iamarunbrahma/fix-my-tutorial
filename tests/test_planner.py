@@ -88,3 +88,8 @@ async def test_plan_tutorial_keeps_only_literals_from_the_page(settings, tmp_pat
     llm = LLM(settings, Ledger(tmp_path / "l.db", settings), client=client)
     plan = await plan_tutorial(doc(), llm, settings, run_id="r", public=True)
     assert plan.steps[0].expect.stdout_contains == ["1"]
+
+
+def test_planner_never_rejects_tutorials_for_outdated_code():
+    from fixmytutorial.prompts import PLANNER_SYSTEM
+    assert "Never set runnable=false because the code looks outdated" in PLANNER_SYSTEM

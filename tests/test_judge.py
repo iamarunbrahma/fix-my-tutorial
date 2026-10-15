@@ -39,3 +39,19 @@ def test_stdout_match_ignores_whitespace_differences():
     assert deterministic_check(step(stdout_contains=["   name  score"]), 0, "  name  score\n0  ana     91") is True
     assert deterministic_check(step(stdout_contains=["name score"]), 0, "name\nscores") is True
     assert deterministic_check(step(stdout_contains=["name score"]), 0, "namescore") is False
+
+
+async def test_stand_in_api_reply_satisfies_generated_text_expectations(settings, tmp_path):
+    from fixmytutorial.judge import STUB_MARKER
+    client = FakeChatClient(['{"passed": false, "reason": "not a haiku"}'])
+    j = Judge(LLM(settings, Ledger(tmp_path / "l.db", settings), client=client))
+    out = "This is an offline reply from the Fix My Tutorial stand-in server. Your code reached the API correctly."
+    assert STUB_MARKER in out
+    res = await j.check(step(description="Prints a haiku about unit tests"), 0, out, run_id="r", public=True)
+    assert res.passed and client.calls == []
+
+
+def test_stub_marker_matches_the_stand_in_server():
+    from fixmytutorial.judge import STUB_MARKER
+    from fixmytutorial.sandbox import ASSETS_DIR
+    assert STUB_MARKER in (ASSETS_DIR / "openai_stub.py").read_text()

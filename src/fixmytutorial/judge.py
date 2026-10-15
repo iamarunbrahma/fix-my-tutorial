@@ -4,6 +4,9 @@ from .ledger import BudgetExceeded
 from .models import Judgement, Step
 from .prompts import JUDGE_SYSTEM
 
+# Part of the fixed reply from the in-sandbox stand-in OpenAI server (sandbox/assets/openai_stub.py).
+STUB_MARKER = "Fix My Tutorial stand-in server"
+
 
 def squash(text: str) -> str:
     """Collapse whitespace runs so column alignment never decides a match."""
@@ -31,6 +34,8 @@ class Judge:
             reason = "" if d else (f"exit code {exit_code}" if exit_code != step.expect.exit_code
                                    else "expected output not found")
             return Judgement(passed=d, reason=reason)
+        if STUB_MARKER in stdout:  # model text is a placeholder, so only "the API call worked" can be checked
+            return Judgement(passed=True, reason="reached the stand-in API")
         if self.llm is None:
             return Judgement(passed=True, reason="exit code 0")
         user = (f"Expected outcome: {step.expect.description}\n\nCode:\n{step.content[:2000]}\n\n"

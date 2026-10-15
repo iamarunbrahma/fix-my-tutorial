@@ -20,6 +20,8 @@ Rules:
      says to open. Never put a long-running server in a shell step.
 5. If the core of the tutorial needs a GPU, a paid API other than OpenAI-compatible ones, a GUI, a database server,
    or hardware, set runnable=false with a short reason. Otherwise skip only the parts that need them.
+   Never set runnable=false because the code looks outdated, deprecated, removed or likely to break with current
+   package versions: running it as written is how that breakage gets found and fixed.
 6. expect: exit_code 0. Use stdout_contains only for short, deterministic literal strings that the tutorial
    explicitly shows as output. Otherwise give a short description of the expected outcome, or leave it empty.
 7. Never use interactive commands (REPL prompts, input(), editors, `read`). Turn REPL sessions into run_code cells.
