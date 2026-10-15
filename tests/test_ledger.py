@@ -161,3 +161,50 @@ def test_public_runs_close_when_a_whole_run_no_longer_fits(settings, tmp_path):
     assert led.public_runs_open()[0]
     led.import_rows([dict(row, id="y", usd=0.2)])  # $0.40 left: less than one run may cost
     assert not led.public_runs_open()[0]
+
+
+DEC1 = 1_796_083_200.0  # 2026-12-01 00:00 UTC
+
+
+def _spend(led, usd, public=False, run="spent"):
+    r = led.reserve_llm(run, public, "repair", int(usd * 1e6), 0)  # repair input costs $1 per 1M tokens
+    led.commit_llm(r, "repair", "m", int(usd * 1e6), 0)
+
+
+def _demo(settings, tmp_path, now=1_792_000_000.0):
+    return make(settings, tmp_path, now=now, public_demo=True, cap_lifetime_usd=15.0, demo_reserve_usd=7.5,
+                demo_reserve_until="2026-12-01", cap_daily_usd=100, cap_daily_all_usd=100, cap_run_usd=100)
+
+
+def test_demo_holds_the_reserve_until_december(settings, tmp_path):
+    led, _ = _demo(settings, tmp_path)
+    assert led.public_cap_usd() == pytest.approx(7.5)
+    _spend(led, 1.0)
+    assert led.public_runs_open() == (True, "")
+    _spend(led, 6.4)
+    ok, why = led.public_runs_open()
+    assert not ok and why == ("Public runs are paused until 1 December. "
+                              "You can still browse the Rot Index and open past reports.")
+
+
+def test_reserve_opens_on_the_unlock_date(settings, tmp_path):
+    led, clock = _demo(settings, tmp_path, now=DEC1 - 1)
+    assert led.public_cap_usd() == pytest.approx(7.5)
+    clock["t"] = DEC1
+    assert led.public_cap_usd() == pytest.approx(15.0)
+    _spend(led, 7.4)
+    assert led.public_runs_open() == (True, "")
+
+
+def test_laptop_has_no_reserve(settings, tmp_path):
+    led, _ = make(settings, tmp_path, public_demo=False, cap_lifetime_usd=11.0, demo_reserve_usd=7.5)
+    assert led.public_cap_usd() == pytest.approx(11.0)
+
+
+def test_public_calls_cannot_spend_the_reserve(settings, tmp_path):
+    led, _ = _demo(settings, tmp_path)
+    _spend(led, 7.4)
+    with pytest.raises(BudgetExceeded) as e:
+        led.reserve_llm("pub", True, "repair", 200_000, 0)  # $0.20 would cross $7.50
+    assert e.value.scope == "reserve"
+    led.release(led.reserve_llm("laptop", False, "repair", 200_000, 0))  # the reserve only holds back public runs

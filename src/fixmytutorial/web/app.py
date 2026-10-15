@@ -463,6 +463,12 @@ def create_app(deps: Deps | None = None) -> FastAPI:
                 "lifetime": d.settings.cap_lifetime_usd,
                 "daily": d.settings.cap_daily_usd,
                 "run": d.settings.cap_run_usd,
+                "public": d.ledger.public_cap_usd(),
+            },
+            "reserve": {
+                "usd": d.settings.demo_reserve_usd,
+                "until": d.settings.demo_reserve_until,
+                "held": d.ledger.public_cap_usd() < d.settings.cap_lifetime_usd,
             },
         }
 

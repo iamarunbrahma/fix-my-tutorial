@@ -65,6 +65,18 @@ class Ledger:
     def _day(self) -> str:
         return datetime.fromtimestamp(self._clock(), timezone.utc).strftime("%Y-%m-%d")
 
+    def _reserve_held(self) -> bool:
+        return self._s.public_demo and self._day() < self._s.demo_reserve_until
+
+    def public_cap_usd(self) -> float:
+        """What public runs may spend in total: the demo holds part of its budget back until judging starts."""
+        return self._s.cap_lifetime_usd - (self._s.demo_reserve_usd if self._reserve_held() else 0.0)
+
+    def _reserve_message(self) -> str:
+        d = datetime.strptime(self._s.demo_reserve_until, "%Y-%m-%d")
+        return (f"Public runs are paused until {d.day} {d:%B}. "
+                "You can still browse the Rot Index and open past reports.")
+
     def price_usd(self, role: str, prompt_tokens: int, completion_tokens: int) -> float:
         pin, pout = self._s.price_for(role)
         return prompt_tokens / 1e6 * pin + completion_tokens / 1e6 * pout
@@ -110,6 +122,8 @@ class Ledger:
                 raise BudgetExceeded("lifetime", "The project's total model budget is used up.")
             if t.today_all_usd + est > self._s.cap_daily_all_usd:
                 raise BudgetExceeded("daily_all", "Today's model budget is used up. Try again tomorrow.")
+            if public and t.lifetime_usd + est > self.public_cap_usd():
+                raise BudgetExceeded("reserve", self._reserve_message())
             if public and t.today_public_usd + est > self._s.cap_daily_usd:
                 raise BudgetExceeded("daily", "Today's budget for public runs is used up. Try again tomorrow.")
             if t.run_usd + est > self._s.cap_run_usd:
@@ -185,6 +199,8 @@ class Ledger:
 
         if full(t.lifetime_usd, self._s.cap_lifetime_usd):
             return False, "Public runs are paused: the project's model budget is used up."
+        if full(t.lifetime_usd, self.public_cap_usd()):
+            return False, self._reserve_message()
         if full(t.today_public_usd, self._s.cap_daily_usd) or full(t.today_all_usd, self._s.cap_daily_all_usd):
             return False, "Public runs are paused for today. Browse the Rot Index or come back tomorrow."
         if t.lifetime_credits >= self._s.cap_tavily_lifetime_credits:

@@ -48,6 +48,8 @@ class Settings(BaseSettings):
     public_demo: bool = False
     cap_lifetime_usd: float = 11.0  # laptop budget; replaced by cap_lifetime_demo_usd in the public demo
     cap_lifetime_demo_usd: float = 15.0
+    demo_reserve_usd: float = 7.5  # held back from public runs until judging starts, so judges find it open
+    demo_reserve_until: str = "2026-12-01"  # UTC date the reserve opens
     cap_daily_usd: float = 3.0  # public runs per day
     cap_daily_all_usd: float = 3.0  # all runs per day (local evals and batches too), so credits last to judging
     cap_run_usd: float = 0.50
