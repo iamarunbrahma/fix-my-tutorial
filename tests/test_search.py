@@ -63,3 +63,12 @@ async def test_search_error_charges_reserved_credit(settings, tmp_path):
     with pytest.raises(TimeoutError):
         await sc.search("q", run_id="r", public=True)
     assert led.totals("r").run_credits == 1
+
+
+async def test_search_can_restrict_domains_and_caches_per_domain_set(settings, tmp_path):
+    fake = FakeTavily([{"url": "https://realpython.com/x", "title": "T", "content": "C", "score": 0.5}])
+    sc, _ = make(settings, tmp_path, fake)
+    await sc.search("pandas tutorial", run_id="r", public=False, include_domains=["realpython.com"])
+    await sc.search("pandas tutorial", run_id="r", public=False)
+    assert fake.search_calls[0]["include_domains"] == ["realpython.com"]
+    assert "include_domains" not in fake.search_calls[1]

@@ -33,17 +33,23 @@ ROOT = Path(__file__).resolve().parents[2]
 LIST = ROOT / "rot_index" / "list.yaml"
 CANDIDATES = ROOT / "rot_index" / "candidates.yaml"
 RESULTS = ROOT / "rot_index" / "results.json"
+TUTORIAL_DOMAINS = [
+    "realpython.com", "freecodecamp.org", "digitalocean.com", "geeksforgeeks.org", "medium.com", "dev.to",
+    "towardsdatascience.com", "machinelearningmastery.com", "stackabuse.com", "datacamp.com", "analyticsvidhya.com",
+    "blog.logrocket.com", "sitepoint.com", "programiz.com", "w3schools.com", "kdnuggets.com", "pythonbasics.org",
+    "javascripttutorial.net", "twilio.com", "auth0.com", "hackernoon.com",
+]
 DISCOVER_QUERIES = [
-    "pandas tutorial DataFrame append rows loop", "scikit-learn linear regression tutorial load_boston",
-    "openai python tutorial ChatCompletion.create", "langchain tutorial from langchain.llms import OpenAI",
-    "flask tutorial before_first_request", "matplotlib tutorial plt.style.use seaborn",
-    "pandas iteritems tutorial", "sklearn OneHotEncoder sparse=False tutorial", "numpy dtype np.float tutorial",
-    "pandas read_csv error_bad_lines tutorial", "seaborn distplot tutorial", "keras fit_generator tutorial",
-    "tensorflow tf.Session placeholder tutorial", "python asyncio get_event_loop run_until_complete tutorial",
-    "beautifulsoup requests scraping tutorial 2020", "fastapi tutorial beginners 2021",
-    "express js tutorial 404 page app.get('*')", "node-fetch require tutorial", "faker js require tutorial",
-    "chalk node tutorial require", "express body-parser tutorial", "axios node tutorial 2020",
-    "node.js read file tutorial callback", "jest testing tutorial node 2020", "dotenv node tutorial",
+    "pandas DataFrame append rows tutorial", "scikit-learn linear regression boston housing tutorial",
+    "openai python ChatCompletion tutorial", "langchain getting started OpenAI tutorial",
+    "flask before_first_request tutorial", "matplotlib style seaborn plot tutorial", "pandas iteritems loop tutorial",
+    "OneHotEncoder sparse tutorial", "numpy dtype float tutorial", "pandas read_csv error_bad_lines tutorial",
+    "seaborn distplot tutorial", "keras fit_generator tutorial", "python asyncio get_event_loop tutorial",
+    "beautifulsoup requests web scraping tutorial", "fastapi beginner tutorial", "flask hello world tutorial",
+    "python requests api tutorial", "pandas groupby tutorial", "matplotlib bar chart tutorial",
+    "scikit-learn train_test_split tutorial", "express hello world tutorial", "express 404 page tutorial",
+    "node-fetch tutorial", "faker js fake data tutorial", "chalk node colors tutorial", "express body-parser tutorial",
+    "axios node tutorial", "node.js read file tutorial", "jest testing node tutorial", "dotenv node tutorial",
 ]
 
 
@@ -79,7 +85,8 @@ async def discover() -> None:
     search = SearchClient(s, ledger, store)
     seen: dict[str, dict] = {}
     for i, q in enumerate(DISCOVER_QUERIES):
-        for r in await search.search(q, run_id=f"rot-discover-{i}", public=False, max_results=8):
+        for r in await search.search(q, run_id=f"rot-discover-{i}", public=False, max_results=8,
+                                     include_domains=TUTORIAL_DOMAINS):
             seen.setdefault(r["url"], {"url": r["url"], "title": r["title"], "query": q})
     CANDIDATES.write_text(yaml.safe_dump({"candidates": list(seen.values())}, sort_keys=False, allow_unicode=True))
     print(f"wrote {len(seen)} candidates to {CANDIDATES}")

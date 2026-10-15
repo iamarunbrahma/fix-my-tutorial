@@ -130,3 +130,14 @@ def test_unverified_ledger_closes_public_runs(settings, tmp_path):
     led.mark_unverified("Spend history could not be loaded.")
     ok, why = led.public_runs_open()
     assert not ok and "could not be loaded" in why
+
+
+def test_daily_cap_covers_all_runs_not_just_public(settings, tmp_path):
+    led, clock = make(settings, tmp_path, cap_daily_all_usd=0.01, cap_daily_usd=10, cap_run_usd=10)
+    r = led.reserve_llm("batch", False, "planner", 20_000, 2_000)
+    led.commit_llm(r, "planner", "m", 20_000, 2_000)  # ~0.0078, a private batch run
+    with pytest.raises(BudgetExceeded) as e:
+        led.reserve_llm("batch2", False, "planner", 20_000, 2_000)
+    assert e.value.scope == "daily_all"
+    clock["t"] += 86_400
+    led.reserve_llm("batch2", False, "planner", 20_000, 2_000)

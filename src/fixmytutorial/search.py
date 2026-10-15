@@ -28,14 +28,16 @@ class SearchClient:
         self.store = store
         self.client = client or AsyncTavilyClient(api_key=settings.tavily_api_key)
 
-    async def search(self, query: str, *, run_id: str, public: bool, max_results: int = 5) -> list[dict]:
-        key = _key("search", [query, max_results])
+    async def search(self, query: str, *, run_id: str, public: bool, max_results: int = 5,
+                     include_domains: list[str] | None = None) -> list[dict]:
+        key = _key("search", [query, max_results, sorted(include_domains or [])])
         cached = self.store.cache_get(key)
         if cached is not None:
             return cached
         res = self.ledger.reserve_tavily(run_id, public, 1)
         try:
-            resp = await self.client.search(query=query, search_depth="basic", max_results=max_results)
+            extra = {"include_domains": include_domains} if include_domains else {}
+            resp = await self.client.search(query=query, search_depth="basic", max_results=max_results, **extra)
         except Exception:
             self.ledger.charge_reserved(res, "search", "tavily")  # may have been billed; fail closed
             raise

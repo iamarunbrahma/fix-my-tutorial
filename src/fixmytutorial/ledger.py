@@ -45,6 +45,7 @@ class Reservation:
 class Totals:
     lifetime_usd: float
     today_public_usd: float
+    today_all_usd: float
     run_usd: float
     lifetime_credits: int
     run_credits: int
@@ -77,6 +78,7 @@ class Ledger:
         t = Totals(
             lifetime_usd=self._sum("SELECT SUM(usd) FROM spend"),
             today_public_usd=self._sum("SELECT SUM(usd) FROM spend WHERE day=? AND public=1", (day,)),
+            today_all_usd=self._sum("SELECT SUM(usd) FROM spend WHERE day=?", (day,)),
             run_usd=self._sum("SELECT SUM(usd) FROM spend WHERE run_id=?", (run_id,)) if run_id else 0.0,
             lifetime_credits=int(self._sum("SELECT SUM(credits) FROM spend")),
             run_credits=int(self._sum("SELECT SUM(credits) FROM spend WHERE run_id=?", (run_id,))) if run_id else 0,
@@ -84,6 +86,7 @@ class Ledger:
         for r in self._pending.values():
             if r.kind == "llm":
                 t.lifetime_usd += r.amount
+                t.today_all_usd += r.amount
                 if r.public:
                     t.today_public_usd += r.amount
                 if run_id and r.run_id == run_id:
@@ -105,6 +108,8 @@ class Ledger:
             t = self._totals_unlocked(run_id)
             if t.lifetime_usd + est > self._s.cap_lifetime_usd:
                 raise BudgetExceeded("lifetime", "The project's total model budget is used up.")
+            if t.today_all_usd + est > self._s.cap_daily_all_usd:
+                raise BudgetExceeded("daily_all", "Today's model budget is used up. Try again tomorrow.")
             if public and t.today_public_usd + est > self._s.cap_daily_usd:
                 raise BudgetExceeded("daily", "Today's budget for public runs is used up. Try again tomorrow.")
             if t.run_usd + est > self._s.cap_run_usd:
@@ -172,7 +177,7 @@ class Ledger:
         t = self.totals()
         if t.lifetime_usd >= self._s.cap_lifetime_usd * 0.98:
             return False, "Public runs are paused: the project's model budget is used up."
-        if t.today_public_usd >= self._s.cap_daily_usd:
+        if t.today_public_usd >= self._s.cap_daily_usd or t.today_all_usd >= self._s.cap_daily_all_usd:
             return False, "Public runs are paused for today. Browse the Rot Index or come back tomorrow."
         if t.lifetime_credits >= self._s.cap_tavily_lifetime_credits:
             return False, "Public runs are paused: the web search budget is used up."

@@ -40,7 +40,8 @@ class Settings(BaseSettings):
     json_object_roles: str = ""  # comma list of roles that need json_object instead of json_schema
 
     cap_lifetime_usd: float = 28.0  # real credits: $29.50 Builders + $1 trial; keep a margin
-    cap_daily_usd: float = 3.0
+    cap_daily_usd: float = 3.0  # public runs per day
+    cap_daily_all_usd: float = 3.0  # all runs per day (local evals and batches too), so credits last to judging
     cap_run_usd: float = 0.50
     cap_tavily_run_credits: int = 30
     cap_tavily_lifetime_credits: int = 5000  # 9,000 Tavily credits available (free plan + BBDEVPOST coupon)
