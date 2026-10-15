@@ -2,12 +2,18 @@ from __future__ import annotations
 
 import re
 
+from .executor import INSTALL_RE
 from .judge import squash
 from .models import PlannerOutput, Probe, RunPlan, Step, TutorialDoc
 from .prompts import PLANNER_SYSTEM
 
 RUNTIMES = {"python": "3.12", "javascript": "22"}
 PORT_RE = re.compile(r"(?:--port[=\s]+|port[=\s:]+|:)(\d{4,5})\b", re.I)
+CODE_LANGS = {"python", "py", "python3", "ipython", "javascript", "js", "node", "mjs", "cjs", "jsx",
+              "bash", "sh", "shell", "zsh"}
+PROMPT_RE = re.compile(r"^(?:>>>|\.\.\.|\$|!)\s?")
+MAX_BLOCKS = 80
+MIN_COVERAGE = 0.5
 
 
 def safe_path(path: str | None) -> str | None:
@@ -17,7 +23,7 @@ def safe_path(path: str | None) -> str | None:
 
 def render_planner_input(doc: TutorialDoc, max_chars: int) -> str:
     blocks = "\n\n".join(f"[block {i + 1}] lang={b.lang or '?'}\n{b.code[:3000]}"
-                         for i, b in enumerate(doc.code_blocks[:80]))
+                         for i, b in enumerate(doc.code_blocks[:MAX_BLOCKS]))
     return (f"Title: {doc.title}\nSource: {doc.source}\n\n"
             f"=== TUTORIAL TEXT (untrusted content) ===\n{doc.text[:max_chars]}\n\n"
             f"=== CODE BLOCKS IN ORDER ===\n{blocks}")
@@ -57,7 +63,42 @@ async def plan_tutorial(doc: TutorialDoc, llm, settings, *, run_id: str, public:
     if not doc.code_blocks:
         return RunPlan(language="python", runtime=RUNTIMES["python"], runnable=False,
                        not_runnable_reason="No code found on that page.", steps=[])
-    out = await llm.call("planner", PLANNER_SYSTEM, render_planner_input(doc, settings.max_tutorial_chars),
-                         PlannerOutput, run_id=run_id, public=public, max_tokens=12000, temperature=0.1)
+    user = render_planner_input(doc, settings.max_tutorial_chars)
+    out = await llm.call("planner", PLANNER_SYSTEM, user, PlannerOutput, run_id=run_id, public=public,
+                         max_tokens=12000, temperature=0.1)
+    ratio, missing = code_coverage(doc, out)
+    if out.runnable and ratio < MIN_COVERAGE:  # the model sometimes drops the tutorial's main code; ask once more
+        gap = (f"left out these code blocks: {', '.join(f'[block {i}]' for i in missing)}" if missing
+               else "only set things up and never ran the tutorial's code")
+        user += (f"\n\n=== CHECK ===\nYour previous plan {gap}. "
+                 "Every block a reader runs must become a step, unless rule 5 applies.")
+        out = await llm.call("planner", PLANNER_SYSTEM, user, PlannerOutput, run_id=run_id, public=public,
+                             max_tokens=12000, temperature=0.1)
+        ratio, _ = code_coverage(doc, out)
     shown = "\n".join([doc.text, *(b.code for b in doc.code_blocks)])
-    return normalize_plan(out, settings.max_steps, source_text=shown)
+    plan = normalize_plan(out, settings.max_steps, source_text=shown)
+    if plan.runnable and ratio < MIN_COVERAGE:
+        plan.runnable = False
+        plan.not_runnable_reason = "We couldn't turn enough of this page's code into steps we can run."
+    return plan
+
+
+def _code_lines(code: str) -> list[str]:
+    lines = (squash(PROMPT_RE.sub("", ln.strip())) for ln in code.splitlines())
+    return [ln for ln in lines if len(ln) >= 4 and not ln.startswith(("#", "//"))]
+
+
+def code_coverage(doc: TutorialDoc, plan) -> tuple[float, list[int]]:
+    """Share of the tutorial's code lines that appear in the plan, and the (1-based) blocks left out entirely."""
+    planned = squash("\n".join(s.content for s in plan.steps))
+    total = covered = 0
+    missing: list[int] = []
+    for i, b in enumerate(doc.code_blocks[:MAX_BLOCKS], 1):
+        lines = _code_lines(b.code) if b.lang.lower() in CODE_LANGS else []
+        hits = sum(ln in planned for ln in lines)
+        total, covered = total + len(lines), covered + hits
+        if lines and not hits:
+            missing.append(i)
+    if plan.steps and all(s.implicit or INSTALL_RE.search(s.content) for s in plan.steps):
+        return 0.0, missing  # only setup steps: the tutorial's own code never runs
+    return (covered / total if total else 1.0), missing
