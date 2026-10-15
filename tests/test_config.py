@@ -43,3 +43,10 @@ def test_the_container_image_is_a_public_demo():
     from pathlib import Path
     dockerfile = (Path(__file__).parents[1] / "Dockerfile").read_text()
     assert "PUBLIC_DEMO=true" in dockerfile
+
+
+def test_one_visitor_cannot_fill_the_global_stream_cap():
+    s = Settings(_env_file=None)
+    # Per-visitor keys are IPv6 /64s, and a home connection often holds a /56 (256 of them). The global cap is a
+    # memory safety net, so a single visitor must not be able to reach it and lock everyone else out.
+    assert s.max_streams_total > 4 * 256 * s.max_streams_per_client

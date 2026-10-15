@@ -56,7 +56,7 @@ class Settings(BaseSettings):
 
     rate_limit_runs_per_hour: int = 3
     max_streams_per_client: int = 8  # open live-progress pages per visitor (several tabs)
-    max_streams_total: int = 500
+    max_streams_total: int = 10_000  # memory safety net only: idle streams are cheap, and a low cap is a lockout lever
     max_concurrent_runs: int = 4
     max_sandbox_ops: int = 12
     cache_ttl_s: int = 24 * 3600
