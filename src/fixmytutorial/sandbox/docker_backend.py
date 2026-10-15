@@ -42,8 +42,10 @@ class SandboxPolicyError(RuntimeError):
     pass
 
 
-# Runs inside a sandbox container: can it reach the network gateway (stand-in for the LAN/host) or the cloud
-# metadata address? "refused" means the packet got there, so it counts as reachable.
+# Runs inside a sandbox container: can it reach the gateway (the host), the cloud metadata address, or sample
+# addresses in every private range? "refused" means the packet arrived, so it counts as reachable. This is a
+# defense-in-depth check, not a proof: production runs third-party tutorials on Token Factory Sandboxes, and the
+# Docker fallback host must also firewall these ranges (see the deploy notes).
 EGRESS_PROBE = """
 import json, socket, struct
 def gateway():
@@ -51,8 +53,15 @@ def gateway():
         f = line.split()
         if f[1] == "00000000":
             return socket.inet_ntoa(struct.pack("<L", int(f[2], 16)))
+def host_internal():
+    try:
+        return socket.gethostbyname("host.docker.internal")
+    except OSError:
+        return None
+targets = [(gateway(), 1), (host_internal(), 1), ("169.254.169.254", 80), ("10.0.0.1", 1), ("172.16.0.1", 1),
+           ("192.168.0.1", 1), ("192.168.1.1", 1), ("100.64.0.1", 1)]
 res = {}
-for host, port in [(gateway(), 1), ("169.254.169.254", 80)]:
+for host, port in targets:
     if not host:
         continue
     s = socket.socket()
@@ -127,11 +136,12 @@ class DockerBackend:
         net = self.s.docker_network
         rc, _, _ = await self._docker("network", "inspect", net)
         if rc != 0:
-            rc, _, err = await self._docker("network", "create", "--driver", "bridge", net)
+            rc, _, err = await self._docker("network", "create", "--driver", "bridge", "--opt",
+                                            "com.docker.network.bridge.enable_icc=false", net)
             if rc != 0:
                 raise SandboxPolicyError(f"Could not create the sandbox network {net}: {err.strip()}")
         rc, out, _ = await self._docker("run", "--rm", *HARDENING, "--network", net, image, "python3", "-c",
-                                        EGRESS_PROBE, timeout=60)
+                                        EGRESS_PROBE, timeout=90)
         if private_egress_open(out) and not self.s.docker_allow_private_egress:
             raise SandboxPolicyError(
                 f"The Docker sandbox network '{net}' can reach private addresses ({out.strip()}). Run tutorials on "

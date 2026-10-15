@@ -49,3 +49,28 @@ async def test_firewalled_network_passes_and_probe_runs_on_that_network(settings
 
 def test_default_network_is_not_the_shared_bridge(settings):
     assert settings.docker_network == "fmt-sandbox" and settings.docker_allow_private_egress is False
+
+
+def test_probe_covers_all_private_ranges():
+    from fixmytutorial.sandbox.docker_backend import EGRESS_PROBE
+    for target in ["169.254.169.254", "10.0.0.1", "172.16.0.1", "192.168.0.1", "192.168.1.1", "100.64.0.1",
+                   "host.docker.internal"]:
+        assert target in EGRESS_PROBE
+
+
+async def test_created_network_blocks_container_to_container_traffic(settings):
+    b = DockerBackend(settings)
+    calls = []
+
+    async def fake_docker(*args, timeout=None):
+        calls.append(args)
+        if args[:2] == ("network", "inspect"):
+            return 1, "", "not found"
+        if args[0] == "run":
+            return 0, json.dumps({"10.0.0.1": "blocked"}), ""
+        return 0, "", ""
+
+    b._docker = fake_docker
+    await b.base_image("python")
+    create = next(c for c in calls if c[:2] == ("network", "create"))
+    assert "com.docker.network.bridge.enable_icc=false" in create
