@@ -56,9 +56,17 @@ class LLM:
         self.settings = settings
         self.ledger = ledger
         self._backoff: tuple[float, ...] = (2.0, 6.0)  # retry delays; each attempt is reserved and accounted
-        self.client = client or AsyncOpenAI(
-            base_url=settings.nebius_base_url, api_key=settings.nebius_api_key, max_retries=0, timeout=240
-        )
+        self._client = client
+
+    @property
+    def client(self):
+        """Created on first use, so the site can start and serve reports without an API key."""
+        if self._client is None:
+            if not self.settings.nebius_api_key:
+                raise RuntimeError("NEBIUS_API_KEY is not set, so Nemotron calls are unavailable.")
+            self._client = AsyncOpenAI(base_url=self.settings.nebius_base_url, api_key=self.settings.nebius_api_key,
+                                       max_retries=0, timeout=240)
+        return self._client
 
     async def _complete(self, role, model, messages, schema, run_id, public, max_tokens, temperature) -> str:
         """One completion with retries. Every attempt is reserved first; an attempt that may have been billed is
@@ -98,6 +106,7 @@ class LLM:
     async def call(self, role: str, system: str, user: str, schema: type[T], *, run_id: str, public: bool,
                    max_tokens: int = 4096, temperature: float = 0.2) -> T:
         model = self.settings.model_for(role)
+        self.client  # noqa: B018 - fail before reserving any budget if the API key is missing
         system_full = (
             f"{system}\n\nRespond with one JSON object that matches this JSON schema. No prose, no markdown.\n"
             f"{json.dumps(schema.model_json_schema())}"

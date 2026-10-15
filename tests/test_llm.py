@@ -121,3 +121,11 @@ async def test_bad_request_is_not_charged_or_retried(settings, tmp_path):
     with pytest.raises(openai.BadRequestError):
         await llm.call("triage", "sys", "u", Out, run_id="r", public=False)
     assert len(client.calls) == 1 and led.totals("r").run_usd == 0
+
+
+async def test_missing_api_key_fails_at_call_time_not_at_startup(settings, tmp_path):
+    led = Ledger(tmp_path / "l.db", settings)
+    llm = LLM(settings.model_copy(update={"nebius_api_key": ""}), led)
+    with pytest.raises(RuntimeError, match="NEBIUS_API_KEY"):
+        await llm.call("triage", "s", "u", Out, run_id="r", public=False)
+    assert led.totals("r").run_usd == 0
