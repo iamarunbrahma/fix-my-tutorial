@@ -3,7 +3,9 @@ from __future__ import annotations
 
 import difflib
 import io
+import statistics
 import textwrap
+from collections import Counter
 from dataclasses import dataclass, field
 from datetime import date
 from html import escape
@@ -140,6 +142,25 @@ def broke_in_source(rec: RunRecord) -> Evidence | None:
     if b is None or not b.evidence_id:
         return None
     return next((e for r in rec.repairs for e in r.evidence if e.id == b.evidence_id), None)
+
+
+def break_stats(entries: list[dict]) -> dict:
+    """Rot Index headline numbers about the releases that broke tutorials."""
+    dated = [e for e in entries if e.get("broke_in")]
+    counts = Counter((e["broke_in"]["package"], e["broke_in"]["version"], e["broke_in"]["date"]) for e in dated)
+    releases = [{"package": p, "version": v, "month": f"{date.fromisoformat(d):%b %Y}", "count": n}
+                for (p, v, d), n in counts.most_common(5)]
+    months, early = [], 0
+    for e in dated:
+        if not e.get("published"):
+            continue
+        pub, bad = date.fromisoformat(e["published"]), date.fromisoformat(e["broke_in"]["date"])
+        if bad < pub:
+            early += 1
+        else:
+            months.append((bad.year - pub.year) * 12 + bad.month - pub.month)
+    median = round(statistics.median(months)) if len(months) >= 3 else None
+    return {"releases": releases, "median_months": median, "already_out_of_date": early}
 
 
 def badge_label(rec: RunRecord) -> str:

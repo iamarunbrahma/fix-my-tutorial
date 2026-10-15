@@ -66,10 +66,15 @@ def export_entries(entries: list[dict], store: Store) -> list[dict]:
         verdict = rec.verdict.value
         if e.get("review") == "downgrade" and verdict == "fixed":
             verdict = "could_not_fix"
+        b = rec.broke_in
         out.append({"url": e["url"], "title": e.get("title") or rec.title, "language": e["language"],
-                    "source": e["source"], "year": e["year"], "topic": e.get("topic", ""), "verdict": verdict,
+                    "source": e["source"], "year": e["year"] or (int(rec.published[:4]) if rec.published else ""),
+                    "topic": e.get("topic", ""), "verdict": verdict,
                     "categories": sorted({r.signature.category for r in rec.repairs}),
-                    "changes": len(build_changes(rec)), "run_id": rec.id, "featured": bool(e.get("featured"))})
+                    "changes": len(build_changes(rec)), "run_id": rec.id, "featured": bool(e.get("featured")),
+                    "published": rec.published,
+                    "broke_in": {"package": b.package, "version": b.first_bad, "date": b.first_bad_date.isoformat(),
+                                 "how": b.how} if b else None})
     return out
 
 

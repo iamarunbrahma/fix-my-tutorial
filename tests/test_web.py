@@ -423,3 +423,15 @@ def test_report_says_when_the_tutorial_broke(env):
     deps.store.save_run(done_record().model_copy(update={"id": "dated", "broke_in": bp}))
     r = client.get("/r/dated")
     assert "When it broke" in r.text and "Broke in pandas 2.0.0, released 3 Apr 2023." in r.text
+
+
+def test_index_lists_the_releases_that_broke_tutorials(env):
+    client, deps = env
+    idx = json.loads(deps.settings.rot_index_path.read_text())
+    idx["entries"][0].update({"published": "2022-03-14",
+                              "broke_in": {"package": "pandas", "version": "2.0.0", "date": "2023-04-03",
+                                           "how": "ran"}})
+    deps.settings.rot_index_path.write_text(json.dumps(idx))
+    r = client.get("/index")
+    assert "Releases that broke the most tutorials" in r.text and "pandas 2.0.0" in r.text
+    assert "Broke in pandas 2.0.0" in r.text

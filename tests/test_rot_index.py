@@ -77,3 +77,36 @@ async def test_batch_checks_the_sandbox_before_spending_anything(settings, monke
     with pytest.raises(SandboxPolicyError):
         await ri.run_batch(force=True, concurrency=1)
     assert started == []
+
+
+def test_export_carries_the_breaking_release_and_publish_date(tmp_path):
+    from datetime import date
+
+    from fixmytutorial.models import BreakPoint
+    st = Store(tmp_path / "s.db")
+    bp = BreakPoint(package="pandas", step_id="s1", first_bad="2.0.0", first_bad_date=date(2023, 4, 3),
+                    last_good="1.5.3", last_good_date=date(2023, 1, 19), how="ran")
+    st.save_run(run("a", "https://a", Verdict.FIXED).model_copy(update={"broke_in": bp, "published": "2022-03-14"}))
+    st.save_run(run("b", "https://b", Verdict.STILL_WORKS))
+    entries = [{"url": "https://a", "title": "A", "language": "python", "source": "a.dev", "year": ""},
+               {"url": "https://b", "title": "B", "language": "python", "source": "b.dev", "year": 2022}]
+    out = {e["url"]: e for e in export_entries(entries, st)}
+    assert out["https://a"]["broke_in"] == {"package": "pandas", "version": "2.0.0", "date": "2023-04-03", "how": "ran"}
+    assert out["https://a"]["published"] == "2022-03-14" and out["https://a"]["year"] == 2022
+    assert out["https://b"]["broke_in"] is None and out["https://b"]["year"] == 2022
+
+
+def test_break_stats():
+    from fixmytutorial.report import break_stats
+
+    def e(pkg, ver, day, published=None):
+        return {"broke_in": {"package": pkg, "version": ver, "date": day, "how": "ran"}, "published": published}
+
+    entries = [e("pandas", "2.0.0", "2023-04-03", "2022-03-14"), e("pandas", "2.0.0", "2023-04-03", "2021-04-01"),
+               e("pandas", "2.0.0", "2023-04-03", "2024-01-01"), e("numpy", "1.24.0", "2022-12-18", "2022-06-01"),
+               {"broke_in": None, "published": "2020-01-01"}]
+    s = break_stats(entries)
+    assert s["releases"][0] == {"package": "pandas", "version": "2.0.0", "month": "Apr 2023", "count": 3}
+    assert s["releases"][1]["package"] == "numpy" and s["already_out_of_date"] == 1
+    assert s["median_months"] == 13  # 13, 24 and 6 months
+    assert break_stats(entries[:2])["median_months"] is None  # too few to say

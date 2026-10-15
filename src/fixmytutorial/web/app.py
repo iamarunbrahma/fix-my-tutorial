@@ -28,7 +28,8 @@ from ..jobs import JobQueue, RateLimiter, StreamLimiter
 from ..ledger import Ledger
 from ..models import RunRecord, RunStatus, Verdict, utcnow
 from ..report import (
-    VERDICT_TEXT, badge_svg, broke_in_source, broke_in_text, build_changes, diff_lines, og_png, partial_note,
+    VERDICT_TEXT, badge_svg, break_stats, broke_in_source, broke_in_text, build_changes, diff_lines, og_png,
+    partial_note,
 )
 from ..snapshot import NOT_CONFIGURED
 from ..store import Store
@@ -457,6 +458,7 @@ def create_app(deps: Deps | None = None) -> FastAPI:
                 "total": total,
                 "pct": pct,
                 "causes": causes,
+                "breaks": break_stats(entries),
                 "generated_at": data.get("generated_at"),
             },
         )

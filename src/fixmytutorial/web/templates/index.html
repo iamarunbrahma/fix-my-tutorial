@@ -33,6 +33,21 @@
   </ul>
 </section>
 {% endif %}
+{% if breaks.releases %}
+<section class="mt-10">
+  <h2 class="section-title">Releases that broke the most tutorials</h2>
+  {% if breaks.median_months is not none %}<p class="text-muted-foreground mt-1 text-sm">A typical tutorial here broke {{ breaks.median_months }} month{{ "s" if breaks.median_months != 1 }} after it was published.</p>{% endif %}
+  {% if breaks.already_out_of_date %}<p class="text-muted-foreground mt-1 text-sm">{{ breaks.already_out_of_date }} {{ "was" if breaks.already_out_of_date == 1 else "were" }} already out of date on the day {{ "it was" if breaks.already_out_of_date == 1 else "they were" }} published.</p>{% endif %}
+  <ul class="mt-4 flex flex-col text-sm">
+    {% for r in breaks.releases %}
+    <li class="flex items-baseline justify-between gap-4 border-b py-2.5">
+      <span><span class="font-medium">{{ r.package }} {{ r.version }}</span> <span class="text-muted-foreground">· released {{ r.month }}</span></span>
+      <span class="text-muted-foreground tabular-nums">{{ r.count }} tutorial{{ "s" if r.count != 1 }}</span>
+    </li>
+    {% endfor %}
+  </ul>
+</section>
+{% endif %}
 <section class="mt-10">
   <h2 class="section-title">Every tutorial we checked</h2>
   <div class="table-container mt-4 rounded-lg border">
@@ -44,7 +59,7 @@
         <td class="max-w-md"><a class="font-medium underline-offset-4 hover:underline" href="{{ e.url }}" target="_blank" rel="noopener">{{ e.title }}</a><div class="text-muted-foreground text-xs">{{ e.source }}</div></td>
         <td>{{ {"python": "Python", "javascript": "JavaScript"}.get(e.language, e.language) }}</td>
         <td class="tabular-nums">{{ e.year }}</td>
-        <td><span class="status" data-status="{{ e.verdict }}">{{ verdict_label(e.verdict) }}</span></td>
+        <td><span class="status" data-status="{{ e.verdict }}">{{ verdict_label(e.verdict) }}</span>{% if e.broke_in %}<div class="text-muted-foreground mt-1 text-xs">Broke in {{ e.broke_in.package }} {{ e.broke_in.version }}</div>{% endif %}</td>
         <td class="text-right">{% if e.run_id %}<a class="btn" data-variant="ghost" data-size="sm" href="/r/{{ e.run_id }}">Report</a>{% endif %}</td>
       </tr>
       {% endfor %}
