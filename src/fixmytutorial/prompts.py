@@ -83,3 +83,11 @@ SUMMARY_SYSTEM = """Write a 2-3 sentence plain-English summary of this tutorial 
 work, what broke and why, and what was changed.
 Name the version in which something was removed or changed only if a cited source states it (evidence quotes are
 included); otherwise just say it changed in newer releases. No marketing language, no em dashes."""
+
+
+BREAK_SYSTEM = """You find which release of a package made the change that broke a tutorial step.
+You get the error, the failing symbol, the packages installed now (name==version) and quoted sources with ids.
+package: the installed package whose change caused the error, spelled exactly as in the installed list.
+version: the first release that made this change (removed, renamed or changed the thing that fails), exactly as a
+quoted source states it. Leave it empty when no quoted source names the version. Never guess a version.
+evidence_id: the id of the source that states that version."""

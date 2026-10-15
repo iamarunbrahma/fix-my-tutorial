@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from datetime import datetime, timezone
+from datetime import date, datetime, timezone
 from enum import Enum
 from typing import Literal
 
@@ -191,6 +191,26 @@ class RepairRecord(BaseModel):
     stopped: str = ""  # "time" when the run's clock left no room for another round
 
 
+class BreakGuess(BaseModel):
+    """The model's reading of the sources: which release made the change that broke the step."""
+    package: str = ""
+    version: str = ""
+    evidence_id: str = ""
+
+
+class BreakPoint(BaseModel):
+    """The release that broke a tutorial step. "ran": we ran the step with last_good (passed) and first_bad (failed
+    the same way). "release_notes": a cited source names first_bad, but the older release couldn't be run here."""
+    package: str
+    step_id: str
+    first_bad: str
+    first_bad_date: date
+    last_good: str | None = None
+    last_good_date: date | None = None
+    how: Literal["ran", "release_notes"]
+    evidence_id: str | None = None
+
+
 class StepOutcome(BaseModel):
     step_id: str
     status: StepStatus
@@ -211,6 +231,7 @@ class RunRecord(BaseModel):
     final_plan: RunPlan | None = None
     outcomes: dict[str, StepOutcome] = Field(default_factory=dict)
     repairs: list[RepairRecord] = Field(default_factory=list)
+    broke_in: BreakPoint | None = None
     summary: str = ""
     reason: str = ""
     cost_usd: float = 0.0
