@@ -1,0 +1,16 @@
+name: keepalive
+on:
+  schedule:
+    - cron: "17 */12 * * *"
+  workflow_dispatch:
+jobs:
+  ping:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Ping the Space until judging ends (2026-12-16)
+        run: |
+          if [ "$(date -u +%Y%m%d)" -le 20261216 ]; then
+            curl -fsS --retry 3 --max-time 120 https://heliosbrahma-fix-my-tutorial.hf.space/healthz
+          else
+            echo "Judging is over; keep-alive no longer needed."
+          fi
