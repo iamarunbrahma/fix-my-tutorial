@@ -11,7 +11,8 @@ from fixmytutorial.search import SearchClient
 from fixmytutorial.store import Store
 from tests.fakes import FakeBackend, FakeTavily, RoutingChatClient, cells_handler
 
-MD = "# Pandas rows\n\n```bash\npip install pandas\n```\n\n```python\ndf = df.append(row)\n```\n"
+MD = ("# Pandas rows\n\n```bash\npip install pandas\n```\n\n```python\nimport pandas as pd\ndf = pd.DataFrame()\n"
+      "df = df.append({'a': 1}, ignore_index=True)\n```\n")
 PLAN = json.dumps({"language": "python", "runnable": True, "steps": [
     {"id": "a", "title": "Install pandas", "kind": "shell", "content": "pip install pandas"},
     {"id": "b", "title": "Make frame", "kind": "run_code", "content": "import pandas as pd\ndf = pd.DataFrame()"},
@@ -151,3 +152,14 @@ async def test_no_time_for_a_repair_round_ends_as_could_not_fix(settings, tmp_pa
         run_wall_clock_s=100, step_timeout_s=180)
     rec = await p.run(new_record(), Source(markdown=MD))
     assert rec.verdict == Verdict.COULD_NOT_FIX and "time" in rec.reason
+
+
+async def test_verdict_event_carries_the_partial_note(settings, tmp_path):
+    partial = json.loads(PLAN)
+    partial["steps"][1]["content"] = "import pandas as pd"  # drops a line of the page's code, twice
+    partial = json.dumps(partial)
+    p, store, _, _ = build(settings, tmp_path, {settings.model_planner: [partial, partial, SUMMARY]},
+                           handler=cells_handler())
+    rec = await p.run(new_record(), Source(markdown=MD))
+    verdict = next(e for e in events(store) if e["type"] == "verdict")
+    assert verdict["note"].startswith("Partly checked") and rec.plan.coverage < 1.0

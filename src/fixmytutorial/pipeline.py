@@ -14,6 +14,7 @@ from .models import RunPlan, RunRecord, RunStatus, Step, StepOutcome, StepStatus
 from .planner import plan_tutorial
 from .prompts import SUMMARY_SYSTEM
 from .repair import Repairer, run_deadline
+from .report import partial_note
 from .research import research
 from .sandbox import PRELUDE
 from .triage import triage
@@ -75,7 +76,7 @@ class Pipeline:
             self.store.save_run(record)
             await self.bus.publish(record.id, {"type": "verdict", "verdict": record.verdict.value,
                                                "reason": record.reason, "summary": record.summary,
-                                               "cost_usd": record.cost_usd})
+                                               "cost_usd": record.cost_usd, "note": partial_note(record)})
             await self.bus.publish(record.id, {"type": "done"})
             if self.snapshot is not None:
                 await asyncio.to_thread(self.snapshot.save_run, record)

@@ -182,3 +182,10 @@ async def test_gzip_bomb_is_rejected(monkeypatch):
     with pytest.raises(IngestError, match="too large"):
         await ingest(Source(url="https://github.com/o/r/blob/main/b.md"), None, run_id="r", public=True,
                      resolver=public_resolver)
+
+
+
+async def test_cut_off_pages_are_flagged(settings, tmp_path):
+    doc = await ingest(Source(markdown="# T\n\n```python\nprint(1)\n```\n" + "x" * 500), None, run_id="r",
+                       public=True, max_chars=100)
+    assert doc.truncated

@@ -22,7 +22,7 @@ from ..ingest import Source
 from ..jobs import JobQueue, RateLimiter
 from ..ledger import Ledger
 from ..models import RunRecord, RunStatus, Verdict, utcnow
-from ..report import VERDICT_TEXT, badge_svg, build_changes, diff_lines, og_png
+from ..report import VERDICT_TEXT, badge_svg, build_changes, diff_lines, og_png, partial_note
 from ..snapshot import NOT_CONFIGURED
 from ..store import Store
 
@@ -171,7 +171,8 @@ def create_app(deps: Deps | None = None) -> FastAPI:
     app.mount("/static", StaticFiles(directory=HERE / "static"), name="static")
     templates = Jinja2Templates(directory=HERE / "templates")
     templates.env.globals.update(
-        verdict_label=verdict_label, cat_label=lambda c: CATEGORY_TEXT.get(c, c), diff_lines=diff_lines
+        verdict_label=verdict_label, cat_label=lambda c: CATEGORY_TEXT.get(c, c), diff_lines=diff_lines,
+        partial_note=partial_note,
     )
 
     def D(request: Request) -> Deps:

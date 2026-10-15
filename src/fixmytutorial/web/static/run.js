@@ -119,8 +119,9 @@
     const v = $("#verdict");
     v.hidden = false;
     v.replaceChildren(el("span", { class: `pill v-${ev.verdict}` }, VERDICTS[ev.verdict] || ev.verdict),
-      el("span", { class: "muted" }, ev.summary || ev.reason || ""),
-      el("a", { class: "btn", href: `/r/${runId}` }, "See the report"));
+      el("span", { class: "muted" }, ev.summary || ev.reason || ""));
+    if (ev.note) v.append(el("p", { class: "banner warn" }, ev.note));
+    v.append(el("a", { class: "btn", href: `/r/${runId}` }, "See the report"));
   }
 
   if (initial.plan) onPlan({ steps: initial.plan.steps, title: initial.title, note: initial.plan.note });

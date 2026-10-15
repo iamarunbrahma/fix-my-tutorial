@@ -246,6 +246,7 @@ async def ingest(source: Source, search, *, run_id: str, public: bool, http: htt
         raise IngestError("Paste a tutorial link or its Markdown.")
     if not text.strip():
         raise IngestError("Couldn't find any text on that page.")
+    truncated = len(text) > max_chars
     text = text[:max_chars]
     return TutorialDoc(source=label, title=title[:200], text=text, code_blocks=markdown_code_blocks(text),
-                       content_hash=hashlib.sha256(text.encode()).hexdigest()[:16])
+                       content_hash=hashlib.sha256(text.encode()).hexdigest()[:16], truncated=truncated)

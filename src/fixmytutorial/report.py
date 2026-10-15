@@ -88,12 +88,25 @@ def _runtime(rec: RunRecord) -> str:
     return ("Python " if plan.language == "python" else "Node ") + plan.runtime
 
 
+def _partial(rec: RunRecord) -> bool:
+    return bool(rec.plan) and (rec.plan.coverage < 1.0 or rec.plan.truncated)
+
+
+def partial_note(rec: RunRecord) -> str:
+    """Said wherever a verdict is shown, so a partial check is never presented as a full one."""
+    if not _partial(rec):
+        return ""
+    if rec.plan.truncated:
+        return "Partly checked: only the first part of this page was run."
+    return f"Partly checked: we ran {int(rec.plan.coverage * 100)}% of the code on this page."
+
+
 def badge_label(rec: RunRecord) -> str:
     month = (rec.finished_at or rec.created_at).strftime("%b %Y")
     if rec.verdict == Verdict.STILL_WORKS:
-        return f"verified working · {_runtime(rec)} · {month}"
+        return f"{'partly checked' if _partial(rec) else 'verified working'} · {_runtime(rec)} · {month}"
     if rec.verdict == Verdict.FIXED:
-        return f"fixed version available · {month}"
+        return f"fixed version available{' · partly checked' if _partial(rec) else ''} · {month}"
     if rec.verdict == Verdict.COULD_NOT_FIX:
         return f"broken · {month}"
     if rec.verdict == Verdict.NOT_RUNNABLE:

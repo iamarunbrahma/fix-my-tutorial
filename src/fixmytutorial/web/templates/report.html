@@ -14,6 +14,7 @@
 {% if rec.source.startswith("http") %}<a href="{{ rec.source }}" target="_blank" rel="noopener">Open the original tutorial</a>{% endif %}
 <div class="verdict"><span class="pill v-{{ rec.verdict.value }}">{{ verdict_text }}</span><span>{{ rec.summary or rec.reason }}</span></div>
 <p class="muted">{% if plan %}{{ "Python" if plan.language == "python" else "Node.js" }} {{ plan.runtime }} · {% endif %}checked {{ (rec.finished_at or rec.created_at).strftime("%d %b %Y") }} · model cost ${{ "%.3f"|format(rec.cost_usd) }}</p>
+{% set note = partial_note(rec) %}{% if note %}<p class="banner warn">{{ note }}</p>{% endif %}
 {% if changes %}
 <h2>{{ changes|length }} change{{ "s" if changes|length != 1 }} to make it work today</h2>
 {% for c in changes %}

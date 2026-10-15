@@ -63,3 +63,18 @@ def test_og_png_is_1200x630():
     data = og_png(record())
     img = Image.open(io.BytesIO(data))
     assert img.format == "PNG" and img.size == (1200, 630)
+
+
+
+def test_partly_checked_runs_say_so_on_the_badge():
+    from fixmytutorial.report import badge_label
+    rec = record(Verdict.STILL_WORKS)
+    partial = rec.model_copy(update={"plan": rec.plan.model_copy(update={"coverage": 0.8}), "final_plan": None})
+    assert "partly checked" in badge_label(partial) and "verified" not in badge_label(partial)
+    cut = rec.model_copy(update={"plan": rec.plan.model_copy(update={"truncated": True}), "final_plan": None})
+    assert "partly checked" in badge_label(cut)
+    assert "partly checked" not in badge_label(rec)
+    from fixmytutorial.report import partial_note
+    assert partial_note(partial) == "Partly checked: we ran 80% of the code on this page."
+    assert partial_note(cut) == "Partly checked: only the first part of this page was run."
+    assert partial_note(rec) == ""

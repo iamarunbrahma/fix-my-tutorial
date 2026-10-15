@@ -63,6 +63,8 @@ class RunPlan(BaseModel):
     not_runnable_reason: str | None = None
     note: str = ""
     steps: list[Step] = Field(default_factory=list)
+    coverage: float = 1.0  # share of the page's code lines that made it into the plan
+    truncated: bool = False  # the page or the plan was cut short
 
 
 class CodeBlock(BaseModel):
@@ -77,6 +79,7 @@ class TutorialDoc(BaseModel):
     code_blocks: list[CodeBlock] = Field(default_factory=list)
     content_hash: str
     published: str | None = None
+    truncated: bool = False  # the page was longer than we read
 
 
 class ImageRef(BaseModel):

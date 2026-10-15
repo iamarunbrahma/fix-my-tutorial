@@ -57,8 +57,8 @@ def normalize_plan(out: PlannerOutput, max_steps: int = 40, source_text: str | N
             s.expect.stdout_contains = [x for x in s.expect.stdout_contains if squash(x) and squash(x) in shown]
         s.source_excerpt = s.source_excerpt[:1200]
         steps.append(s)
-    note = ""
-    if len(steps) > max_steps:
+    note, truncated = "", len(steps) > max_steps
+    if truncated:
         note = f"This tutorial has {len(steps)} steps; only the first {max_steps} were run."
         steps = steps[:max_steps]
     for i, s in enumerate(steps, 1):
@@ -67,7 +67,7 @@ def normalize_plan(out: PlannerOutput, max_steps: int = 40, source_text: str | N
     if runnable and not steps:
         runnable, reason = False, "No runnable code steps found on that page."
     return RunPlan(language=out.language, runtime=RUNTIMES[out.language], runnable=runnable,
-                   not_runnable_reason=reason, note=note, steps=steps)
+                   not_runnable_reason=reason, note=note, steps=steps, truncated=truncated)
 
 
 async def plan_tutorial(doc: TutorialDoc, llm, settings, *, run_id: str, public: bool) -> RunPlan:
@@ -78,16 +78,22 @@ async def plan_tutorial(doc: TutorialDoc, llm, settings, *, run_id: str, public:
     out = await llm.call("planner", PLANNER_SYSTEM, user, PlannerOutput, run_id=run_id, public=public,
                          max_tokens=12000, temperature=0.1)
     ratio, missing = code_coverage(doc, out)
-    if out.runnable and ratio < MIN_COVERAGE:  # the model sometimes drops the tutorial's main code; ask once more
+    if out.runnable and ratio < 1.0:  # dropped or quietly "modernized" code would hide the rot: ask once more
         gap = (f"left out these code blocks: {', '.join(f'[block {i}]' for i in missing)}" if missing
-               else "only set things up and never ran the tutorial's code")
-        user += (f"\n\n=== CHECK ===\nYour previous plan {gap}. "
-                 "Every block a reader runs must become a step, unless rule 5 applies.")
-        out = await llm.call("planner", PLANNER_SYSTEM, user, PlannerOutput, run_id=run_id, public=public,
-                             max_tokens=12000, temperature=0.1)
-        ratio, _ = code_coverage(doc, out)
+               else "only set things up and never ran the tutorial's code" if ratio == 0
+               else "changed or left out some of the tutorial's code")
+        lines = "\n".join(f"  {ln}" for ln in missing_lines(doc, out))
+        retry = (f"{user}\n\n=== CHECK ===\nYour previous plan {gap}. Every block a reader runs must become a step, "
+                 "unless rule 5 applies, with its code exactly as written."
+                 + (f" These lines are missing or changed:\n{lines}" if lines else ""))
+        again = await llm.call("planner", PLANNER_SYSTEM, retry, PlannerOutput, run_id=run_id, public=public,
+                               max_tokens=12000, temperature=0.1)
+        ratio_again, _ = code_coverage(doc, again)
+        if ratio_again >= ratio:
+            out, ratio = again, ratio_again
     shown = "\n".join([doc.text, *(b.code for b in doc.code_blocks)])
     plan = normalize_plan(out, settings.max_steps, source_text=shown)
+    plan.coverage, plan.truncated = round(ratio, 3), plan.truncated or doc.truncated
     if plan.runnable and ratio < MIN_COVERAGE:
         plan.runnable = False
         plan.not_runnable_reason = "We couldn't turn enough of this page's code into steps we can run."
@@ -95,8 +101,20 @@ async def plan_tutorial(doc: TutorialDoc, llm, settings, *, run_id: str, public:
 
 
 def _code_lines(code: str) -> list[str]:
-    lines = (squash(PROMPT_RE.sub("", ln.strip())) for ln in code.splitlines())
+    raw = [ln.strip() for ln in code.splitlines()]
+    if any(ln.startswith(">>>") for ln in raw):  # an interactive session: lines without a prompt are output
+        raw = [ln for ln in raw if ln.startswith((">>>", "..."))]
+    lines = (squash(PROMPT_RE.sub("", ln)) for ln in raw)
     return [ln for ln in lines if len(ln) >= 4 and not ln.startswith(("#", "//"))]
+
+
+def missing_lines(doc: TutorialDoc, plan, limit: int = 12) -> list[str]:
+    planned = squash("\n".join(s.content for s in plan.steps))
+    out: list[str] = []
+    for b in doc.code_blocks[:MAX_BLOCKS]:
+        if b.lang.lower() in CODE_LANGS:
+            out += [ln for ln in _code_lines(b.code) if ln not in planned and ln not in out]
+    return out[:limit]
 
 
 def code_coverage(doc: TutorialDoc, plan) -> tuple[float, list[int]]:

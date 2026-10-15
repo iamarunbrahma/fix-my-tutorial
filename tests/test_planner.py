@@ -152,3 +152,48 @@ def test_prompts_explain_that_cd_does_not_carry_over_and_forbid_hiding_failures(
         assert "A `cd` does not carry over" in prompt
     assert "Never hide a failure" in REPAIR_SYSTEM
     assert "new_kind to change the step's kind" in REPAIR_SYSTEM
+
+
+
+MODERNIZED = planner_json([
+    {"id": "a", "title": "i", "kind": "shell", "content": "pip install pandas"},
+    {"id": "b", "title": "r", "kind": "run_code", "content": PANDAS_DOC.code_blocks[1].code.replace(
+        'df = df.append({"a": 1}, ignore_index=True)', 'df = pd.concat([df, pd.DataFrame([{"a": 1}])])')}])
+
+
+async def test_a_quietly_changed_line_is_sent_back_by_name(settings, tmp_path):
+    client = FakeChatClient([MODERNIZED, FULL])
+    llm = LLM(settings, Ledger(tmp_path / "l.db", settings), client=client)
+    plan = await plan_tutorial(PANDAS_DOC, llm, settings, run_id="r", public=True)
+    assert len(client.calls) == 2
+    assert 'df = df.append({"a": 1}, ignore_index=True)' in client.calls[1]["messages"][1]["content"]
+    assert plan.coverage == 1.0
+
+
+async def test_a_plan_that_stays_partial_is_recorded_as_partial(settings, tmp_path):
+    client = FakeChatClient([MODERNIZED, MODERNIZED])
+    llm = LLM(settings, Ledger(tmp_path / "l.db", settings), client=client)
+    plan = await plan_tutorial(PANDAS_DOC, llm, settings, run_id="r", public=True)
+    assert plan.runnable and 0.5 <= plan.coverage < 1.0
+
+
+def test_output_lines_of_interactive_examples_are_not_code():
+    from fixmytutorial.planner import code_coverage
+    doc = TutorialDoc(source="x", title="t", text="", content_hash="h", code_blocks=[
+        CodeBlock(lang="python", code=">>> import numpy as np\n>>> np.zeros(3)\narray([0., 0., 0.])\n")])
+    out = PlannerOutput.model_validate_json(planner_json([
+        {"id": "a", "title": "r", "kind": "run_code", "content": "import numpy as np\nprint(np.zeros(3))"}]))
+    assert code_coverage(doc, out)[0] == 1.0
+
+
+def test_capped_plans_are_marked_truncated():
+    steps = [{"id": f"a{i}", "title": "t", "kind": "shell", "content": f"echo {i}"} for i in range(45)]
+    assert normalize_plan(PlannerOutput.model_validate_json(planner_json(steps)), max_steps=40).truncated
+
+
+async def test_a_cut_off_page_marks_the_plan_truncated(settings, tmp_path):
+    client = FakeChatClient([FULL])
+    llm = LLM(settings, Ledger(tmp_path / "l.db", settings), client=client)
+    plan = await plan_tutorial(PANDAS_DOC.model_copy(update={"truncated": True}), llm, settings, run_id="r",
+                               public=True)
+    assert plan.truncated

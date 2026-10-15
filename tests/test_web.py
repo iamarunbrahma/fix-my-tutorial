@@ -261,3 +261,12 @@ def test_server_leaves_forwarded_headers_to_the_app():
     from pathlib import Path
     cmd = next(ln for ln in (Path(__file__).parents[1] / "Dockerfile").read_text().splitlines() if ln.startswith("CMD"))
     assert "--no-proxy-headers" in cmd and "--forwarded-allow-ips" not in cmd
+
+
+def test_report_page_says_when_a_check_was_partial(env):
+    client, deps = env
+    rec = done_record()
+    deps.store.save_run(rec.model_copy(update={"id": "part1", "plan": rec.plan.model_copy(update={"coverage": 0.8})}))
+    assert "Partly checked: we ran 80% of the code on this page." in client.get("/r/part1").text
+    deps.store.save_run(rec)
+    assert "Partly checked" not in client.get("/r/done1").text
