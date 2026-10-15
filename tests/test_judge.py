@@ -33,3 +33,9 @@ async def test_judge_error_falls_back_to_pass(settings, tmp_path):
 
 async def test_no_llm_passes_fuzzy_on_exit_zero():
     assert (await Judge(None).check(step(description="x"), 0, "", run_id="r", public=True)).passed
+
+
+def test_stdout_match_ignores_whitespace_differences():
+    assert deterministic_check(step(stdout_contains=["   name  score"]), 0, "  name  score\n0  ana     91") is True
+    assert deterministic_check(step(stdout_contains=["name score"]), 0, "name\nscores") is True
+    assert deterministic_check(step(stdout_contains=["name score"]), 0, "namescore") is False

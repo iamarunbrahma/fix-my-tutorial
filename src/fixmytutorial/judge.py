@@ -5,10 +5,16 @@ from .models import Judgement, Step
 from .prompts import JUDGE_SYSTEM
 
 
+def squash(text: str) -> str:
+    """Collapse whitespace runs so column alignment never decides a match."""
+    return " ".join(text.split())
+
+
 def deterministic_check(step: Step, exit_code: int, stdout: str) -> bool | None:
     if exit_code != step.expect.exit_code:
         return False
-    if any(s not in stdout for s in step.expect.stdout_contains):
+    out = squash(stdout)
+    if any(squash(s) not in out for s in step.expect.stdout_contains):
         return False
     if step.kind == "run_code" and step.expect.description and not step.expect.stdout_contains:
         return None

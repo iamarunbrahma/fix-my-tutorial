@@ -72,3 +72,19 @@ def test_prompts_forbid_unsourced_version_claims():
     from fixmytutorial.prompts import REPAIR_SYSTEM, SUMMARY_SYSTEM
     assert "only if a cited source states it" in REPAIR_SYSTEM
     assert "only if a cited source states it" in SUMMARY_SYSTEM
+
+
+def test_drops_stdout_literals_the_tutorial_never_shows():
+    out = PlannerOutput.model_validate_json(planner_json([
+        {"id": "a", "title": "t", "kind": "run_code", "content": "print(df)",
+         "expect": {"stdout_contains": ["   name  score", "Accuracy: 0.93"]}}]))
+    plan = normalize_plan(out, source_text="Run it and you will see\nAccuracy:   0.93\n")
+    assert plan.steps[0].expect.stdout_contains == ["Accuracy: 0.93"]
+
+
+async def test_plan_tutorial_keeps_only_literals_from_the_page(settings, tmp_path):
+    client = FakeChatClient([planner_json([{"id": "a", "title": "t", "kind": "run_code", "content": "print(1)",
+                                            "expect": {"stdout_contains": ["1", "invented"]}}])])
+    llm = LLM(settings, Ledger(tmp_path / "l.db", settings), client=client)
+    plan = await plan_tutorial(doc(), llm, settings, run_id="r", public=True)
+    assert plan.steps[0].expect.stdout_contains == ["1"]

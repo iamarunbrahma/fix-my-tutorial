@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import re
 
+from .judge import squash
 from .models import PlannerOutput, Probe, RunPlan, Step, TutorialDoc
 from .prompts import PLANNER_SYSTEM
 
@@ -22,7 +23,8 @@ def render_planner_input(doc: TutorialDoc, max_chars: int) -> str:
             f"=== CODE BLOCKS IN ORDER ===\n{blocks}")
 
 
-def normalize_plan(out: PlannerOutput, max_steps: int = 40) -> RunPlan:
+def normalize_plan(out: PlannerOutput, max_steps: int = 40, source_text: str | None = None) -> RunPlan:
+    shown = squash(source_text) if source_text is not None else None
     steps: list[Step] = []
     for ps in out.steps:
         if not ps.content.strip():
@@ -34,6 +36,8 @@ def normalize_plan(out: PlannerOutput, max_steps: int = 40) -> RunPlan:
         if s.kind == "serve" and s.probe is None:
             m = PORT_RE.search(s.content)
             s.probe = Probe(port=int(m.group(1)) if m else (8000 if out.language == "python" else 3000))
+        if shown is not None:  # only literals the tutorial actually shows may gate a step
+            s.expect.stdout_contains = [x for x in s.expect.stdout_contains if squash(x) and squash(x) in shown]
         s.source_excerpt = s.source_excerpt[:1200]
         steps.append(s)
     note = ""
@@ -55,4 +59,5 @@ async def plan_tutorial(doc: TutorialDoc, llm, settings, *, run_id: str, public:
                        not_runnable_reason="No code found on that page.", steps=[])
     out = await llm.call("planner", PLANNER_SYSTEM, render_planner_input(doc, settings.max_tutorial_chars),
                          PlannerOutput, run_id=run_id, public=public, max_tokens=12000, temperature=0.1)
-    return normalize_plan(out, settings.max_steps)
+    shown = "\n".join([doc.text, *(b.code for b in doc.code_blocks)])
+    return normalize_plan(out, settings.max_steps, source_text=shown)
