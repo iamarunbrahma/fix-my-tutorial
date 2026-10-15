@@ -1,4 +1,4 @@
-# FixMyTutorial - Design Spec
+# Fix My Tutorial - Design Spec
 
 - **Date:** 2026-10-15
 - **Event:** Nebius x NVIDIA Global AI Hackathon (Devpost)
@@ -12,7 +12,7 @@
 
 Coding tutorials rot. A guide written in 2023 breaks in 2026 because a library removed a function, renamed a package, or changed its defaults. Learners hit the error, search for hours, and often give up. AI coding assistants trained on those same tutorials repeat the broken code. NVIDIA's own OpenShell repo has an open issue literally titled "Tutorial Rot" (#2998).
 
-**FixMyTutorial** takes any Python or JavaScript tutorial URL and:
+**Fix My Tutorial** takes any Python or JavaScript tutorial URL and:
 
 1. turns the prose into an executable plan (Nemotron 3 Super),
 2. runs it step by step in an isolated Token Factory Sandbox, saving a snapshot after each step,
@@ -20,7 +20,7 @@ Coding tutorials rot. A guide written in 2023 breaks in 2026 because a library r
 4. runs all three fixes in parallel from the last good snapshot and keeps the one that passes,
 5. replays the whole patched tutorial from scratch to prove it works, then publishes a report: a verdict, a code diff where every change carries its reason and citation, and an embeddable "Verified working" badge.
 
-A public **Rot Index** shows the result of running FixMyTutorial on about 100 popular tutorials: how many still work, why the rest broke, and the verified fix for each.
+A public **Rot Index** shows the result of running Fix My Tutorial on about 100 popular tutorials: how many still work, why the rest broke, and the verified fix for each.
 
 ## 2. Goals and success criteria
 
@@ -98,7 +98,7 @@ A project can win one overall prize, or one track prize plus one bonus. Targets:
 4. **Rot Index** `/index`:
    - Headline stats (% still working, % fixed, % could not fix, % not runnable).
    - Root-cause breakdown and a filterable table (language, source site, publish year, verdict) linking to each report.
-5. **Badge** `/badge/{run_id}.svg` - for example "FixMyTutorial · verified working · Python 3.12 · Oct 2026", or "fixed version available".
+5. **Badge** `/badge/{run_id}.svg` - for example "Fix My Tutorial · verified working · Python 3.12 · Oct 2026", or "fixed version available".
 
 ### 5.2 Verdicts
 
