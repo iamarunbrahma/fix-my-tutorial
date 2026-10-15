@@ -110,3 +110,16 @@ async def test_concurrent_reservations_never_exceed_cap(settings, tmp_path):
 
     await asyncio.gather(*(one(i) for i in range(20)))
     assert ok == 4  # 4 * 0.022 = 0.088 <= 0.1; a 5th would exceed
+
+
+def test_charge_reserved_records_full_estimate(settings, tmp_path):
+    led, _ = make(settings, tmp_path)
+    r = led.reserve_llm("run1", True, "repair", 10_000, 4_000)
+    usd = led.charge_reserved(r, "repair", "m")
+    assert usd == pytest.approx(r.amount) and led.totals("run1").run_usd == pytest.approx(r.amount)
+
+
+def test_commit_never_records_less_than_zero(settings, tmp_path):
+    led, _ = make(settings, tmp_path)
+    r = led.reserve_llm("run1", True, "planner", 100, 100)
+    assert led.commit_llm(r, "planner", "m", 0, 0) == 0

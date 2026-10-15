@@ -53,3 +53,13 @@ async def test_run_credit_cap(settings, tmp_path):
     await sc.search("a", run_id="r", public=True)
     with pytest.raises(BudgetExceeded):
         await sc.search("b", run_id="r", public=True)
+
+
+async def test_search_error_charges_reserved_credit(settings, tmp_path):
+    class Boom(FakeTavily):
+        async def search(self, query, **kw):
+            raise TimeoutError("tavily timed out")
+    sc, led = make(settings, tmp_path, Boom())
+    with pytest.raises(TimeoutError):
+        await sc.search("q", run_id="r", public=True)
+    assert led.totals("r").run_credits == 1

@@ -132,7 +132,7 @@ class Ledger:
 
     def commit_llm(self, res: Reservation, role: str, model: str, prompt_tokens: int,
                    completion_tokens: int) -> float:
-        usd = self.price_usd(role, prompt_tokens, completion_tokens)
+        usd = max(0.0, self.price_usd(role, prompt_tokens, completion_tokens))
         with self._lock:
             self._pending.pop(res.id, None)
             self._insert(res, role, model, prompt_tokens, completion_tokens, 0, usd)
@@ -142,6 +142,17 @@ class Ledger:
         with self._lock:
             self._pending.pop(res.id, None)
             self._insert(res, "search", "tavily", 0, 0, credits_used, 0.0)
+
+    def charge_reserved(self, res: Reservation, role: str, model: str) -> float:
+        """Record the full reservation as spent. Used when a call failed in a way that may still have been billed
+        (timeouts, dropped connections, server errors), so the guard fails closed instead of open."""
+        with self._lock:
+            self._pending.pop(res.id, None)
+            if res.kind == "llm":
+                self._insert(res, role, model, -1, -1, 0, res.amount)
+                return res.amount
+            self._insert(res, role, model, 0, 0, int(res.amount), 0.0)
+            return 0.0
 
     def release(self, res: Reservation) -> None:
         with self._lock:

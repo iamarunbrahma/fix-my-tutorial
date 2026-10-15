@@ -58,13 +58,6 @@ async def test_gives_up_after_two_invalid(settings, tmp_path):
         await llm.call("planner", "sys", "u", Out, run_id="r", public=False)
 
 
-async def test_api_error_releases_reservation(settings, tmp_path):
-    llm, _, led = make_llm(settings, tmp_path, [RuntimeError("boom")])
-    with pytest.raises(RuntimeError):
-        await llm.call("repair", "sys", "u", Out, run_id="r", public=False)
-    assert led.totals("r").run_usd == 0
-
-
 async def test_budget_exceeded_stops_before_api_call(settings, tmp_path):
     s = settings.model_copy(update={"cap_run_usd": 0.000001})
     led = Ledger(tmp_path / "l.db", s)
@@ -78,3 +71,53 @@ async def test_missing_usage_falls_back_to_estimate(settings, tmp_path):
     llm, _, led = make_llm(settings, tmp_path, ['{"ok": true, "n": 1}'], usage=None)
     await llm.call("judge", "sys", "u", Out, run_id="r", public=False)
     assert led.totals("r").run_usd > 0
+
+
+def make_exc(cls, msg="x"):
+    e = cls.__new__(cls)
+    Exception.__init__(e, msg)
+    return e
+
+
+def test_estimate_is_an_upper_bound_on_tokens():
+    from fixmytutorial.llm import estimate_tokens
+    assert estimate_tokens("abcd") >= 4
+    assert estimate_tokens("naïve 日本語") >= len("naïve 日本語".encode())
+
+
+def test_default_client_has_no_hidden_retries(settings, tmp_path):
+    s = settings.model_copy(update={"nebius_api_key": "k"})
+    assert LLM(s, Ledger(tmp_path / "l.db", s)).client.max_retries == 0
+
+
+async def test_unknown_error_is_charged_pessimistically(settings, tmp_path):
+    llm, _, led = make_llm(settings, tmp_path, [RuntimeError("boom")])
+    with pytest.raises(RuntimeError):
+        await llm.call("repair", "sys", "u", Out, run_id="r", public=False)
+    assert led.totals("r").run_usd > 0
+
+
+async def test_rate_limit_is_not_charged_and_is_retried(settings, tmp_path):
+    import openai
+    llm, client, led = make_llm(settings, tmp_path, [make_exc(openai.RateLimitError), '{"ok": true, "n": 1}'])
+    llm._backoff = (0, 0)
+    out = await llm.call("triage", "sys", "u", Out, run_id="r", public=False)
+    assert out.n == 1 and len(client.calls) == 2
+    assert led.totals("r").run_usd == pytest.approx(led.price_usd("triage", 100, 50))
+
+
+async def test_timeout_is_charged_then_retried(settings, tmp_path):
+    import openai
+    llm, client, led = make_llm(settings, tmp_path, [make_exc(openai.APITimeoutError), '{"ok": true, "n": 1}'])
+    llm._backoff = (0, 0)
+    await llm.call("triage", "sys", "u", Out, run_id="r", public=False)
+    assert len(client.calls) == 2
+    assert led.totals("r").run_usd > led.price_usd("triage", 100, 50)
+
+
+async def test_bad_request_is_not_charged_or_retried(settings, tmp_path):
+    import openai
+    llm, client, led = make_llm(settings, tmp_path, [make_exc(openai.BadRequestError)])
+    with pytest.raises(openai.BadRequestError):
+        await llm.call("triage", "sys", "u", Out, run_id="r", public=False)
+    assert len(client.calls) == 1 and led.totals("r").run_usd == 0

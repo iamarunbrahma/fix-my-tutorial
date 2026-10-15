@@ -37,7 +37,7 @@ class SearchClient:
         try:
             resp = await self.client.search(query=query, search_depth="basic", max_results=max_results)
         except Exception:
-            self.ledger.release(res)
+            self.ledger.charge_reserved(res, "search", "tavily")  # may have been billed; fail closed
             raise
         self.ledger.commit_tavily(res, 1)
         results = [{"url": r["url"], "title": r.get("title", ""), "content": r.get("content", ""),
@@ -61,7 +61,7 @@ class SearchClient:
         try:
             resp = await self.client.extract(urls=urls, **kwargs)
         except Exception:
-            self.ledger.release(res)
+            self.ledger.charge_reserved(res, "search", "tavily")  # may have been billed; fail closed
             raise
         ok = [{"url": r["url"], "raw_content": r.get("raw_content") or ""} for r in resp.get("results", [])]
         self.ledger.commit_tavily(res, extract_credits(max(1, len(ok)), depth))
