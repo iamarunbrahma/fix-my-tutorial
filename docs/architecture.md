@@ -39,9 +39,11 @@ All modules live in `src/fixmytutorial/`.
 | `triage` | Nemotron 3.5 Lightning turns a failure log into a `FailureSignature` (category, key line, package, symbol) |
 | `research` | Tavily search plus extract-with-query on official docs, changelogs and issue trackers; returns quoted, cited evidence |
 | `repair` | Nemotron 3 Ultra proposes up to 3 candidate fixes per round (migrate, pin, workaround); they race in parallel from the last good checkpoint; up to 3 rounds |
+| `breakage` | After a Fixed or Could not fix verdict: Nemotron 3.5 Lightning names the release from the cited notes (only real releases that the quote states), PyPI or npm gives release dates, and the failing step runs from its checkpoint with neighbouring releases to confirm it. Best effort, never changes the verdict |
 | `pipeline` | Runs the stages above for one run and decides the verdict |
 | `jobs` | In-process run queue with queue-position events |
-| `report` | Diff, verdict, badge SVG and OG image for a finished run |
+| `report` | Diff, verdict, badge SVG and OG image for a finished run; "when it broke" text and Rot Index release stats |
+| `author` | A note for the tutorial's author and a pre-filled GitHub new-issue link (filed by the visitor, never by us) |
 | `store` | SQLite persistence for runs, events and the cache |
 | `snapshot` | Copies runs and the spend ledger to a private Hugging Face dataset so a restarted Space keeps its history and true lifetime spend |
 | `events` | Per-run event bus backed by the store; feeds Server-Sent Events |
@@ -90,7 +92,7 @@ Each run streams JSON events over SSE (`/run/{run_id}/events`). Every event has 
 | type | Fields | Meaning |
 |---|---|---|
 | `queue` | `position` | Waiting for a free run slot |
-| `stage` | `stage` | Run status changed (`ingesting`, `planning`, `executing`, `repairing`, `replaying`) |
+| `stage` | `stage` | Run status changed (`ingesting`, `planning`, `executing`, `repairing`, `replaying`, `dating`) |
 | `plan` | `title`, `language`, `runtime`, `note`, `steps[]` | The plan, re-sent after each applied fix |
 | `step` | `step_id`, `status`, `phase`, `output?`, `duration_s?` | `running`, `passed`, `failed`, `pending`, `repairing` or `repaired`; `phase` is `run` or `replay` |
 | `diagnosis` | `step_id`, `category`, `key_line`, `package`, `symbol` | Triage result for a failing step |
@@ -98,6 +100,7 @@ Each run streams JSON events over SSE (`/run/{run_id}/events`). Every event has 
 | `candidates` | `step_id`, `round`, `candidates[]` | The fixes proposed for this round |
 | `candidate_result` | `step_id`, `round`, `index`, `passed`, `error` | Outcome of one racing candidate |
 | `winner` | `step_id`, `round`, `index` | The passing candidate that was applied to the tutorial |
+| `broke_in` | `package`, `first_bad`, `first_bad_date`, `last_good?`, `how`, `evidence_id?`, `text` | The release that broke the tutorial; `how` is `ran` (both releases were run) or `release_notes` |
 | `verdict` | `verdict`, `reason`, `summary`, `cost_usd`, `note` | Final result; `note` says when only part of the page was checked |
 | `done` | | Stream end |
 | `ping` | | Keep-alive while nothing new has happened |

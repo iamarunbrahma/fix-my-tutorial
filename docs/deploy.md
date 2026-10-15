@@ -4,7 +4,8 @@
 
 1. `uv run python -m fixmytutorial.rot_index sync` (first time ever: add `--bootstrap`). This uploads local runs and their events so the Space can show Rot Index reports. The laptop never uploads spend: the Space owns the remote `ledger.json` and its own budget ($15 lifetime), the laptop keeps a separate local budget ($11), and both together stay under the account's credits. `--bootstrap` creates an empty `ledger.json` if none exists, so the Space's first boot can verify its (zero) past spend.
 2. `uv run python scripts/deploy_space.py`. It creates the Space and sets secrets and variables (`SANDBOX_BACKEND=contree`), then uploads the app.
-3. Check `/healthz`, then `/admin/ledger?token=...` (lifetime spend is the Space's own), then run one fixture tutorial.
+3. Check `/healthz`, then `/admin/ledger?token=...` (lifetime spend is the Space's own; `reserve.held` is true until 1 December, with `caps.public` at $7.50), then run one fixture tutorial.
+4. Open every "Tutorials we already checked" card on the live home page and every report link on `/index`. Each must open its report on the Space: these saved reports are what visitors and judges still see when public runs are paused.
 
 Tutorial code runs inside Token Factory Sandboxes microVMs, never on the Space itself.
 

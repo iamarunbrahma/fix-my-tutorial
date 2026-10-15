@@ -37,6 +37,7 @@ Shared: llm (Token Factory client + routing), ledger (spend guard),
 3. **Diagnose.** When a step fails, Nemotron 3.5 Lightning classifies the error (removed API, renamed package, version conflict and so on), and Tavily finds the release note, migration guide or issue that explains it.
 4. **Repair.** Nemotron 3 Ultra proposes up to three fixes (migrate to the new API, pin an older version, or work around it). When evidence was found, each fix must cite it. The fixes race in parallel sandboxes from the last good checkpoint.
 5. **Prove it.** The repaired tutorial is replayed from scratch before it is called fixed. The report shows the diff, the cited reasons, and a badge.
+6. **Date it.** When a package change broke the step, Nemotron 3.5 Lightning reads the cited release notes and names the release that made the change. Only a version that exists on PyPI or npm and appears in the quoted text counts. The step then runs from its checkpoint with that release and the one before it, and a short binary search corrects a wrong guess. The report says, for example, "Broke in pandas 2.0.0, released 3 Apr 2023", and how long the tutorial worked when the page states its publish date. When older releases can't install on today's Python, the answer comes from the cited notes and says so.
 
 | Role | Model | Price per 1M tokens (in / out) | Why this size |
 |---|---|---|---|
@@ -45,6 +46,13 @@ Shared: llm (Token Factory client + routing), ledger (spend guard),
 | judge | `nvidia/NVIDIA-Nemotron-3-Nano-30B-A3B` | $0.06 / $0.24 | Cheap yes/no on fuzzy expectations ("prints the accuracy") |
 | repair | `nvidia/Nemotron-3-Ultra-550b-a55b` | $1.00 / $3.00 | Hard reasoning over the error, the code and the evidence; only runs on failures |
 | summary | `nvidia/nemotron-3-super-120b-a12b` | $0.30 / $0.90 | One plain-language paragraph about the run |
+| release finder | `nvidia/Nemotron-3_5-Lightning` | $0.06 / $0.24 | Reads the cited release notes for the version that made the change |
+
+After a check, the report offers:
+
+- **Tell the author.** For a tutorial on GitHub, "Open an issue" opens GitHub's new-issue page filled in with what broke, the fix and its sources, for you to review and file from your own account. For any other site, copy the same note.
+- **A badge** the author can add to the page.
+- **Check from any page.** Drag the "Check this tutorial" bookmark from the home page to your bookmarks bar, or share a link like `/?url=<tutorial>`. The link only fills in the form; a run always starts with a click.
 
 More detail: [docs/architecture.md](docs/architecture.md).
 
@@ -53,7 +61,7 @@ More detail: [docs/architecture.md](docs/architecture.md).
 Four Nemotron sizes split the work so the expensive model only runs when something is actually broken:
 
 - **Nemotron 3 Super** plans every run (about $0.0013 per plan) and writes the summary (about $0.0004).
-- **Nemotron 3.5 Lightning** triages each failure (about $0.0002 per call).
+- **Nemotron 3.5 Lightning** triages each failure (about $0.0002 per call) and reads the release notes for the version that broke it.
 - **Nemotron 3 Nano** judges fuzzy expectations (about $0.00004 per call); exact checks never reach a model.
 - **Nemotron 3 Ultra** writes the fixes (about $0.01 per repair round) and is the bulk of the cost.
 
@@ -97,6 +105,7 @@ A bank card sits behind the Token Factory account, so the app is built to never 
 - Every model and Tavily call goes through a ledger that reserves an upper-bound cost first, and refuses the call if it would cross a cap.
 - The public demo and our own evaluation runs have separate budgets ($15 and $11 lifetime) that, with a margin for runs cut off by a restart, stay under the account's $30.50 of credits. So neither has to trust the other's records.
 - Daily and per-run caps: $3 a day, $0.50 per run, 30 Tavily credits per run and 5,000 lifetime.
+- Until 1 December, when judging starts, the demo holds $7.50 of its $15 back from public runs, so a busy launch can't leave the demo closed for judges. Past reports and the Rot Index stay open while public runs are paused.
 - Calls that fail after they may have been billed are charged at their upper bound.
 - If the demo's ledger can't be loaded or saved, public runs pause instead of starting from zero, and the app keeps retrying until it can.
 - Public runs are limited to 3 per hour per visitor.
@@ -107,6 +116,7 @@ A bank card sits behind the Token Factory account, so the app is built to never 
 - Python and JavaScript only.
 - Code that calls OpenAI-style APIs talks to a stand-in server inside the sandbox. It proves the SDK calls are correct today, not what a real model would answer.
 - Fixes are checked by running the tutorial, not by reading it. A step with no visible output passes if it exits cleanly.
+- "When it broke" needs an older release that still installs on Python 3.12 or Node.js 22 to be checked by running. Otherwise it rests on the cited release notes, and the report says so.
 
 ## Roadmap
 

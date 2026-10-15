@@ -10,6 +10,9 @@
 > 1. Beat 9: replace `ROT_INDEX_STAT` with the real headline from `rot_index/results.json`.
 > 2. Beats 4 and 11: if Token Factory Sandboxes access is granted and the demo runs on it, say
 >    "Token Factory Sandbox"; if we fall back to Docker, keep "isolated sandbox" and drop the Sandboxes claim in beat 11.
+> 3. Features added on 2026-10-15 after this draft: "When it broke" (release, date, how long it worked), "Tell the
+>    author" (pre-filled GitHub issue) and the Rot Index "Releases that broke the most tutorials" list. Propose where
+>    they fit (likely the report beat and beat 9) and get Arun's OK on the revised lines before recording.
 
 Every number spoken below must be real and reproducible:
 
