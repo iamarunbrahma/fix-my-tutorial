@@ -5,6 +5,7 @@ Space is its only writer (owns_ledger): the laptop keeps its own ledger and budg
 runs and events but never ledger.json, so it can never erase spend the Space recorded. Every Space path fails
 closed: if past spend cannot be loaded or saved, public runs pause until heal() succeeds.
 """
+
 from __future__ import annotations
 
 import json
@@ -24,6 +25,7 @@ NOT_CONFIGURED = "spend records are not set up."
 class HubAdapter:
     def __init__(self, token: str):
         from huggingface_hub import HfApi
+
         self._api = HfApi(token=token)
         self._token = token
 
@@ -38,6 +40,7 @@ class HubAdapter:
 
     def snapshot_download(self, **kw) -> str:
         from huggingface_hub import snapshot_download
+
         return snapshot_download(token=self._token, **kw)
 
 
@@ -53,7 +56,9 @@ class Snapshotter:
         self.last_restore_error = ""  # "", "unreachable", "missing" or "corrupt"
         self._merged = False  # True once this process has loaded the remote ledger (safe to upload ours)
         self._repo_ready = False
-        self._lock = threading.Lock()  # one save at a time, so the newest ledger is always the last one uploaded
+        self._lock = (
+            threading.Lock()
+        )  # one save at a time, so the newest ledger is always the last one uploaded
 
     def _ensure_repo(self) -> None:
         if not self._repo_ready:
@@ -61,12 +66,19 @@ class Snapshotter:
             self._repo_ready = True
 
     def _upload(self, data: bytes, path: str) -> None:
-        self.api.upload_file(path_or_fileobj=data, path_in_repo=path, repo_id=self.repo, repo_type="dataset",
-                             commit_message=f"Update {path}")
+        self.api.upload_file(
+            path_or_fileobj=data,
+            path_in_repo=path,
+            repo_id=self.repo,
+            repo_type="dataset",
+            commit_message=f"Update {path}",
+        )
 
     def _download(self, patterns: list[str]) -> Path:
         self._ensure_repo()
-        return Path(self.api.snapshot_download(repo_id=self.repo, repo_type="dataset", allow_patterns=patterns))
+        return Path(
+            self.api.snapshot_download(repo_id=self.repo, repo_type="dataset", allow_patterns=patterns)
+        )
 
     def _restore_runs(self, local: Path) -> int:
         restored = 0
@@ -204,8 +216,12 @@ class Snapshotter:
                         ledger_rows = self.ledger.export_rows()
                     if ledger_rows is not None:
                         (root / "ledger.json").write_text(json.dumps(ledger_rows))
-                    self.api.upload_folder(folder_path=d, repo_id=self.repo, repo_type="dataset",
-                                           commit_message=f"Batch update ({len(records)} runs)")
+                    self.api.upload_folder(
+                        folder_path=d,
+                        repo_id=self.repo,
+                        repo_type="dataset",
+                        commit_message=f"Batch update ({len(records)} runs)",
+                    )
             except Exception:
                 log.exception("snapshot batch save failed")
                 return False

@@ -153,7 +153,14 @@ def target(evidence=EVID, versions=FREEZE, sig=SIG):
 
 
 async def find(
-    settings, tmp_path, outcomes, reply: str | Exception = GUESS, registry=None, time_s: float = 30, search=None, **kw
+    settings,
+    tmp_path,
+    outcomes,
+    reply: str | Exception = GUESS,
+    registry=None,
+    time_s: float = 30,
+    search=None,
+    **kw,
 ):
     calls = []
 
@@ -237,16 +244,28 @@ async def test_versions_the_sources_do_not_state_are_never_shown(settings, tmp_p
 
 
 async def test_a_version_the_source_never_states_is_not_trusted(settings, tmp_path):
-    evidence = [EVID[0].model_copy(update={"url": "https://stackoverflow.com/q/123",
-                                           "quote": "DataFrame.append was removed. Use pandas.concat instead."})]
+    evidence = [
+        EVID[0].model_copy(
+            update={
+                "url": "https://stackoverflow.com/q/123",
+                "quote": "DataFrame.append was removed. Use pandas.concat instead.",
+            }
+        )
+    ]
     bp, _ = await find(settings, tmp_path, {"1.5.3": "no_install", "2.0.0": "same"}, evidence=evidence)
     assert bp is None
 
 
 async def test_a_version_stated_by_the_release_note_address_is_trusted(settings, tmp_path):
-    evidence = [EVID[0].model_copy(update={"quote": "DataFrame.append was removed. Use pandas.concat instead."})]
+    evidence = [
+        EVID[0].model_copy(update={"quote": "DataFrame.append was removed. Use pandas.concat instead."})
+    ]
     bp, _ = await find(settings, tmp_path, {"1.5.3": "no_install", "2.0.0": "same"}, evidence=evidence)
-    assert (bp.first_bad, bp.how, bp.source.url) == ("2.0.0", "release_notes", "https://pandas.pydata.org/whatsnew/v2.0.0")
+    assert (bp.first_bad, bp.how, bp.source.url) == (
+        "2.0.0",
+        "release_notes",
+        "https://pandas.pydata.org/whatsnew/v2.0.0",
+    )
 
 
 async def test_without_release_notes_the_start_of_the_major_series_is_tried(settings, tmp_path):
@@ -347,23 +366,41 @@ async def test_probe_runs_the_failing_step_with_one_release_from_the_checkpoint(
     assert await probe("3.0.0") == "other"  # fails, but not with the error we are dating
 
 
-OPENAI_REL = [Release(version=v, date=date.fromisoformat(d)) for v, d in [
-    ("0.27.0", "2023-03-01"), ("0.28.1", "2023-09-20"), ("1.0.0", "2023-11-06"), ("1.5.0", "2023-12-17"),
-    ("2.0.0", "2025-09-30"), ("2.3.0", "2026-08-01")]]
+OPENAI_REL = [
+    Release(version=v, date=date.fromisoformat(d))
+    for v, d in [
+        ("0.27.0", "2023-03-01"),
+        ("0.28.1", "2023-09-20"),
+        ("1.0.0", "2023-11-06"),
+        ("1.5.0", "2023-12-17"),
+        ("2.0.0", "2025-09-30"),
+        ("2.3.0", "2026-08-01"),
+    ]
+]
 
 
 async def test_steps_back_a_series_when_the_change_is_older(settings, tmp_path):
     reply = json.dumps({"package": "pandas", "version": "", "evidence_id": ""})
     outcomes = {"1.5.0": "same", "2.0.0": "same", "0.28.1": "pass", "1.0.0": "same"}
-    bp, calls = await find(settings, tmp_path, outcomes, reply=reply, registry=FakeRegistry(OPENAI_REL),
-                           versions="pandas==2.3.0\n")
+    bp, calls = await find(
+        settings,
+        tmp_path,
+        outcomes,
+        reply=reply,
+        registry=FakeRegistry(OPENAI_REL),
+        versions="pandas==2.3.0\n",
+    )
     assert (bp.first_bad, bp.last_good, bp.how) == ("1.0.0", "0.28.1", "ran") and len(calls) == 4
 
 
 async def test_the_package_is_read_from_the_failing_step_when_nobody_names_it(settings, tmp_path):
     reply = json.dumps({"package": "", "version": "", "evidence_id": ""})
-    step_plan = PLAN.model_copy(update={"steps": PLAN.steps[:2] + [PLAN.steps[2].model_copy(
-        update={"content": "import pandas as pd\ndf = df.append({'a': 1})"})]})
+    step_plan = PLAN.model_copy(
+        update={
+            "steps": PLAN.steps[:2]
+            + [PLAN.steps[2].model_copy(update={"content": "import pandas as pd\ndf = df.append({'a': 1})"})]
+        }
+    )
     calls = []
 
     async def probe(version):
@@ -371,10 +408,25 @@ async def test_the_package_is_read_from_the_failing_step_when_nobody_names_it(se
         return {"1.5.3": "pass", "2.0.0": "same"}[version]
 
     llm = LLM(settings, Ledger(tmp_path / "l.db", settings), client=FakeChatClient([reply]))
-    t = BreakTarget(plan=step_plan, trace=None, step_id="s3", signature=SIG.model_copy(update={"package": None}),
-                    evidence=EVID, versions=FREEZE)
-    bp = await find_break(t, language="python", llm=llm, registry=FakeRegistry(), probe_for=lambda p: probe,
-                          max_probes=6, time_s=30, run_id="r", public=True)
+    t = BreakTarget(
+        plan=step_plan,
+        trace=None,
+        step_id="s3",
+        signature=SIG.model_copy(update={"package": None}),
+        evidence=EVID,
+        versions=FREEZE,
+    )
+    bp = await find_break(
+        t,
+        language="python",
+        llm=llm,
+        registry=FakeRegistry(),
+        probe_for=lambda p: probe,
+        max_probes=6,
+        time_s=30,
+        run_id="r",
+        public=True,
+    )
     assert bp.package == "pandas" and bp.first_bad == "2.0.0"
 
 
@@ -392,13 +444,31 @@ class FakeSearch:
 
 
 NOTES_URL = "https://numpy.org/doc/stable/release/1.24.0-notes.html"
-NP_REL = [Release(version=v, date=date.fromisoformat(d)) for v, d in [
-    ("1.23.5", "2022-11-20"), ("1.24.0", "2022-12-18"), ("1.26.4", "2024-02-05"), ("2.0.0", "2024-06-16"),
-    ("2.3.1", "2026-06-01")]]
-NP_SIG = FailureSignature(category="removed_api", error_type="AttributeError", package="numpy", symbol="numpy.float",
-                          key_line="AttributeError: module 'numpy' has no attribute 'float'.")
-NP_EVID = [Evidence(id="r1e1", url="https://stackoverflow.com/q/1", title="np.float error",
-                    quote="np.float was a deprecated alias for the builtin float. Use float instead.")]
+NP_REL = [
+    Release(version=v, date=date.fromisoformat(d))
+    for v, d in [
+        ("1.23.5", "2022-11-20"),
+        ("1.24.0", "2022-12-18"),
+        ("1.26.4", "2024-02-05"),
+        ("2.0.0", "2024-06-16"),
+        ("2.3.1", "2026-06-01"),
+    ]
+]
+NP_SIG = FailureSignature(
+    category="removed_api",
+    error_type="AttributeError",
+    package="numpy",
+    symbol="numpy.float",
+    key_line="AttributeError: module 'numpy' has no attribute 'float'.",
+)
+NP_EVID = [
+    Evidence(
+        id="r1e1",
+        url="https://stackoverflow.com/q/1",
+        title="np.float error",
+        quote="np.float was a deprecated alias for the builtin float. Use float instead.",
+    )
+]
 
 
 async def numpy_find(settings, tmp_path, replies, outcomes, search):
@@ -406,17 +476,31 @@ async def numpy_find(settings, tmp_path, replies, outcomes, search):
         return outcomes[version]
 
     llm = LLM(settings, Ledger(tmp_path / "l.db", settings), client=FakeChatClient(replies))
-    t = BreakTarget(plan=PLAN, trace=None, step_id="s3", signature=NP_SIG, evidence=NP_EVID,
-                    versions="numpy==2.3.1\n")
-    return await find_break(t, language="python", llm=llm, registry=FakeRegistry(NP_REL),
-                            probe_for=lambda p: probe, max_probes=6, time_s=30, run_id="r", public=True,
-                            search=search)
+    t = BreakTarget(
+        plan=PLAN, trace=None, step_id="s3", signature=NP_SIG, evidence=NP_EVID, versions="numpy==2.3.1\n"
+    )
+    return await find_break(
+        t,
+        language="python",
+        llm=llm,
+        registry=FakeRegistry(NP_REL),
+        probe_for=lambda p: probe,
+        max_probes=6,
+        time_s=30,
+        run_id="r",
+        public=True,
+        search=search,
+    )
 
 
 async def test_release_notes_are_searched_when_running_cannot_answer(settings, tmp_path):
-    search = FakeSearch([{"url": NOTES_URL, "title": "NumPy 1.24.0 Release Notes", "content": ""}],
-                        {NOTES_URL: "## Expired deprecations\n\nThe deprecation for the aliases np.object, np.bool, "
-                                    "np.float, np.complex, np.str, and np.int is expired.\n\nOther text."})
+    search = FakeSearch(
+        [{"url": NOTES_URL, "title": "NumPy 1.24.0 Release Notes", "content": ""}],
+        {
+            NOTES_URL: "## Expired deprecations\n\nThe deprecation for the aliases np.object, np.bool, "
+            "np.float, np.complex, np.str, and np.int is expired.\n\nOther text."
+        },
+    )
     empty = json.dumps({"package": "numpy", "version": "", "evidence_id": ""})
     named = json.dumps({"package": "numpy", "version": "1.24.0", "evidence_id": "b1"})
     outcomes = {"1.26.4": "same", "2.0.0": "same", "1.23.5": "no_install", "1.24.0": "same"}
@@ -428,18 +512,27 @@ async def test_release_notes_are_searched_when_running_cannot_answer(settings, t
 
 async def test_no_release_notes_search_when_running_answers(settings, tmp_path):
     search = FakeSearch([], {})
-    bp, _ = await find(settings, tmp_path, {"1.5.3": "pass", "2.0.0": "same"},
-                       reply=json.dumps({"package": "pandas", "version": "", "evidence_id": ""}), search=search)
+    bp, _ = await find(
+        settings,
+        tmp_path,
+        {"1.5.3": "pass", "2.0.0": "same"},
+        reply=json.dumps({"package": "pandas", "version": "", "evidence_id": ""}),
+        search=search,
+    )
     assert bp.how == "ran" and search.calls == []
 
 
 async def test_a_searched_version_that_running_contradicts_is_not_shown(settings, tmp_path):
-    search = FakeSearch([{"url": NOTES_URL, "title": "NumPy 1.24.0 Release Notes", "content": ""}],
-                        {NOTES_URL: "The deprecation for np.float is expired in 2.0.0."})
+    search = FakeSearch(
+        [{"url": NOTES_URL, "title": "NumPy 1.24.0 Release Notes", "content": ""}],
+        {NOTES_URL: "The deprecation for np.float is expired in 2.0.0."},
+    )
     empty = json.dumps({"package": "numpy", "version": "", "evidence_id": ""})
     named = json.dumps({"package": "numpy", "version": "2.0.0", "evidence_id": "b1"})
     outcomes = {"1.26.4": "same", "2.0.0": "same", "1.23.5": "no_install", "1.24.0": "same"}
-    assert await numpy_find(settings, tmp_path, [empty, named], outcomes, search) is None  # 1.26.4 already fails
+    assert (
+        await numpy_find(settings, tmp_path, [empty, named], outcomes, search) is None
+    )  # 1.26.4 already fails
 
 
 async def test_a_probe_error_counts_as_not_runnable_and_keeps_the_other_result(settings, tmp_path):
@@ -452,13 +545,23 @@ async def test_a_probe_error_counts_as_not_runnable_and_keeps_the_other_result(s
         return "same"
 
     llm = LLM(settings, Ledger(tmp_path / "l.db", settings), client=FakeChatClient([GUESS]))
-    bp = await find_break(target(), language="python", llm=llm, registry=FakeRegistry(), probe_for=lambda p: probe,
-                          max_probes=6, time_s=30, run_id="r", public=True)
+    bp = await find_break(
+        target(),
+        language="python",
+        llm=llm,
+        registry=FakeRegistry(),
+        probe_for=lambda p: probe,
+        max_probes=6,
+        time_s=30,
+        run_id="r",
+        public=True,
+    )
     assert (bp.first_bad, bp.how) == ("2.0.0", "release_notes")
 
 
 async def test_a_budget_stop_in_one_probe_cancels_the_other(settings, tmp_path):
     from fixmytutorial.ledger import BudgetExceeded
+
     finished = []
 
     async def probe(version):
@@ -469,8 +572,17 @@ async def test_a_budget_stop_in_one_probe_cancels_the_other(settings, tmp_path):
         return "same"
 
     llm = LLM(settings, Ledger(tmp_path / "l.db", settings), client=FakeChatClient([GUESS]))
-    await find_break(target(), language="python", llm=llm, registry=FakeRegistry(), probe_for=lambda p: probe,
-                     max_probes=6, time_s=30, run_id="r", public=True)
+    await find_break(
+        target(),
+        language="python",
+        llm=llm,
+        registry=FakeRegistry(),
+        probe_for=lambda p: probe,
+        max_probes=6,
+        time_s=30,
+        run_id="r",
+        public=True,
+    )
     await asyncio.sleep(0.5)
     assert finished == []  # nothing keeps running (or spending) after the finder returns
 
@@ -478,8 +590,20 @@ async def test_a_budget_stop_in_one_probe_cancels_the_other(settings, tmp_path):
 async def test_probe_stops_at_the_broken_cell_of_a_cell_group(settings, tmp_path):
     from fixmytutorial.executor import ExecState
     from fixmytutorial.models import ImageRef
-    plan = PLAN.model_copy(update={"steps": PLAN.steps + [
-        Step(id="s4", title="Later", kind="run_code", content="raise SystemExit('a later cell that always fails')")]})
+
+    plan = PLAN.model_copy(
+        update={
+            "steps": PLAN.steps
+            + [
+                Step(
+                    id="s4",
+                    title="Later",
+                    kind="run_code",
+                    content="raise SystemExit('a later cell that always fails')",
+                )
+            ]
+        }
+    )
     state: dict = {}
     payloads = []
     inner = probe_backend(state)
@@ -490,51 +614,93 @@ async def test_probe_stops_at_the_broken_cell_of_a_cell_group(settings, tmp_path
         return inner(script, files, image)
 
     backend = FakeBackend(handler)
-    executor = Executor(backend, settings, Judge(LLM(settings, Ledger(tmp_path / "l.db", settings),
-                                                      client=FakeChatClient([]))))
-    trace = await executor.execute(plan, [ExecState(ImageRef(backend="fake", ref="base"))], run_id="r", public=True)
+    executor = Executor(
+        backend,
+        settings,
+        Judge(LLM(settings, Ledger(tmp_path / "l.db", settings), client=FakeChatClient([]))),
+    )
+    trace = await executor.execute(
+        plan, [ExecState(ImageRef(backend="fake", ref="base"))], run_id="r", public=True
+    )
     t = BreakTarget(plan=plan, trace=trace, step_id="s3", signature=SIG, evidence=EVID, versions=FREEZE)
     assert await make_probe(executor, t, "python", "pandas", run_id="r", public=True)("1.5.3") == "pass"
     assert payloads[-1] == ["s2", "s3"]  # cells after the broken one are not run
 
 
 async def test_the_package_is_read_from_the_file_the_failing_step_runs(settings, tmp_path):
-    js_plan = RunPlan(language="javascript", runtime="22", steps=[
-        Step(id="s1", title="Install", kind="shell", content="npm install chalk express"),
-        Step(id="s2", title="Write", kind="write_file", path="index.js",
-             content="const chalk = require('chalk');\nconsole.log(chalk.red('hi'));"),
-        Step(id="s3", title="Run", kind="shell", content="node index.js")])
+    js_plan = RunPlan(
+        language="javascript",
+        runtime="22",
+        steps=[
+            Step(id="s1", title="Install", kind="shell", content="npm install chalk express"),
+            Step(
+                id="s2",
+                title="Write",
+                kind="write_file",
+                path="index.js",
+                content="const chalk = require('chalk');\nconsole.log(chalk.red('hi'));",
+            ),
+            Step(id="s3", title="Run", kind="shell", content="node index.js"),
+        ],
+    )
     calls = []
 
     async def probe(version):
         calls.append(version)
         return {"4.1.2": "pass", "5.0.0": "same"}[version]
 
-    rel = [Release(version="4.1.2", date=date(2021, 7, 30)), Release(version="5.0.0", date=date(2021, 11, 26)),
-           Release(version="5.6.2", date=date(2025, 9, 8))]
-    llm = LLM(settings, Ledger(tmp_path / "l.db", settings),
-              client=FakeChatClient([json.dumps({"package": "", "version": "", "evidence_id": ""})]))
-    sig = FailureSignature(category="removed_api", error_type="TypeError", key_line="TypeError: chalk.red is not a function")
-    t = BreakTarget(plan=js_plan, trace=None, step_id="s3", signature=sig, evidence=EVID,
-                    versions="work@ /work\n+-- chalk@5.6.2\n`-- express@4.21.2\n")
-    bp = await find_break(t, language="javascript", llm=llm, registry=FakeRegistry(rel), probe_for=lambda p: probe,
-                          max_probes=6, time_s=30, run_id="r", public=True)
+    rel = [
+        Release(version="4.1.2", date=date(2021, 7, 30)),
+        Release(version="5.0.0", date=date(2021, 11, 26)),
+        Release(version="5.6.2", date=date(2025, 9, 8)),
+    ]
+    llm = LLM(
+        settings,
+        Ledger(tmp_path / "l.db", settings),
+        client=FakeChatClient([json.dumps({"package": "", "version": "", "evidence_id": ""})]),
+    )
+    sig = FailureSignature(
+        category="removed_api", error_type="TypeError", key_line="TypeError: chalk.red is not a function"
+    )
+    t = BreakTarget(
+        plan=js_plan,
+        trace=None,
+        step_id="s3",
+        signature=sig,
+        evidence=EVID,
+        versions="work@ /work\n+-- chalk@5.6.2\n`-- express@4.21.2\n",
+    )
+    bp = await find_break(
+        t,
+        language="javascript",
+        llm=llm,
+        registry=FakeRegistry(rel),
+        probe_for=lambda p: probe,
+        max_probes=6,
+        time_s=30,
+        run_id="r",
+        public=True,
+    )
     assert (bp.package, bp.first_bad, bp.last_good, bp.how) == ("chalk", "5.0.0", "4.1.2", "ran")
 
 
 def test_version_matching_is_strict():
     from fixmytutorial.breakage import _mentions
+
     assert not _mentions("Step 2: install pandas", "2")  # a bare number states no version
     assert not _mentions("Try 2.0.0rc0 first", "2.0.0")
     assert _mentions("removed in pandas 2.0.", "2.0") and _mentions("removed in 2.0.0 (April 2023)", "2.0.0")
     from fixmytutorial.breakage import _address
+
     assert _mentions(_address("https://pandas.pydata.org/docs/whatsnew/v2.0.0.html"), "2.0.0")
     assert _mentions(_address("https://numpy.org/doc/stable/release/1.24.0-notes.html"), "1.24.0")
 
 
 async def test_the_release_notes_are_read_a_second_time_when_the_first_read_passes(settings, tmp_path):
-    search = FakeSearch([{"url": "https://ex.com/a", "title": "append removed", "content": ""}],
-                        {"https://ex.com/a": "As of Pandas version 2.0.0, the append() method has been removed."})
+    search = FakeSearch(
+        [{"url": "https://ex.com/a", "title": "append removed", "content": ""}],
+        {"https://ex.com/a": "As of Pandas version 2.0.0, the append() method has been removed."},
+    )
     empty = json.dumps({"package": "", "version": "", "evidence_id": ""})
     named = json.dumps({"package": "", "version": "2.0.0", "evidence_id": "b1"})
     calls = []
@@ -543,8 +709,20 @@ async def test_the_release_notes_are_read_a_second_time_when_the_first_read_pass
         calls.append(version)
         return "no_install"
 
-    llm = LLM(settings, Ledger(tmp_path / "l.db", settings), client=FakeChatClient([empty, named]))  # no evidence yet: the first guess needs no call
+    llm = LLM(
+        settings, Ledger(tmp_path / "l.db", settings), client=FakeChatClient([empty, named])
+    )  # no evidence yet: the first guess needs no call
     t = BreakTarget(plan=PLAN, trace=None, step_id="s3", signature=SIG, evidence=EVID[:0], versions=FREEZE)
-    bp = await find_break(t, language="python", llm=llm, registry=FakeRegistry(), probe_for=lambda p: probe,
-                          max_probes=6, time_s=30, run_id="r", public=True, search=search)
+    bp = await find_break(
+        t,
+        language="python",
+        llm=llm,
+        registry=FakeRegistry(),
+        probe_for=lambda p: probe,
+        max_probes=6,
+        time_s=30,
+        run_id="r",
+        public=True,
+        search=search,
+    )
     assert (bp.first_bad, bp.how, bp.evidence_id) == ("2.0.0", "release_notes", "b1")
