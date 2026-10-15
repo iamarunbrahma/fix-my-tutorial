@@ -9,8 +9,9 @@ until 1 December, features 4 and 6 as described. Executed inline (TDD per task),
 - Plain user-facing copy, no em dashes, no jargon.
 - Nothing here may change a run's verdict. The break finder is best effort: any error, timeout or budget stop
   inside it leaves `broke_in` empty and the run as it was.
-- No new paid services. The break finder adds one Nemotron 3.5 Lightning call (role `triage`, through the ledger)
-  plus sandbox runs; registry lookups are free public JSON (PyPI, npm).
+- No new paid services. The break finder adds Nemotron 3.5 Lightning calls (role `triage`, through the ledger),
+  sandbox runs, and about 2 Tavily credits only when running older releases can't settle it; registry lookups are
+  free public JSON (PyPI, npm).
 - Visitors file GitHub issues from their own account. The app never posts anything.
 - A `?url=` link only prefills the form. It never starts a run or spends money.
 

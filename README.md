@@ -37,7 +37,7 @@ Shared: llm (Token Factory client + routing), ledger (spend guard),
 3. **Diagnose.** When a step fails, Nemotron 3.5 Lightning classifies the error (removed API, renamed package, version conflict and so on), and Tavily finds the release note, migration guide or issue that explains it.
 4. **Repair.** Nemotron 3 Ultra proposes up to three fixes (migrate to the new API, pin an older version, or work around it). When evidence was found, each fix must cite it. The fixes race in parallel sandboxes from the last good checkpoint.
 5. **Prove it.** The repaired tutorial is replayed from scratch before it is called fixed. The report shows the diff, the cited reasons, and a badge.
-6. **Date it.** When a package change broke the step, Nemotron 3.5 Lightning reads the cited release notes and names the release that made the change. Only a version that exists on PyPI or npm and appears in the quoted text counts. The step then runs from its checkpoint with that release and the one before it, and a short binary search corrects a wrong guess. The report says, for example, "Broke in pandas 2.0.0, released 3 Apr 2023", and how long the tutorial worked when the page states its publish date. When older releases can't install on today's Python, the answer comes from the cited notes and says so.
+6. **Date it.** When a package change broke the step, the failing step runs again from its checkpoint with older releases of that package: the one before a cited version, or the end of each earlier release series, then a short binary search. When older releases can't install on today's Python (pandas 1.x and NumPy before 1.26 can't on 3.12), one more Tavily search looks for the release note itself, and Nemotron 3.5 Lightning reads it. Only a version that exists on PyPI or npm and that the quote (or the release note's own address) states is accepted, and the report says which way it was found. In our runs: "Broke in chalk 5.0.0, released 26 Nov 2021. chalk 4.1.2 still runs this step, and 5.0.0 fails the same way." and "Broke in pandas 2.0.0, released 3 Apr 2023, according to the cited release notes." When the page states its publish date, the report also says how long the tutorial worked.
 
 | Role | Model | Price per 1M tokens (in / out) | Why this size |
 |---|---|---|---|
@@ -79,7 +79,7 @@ Earlier runs during the build scored 12, 11, 13, 11, 13, 13 and 12 out of 13, an
 
 ## Tavily
 
-Research uses Tavily search, then Tavily extract with a focused query on the top results, so each piece of evidence is a short quote from a real page, with its URL. Quotes that never mention the failing symbol are dropped. Results are cached for 7 days, so tutorials that share a root cause (several pandas tutorials hitting `append`, say) reuse the same evidence. A repaired step typically uses 2 to 4 credits, and a run is capped at 30.
+Research uses Tavily search, then Tavily extract with a focused query on the top results, so each piece of evidence is a short quote from a real page, with its URL. Quotes that never mention the failing symbol are dropped. Results are cached for 7 days, so tutorials that share a root cause (several pandas tutorials hitting `append`, say) reuse the same evidence. A repaired step typically uses 2 to 4 credits. Finding the release that broke it takes about 2 more, and only when running older releases can't settle it. A run is capped at 30.
 
 ## Run it locally
 
