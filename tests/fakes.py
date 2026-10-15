@@ -2,6 +2,8 @@ from __future__ import annotations
 
 from types import SimpleNamespace
 
+from fixmytutorial.models import ImageRef, StepResult
+
 
 class FakeChatClient:
     """Mimics openai.AsyncOpenAI enough for LLM.call: client.chat.completions.create(**kw)."""
@@ -42,3 +44,26 @@ class FakeTavily:
         ok = [{"url": u, "raw_content": self.extract_results[u]} for u in urls if u in self.extract_results]
         failed = [{"url": u, "error": "not found"} for u in urls if u not in self.extract_results]
         return {"results": ok, "failed_results": failed}
+
+
+class FakeBackend:
+    name = "fake"
+
+    def __init__(self, handler=None):
+        self.handler = handler or (lambda script, files, image: (0, "", ""))
+        self.calls: list[dict] = []
+        self._n = 0
+
+    async def base_image(self, language):
+        return ImageRef(backend="fake", ref=f"base-{language}")
+
+    async def run(self, image, script, *, files=None, timeout_s=180, save=True, env=None):
+        files = files or {}
+        self.calls.append({"image": image.ref, "script": script, "files": files, "save": save,
+                           "timeout_s": timeout_s})
+        out = self.handler(script, files, image)
+        exit_code, stdout, stderr = out[0], out[1], out[2]
+        timed_out = out[3] if len(out) > 3 else False
+        self._n += 1
+        return StepResult(exit_code=exit_code, stdout=stdout, stderr=stderr, timed_out=timed_out, duration_s=0.01,
+                          image=ImageRef(backend="fake", ref=f"img-{self._n}") if save else None)
