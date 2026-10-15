@@ -66,14 +66,15 @@ class Ledger:
         return datetime.fromtimestamp(self._clock(), timezone.utc).strftime("%Y-%m-%d")
 
     def _reserve_held(self) -> bool:
-        return self._s.public_demo and self._day() < self._s.demo_reserve_until
+        today = datetime.fromtimestamp(self._clock(), timezone.utc).date()
+        return self._s.public_demo and today < self._s.demo_reserve_until
 
     def public_cap_usd(self) -> float:
         """What public runs may spend in total: the demo holds part of its budget back until judging starts."""
         return self._s.cap_lifetime_usd - (self._s.demo_reserve_usd if self._reserve_held() else 0.0)
 
     def _reserve_message(self) -> str:
-        d = datetime.strptime(self._s.demo_reserve_until, "%Y-%m-%d")
+        d = self._s.demo_reserve_until
         return (f"Public runs are paused until {d.day} {d:%B}. "
                 "You can still browse the Rot Index and open past reports.")
 

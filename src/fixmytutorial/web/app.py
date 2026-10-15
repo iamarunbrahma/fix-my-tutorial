@@ -192,6 +192,14 @@ def rate_key(addr: str) -> str | None:
     return str(ip)
 
 
+def web_link(url: str) -> bool:
+    try:
+        u = urlparse(url)
+        return u.scheme.lower() in ("http", "https") and bool(u.hostname)
+    except ValueError:  # e.g. "http://[abc"
+        return False
+
+
 def load_index(settings: Settings) -> dict:
     try:
         return json.loads(Path(settings.rot_index_path).read_text())
@@ -299,7 +307,7 @@ def create_app(deps: Deps | None = None) -> FastAPI:
     async def home(request: Request, url: str = ""):
         # A shared ?url= link only fills in the form: starting a run (and spending) always takes a click.
         url = url.strip()
-        if len(url) > 2000 or urlparse(url).scheme.lower() not in ("http", "https"):
+        if len(url) > 2000 or not web_link(url):
             url = ""
         recent = D(request).store.find_recent_run(url, D(request).settings.cache_ttl_s) if url else None
         return templates.TemplateResponse(request, "home.html", home_ctx(request, url=url, recent=recent))
@@ -315,7 +323,7 @@ def create_app(deps: Deps | None = None) -> FastAPI:
                 home_ctx(request, error="Paste a tutorial link or its Markdown."),
                 status_code=400,
             )
-        if url and urlparse(url).scheme.lower() not in ("http", "https"):
+        if url and not web_link(url):
             return templates.TemplateResponse(
                 request, "home.html", home_ctx(request, url=url, error="Only http and https links are supported."),
                 status_code=400,
@@ -488,7 +496,7 @@ def create_app(deps: Deps | None = None) -> FastAPI:
             },
             "reserve": {
                 "usd": d.settings.demo_reserve_usd,
-                "until": d.settings.demo_reserve_until,
+                "until": d.settings.demo_reserve_until.isoformat(),
                 "held": d.ledger.public_cap_usd() < d.settings.cap_lifetime_usd,
             },
         }

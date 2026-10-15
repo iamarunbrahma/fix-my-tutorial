@@ -173,7 +173,7 @@ def _spend(led, usd, public=False, run="spent"):
 
 def _demo(settings, tmp_path, now=1_792_000_000.0):
     return make(settings, tmp_path, now=now, public_demo=True, cap_lifetime_usd=15.0, demo_reserve_usd=7.5,
-                demo_reserve_until="2026-12-01", cap_daily_usd=100, cap_daily_all_usd=100, cap_run_usd=100)
+                demo_reserve_until=__import__("datetime").date(2026, 12, 1), cap_daily_usd=100, cap_daily_all_usd=100, cap_run_usd=100)
 
 
 def test_demo_holds_the_reserve_until_december(settings, tmp_path):
@@ -208,3 +208,14 @@ def test_public_calls_cannot_spend_the_reserve(settings, tmp_path):
         led.reserve_llm("pub", True, "repair", 200_000, 0)  # $0.20 would cross $7.50
     assert e.value.scope == "reserve"
     led.release(led.reserve_llm("laptop", False, "repair", 200_000, 0))  # the reserve only holds back public runs
+
+
+def test_the_reserve_date_is_a_real_date():
+    from datetime import date
+
+    from pydantic import ValidationError
+
+    from fixmytutorial.config import Settings
+    assert Settings(_env_file=None, demo_reserve_until="2026-12-01").demo_reserve_until == date(2026, 12, 1)
+    with pytest.raises(ValidationError):
+        Settings(_env_file=None, demo_reserve_until="2026-12-1x")

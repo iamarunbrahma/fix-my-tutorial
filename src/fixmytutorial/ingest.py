@@ -291,7 +291,7 @@ async def _ingest(source: Source, search, *, run_id: str, public: bool, http: ht
                         text = res[0]["raw_content"]
                         title = first_heading(text) or url
                         try:  # the extracted text has no metadata; the date is a nice-to-have, never a blocker
-                            published = published_date(await asyncio.wait_for(_safe_get(url, client, resolver), 8))
+                            published = published_date(await asyncio.wait_for(_safe_get(url, client, resolver), 5))
                         except Exception:
                             published = None
                 if not text:

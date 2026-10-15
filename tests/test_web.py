@@ -435,3 +435,11 @@ def test_index_lists_the_releases_that_broke_tutorials(env):
     r = client.get("/index")
     assert "Releases that broke the most tutorials" in r.text and "pandas 2.0.0" in r.text
     assert "Broke in pandas 2.0.0" in r.text
+
+
+def test_malformed_links_never_crash_the_home_page_or_the_form(env):
+    client, deps = env
+    r = client.get("/", params={"url": "http://[abc"})
+    assert r.status_code == 200 and 'name="url" value=""' in r.text
+    r = client.post("/runs", data={"url": "http://[abc"})
+    assert r.status_code == 400 and deps.queue.submitted == []
