@@ -123,3 +123,10 @@ def test_commit_never_records_less_than_zero(settings, tmp_path):
     led, _ = make(settings, tmp_path)
     r = led.reserve_llm("run1", True, "planner", 100, 100)
     assert led.commit_llm(r, "planner", "m", 0, 0) == 0
+
+
+def test_unverified_ledger_closes_public_runs(settings, tmp_path):
+    led, _ = make(settings, tmp_path)
+    led.mark_unverified("Spend history could not be loaded.")
+    ok, why = led.public_runs_open()
+    assert not ok and "could not be loaded" in why

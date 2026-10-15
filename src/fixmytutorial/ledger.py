@@ -59,6 +59,7 @@ class Ledger:
         self._s = settings
         self._clock = clock
         self._pending: dict[str, Reservation] = {}
+        self._unverified: str = ""  # set when past spend could not be loaded; public runs stay closed
 
     def _day(self) -> str:
         return datetime.fromtimestamp(self._clock(), timezone.utc).strftime("%Y-%m-%d")
@@ -158,7 +159,12 @@ class Ledger:
         with self._lock:
             self._pending.pop(res.id, None)
 
+    def mark_unverified(self, reason: str) -> None:
+        self._unverified = reason
+
     def public_runs_open(self) -> tuple[bool, str]:
+        if self._unverified:
+            return False, f"Public runs are paused: {self._unverified}"
         t = self.totals()
         if t.lifetime_usd >= self._s.cap_lifetime_usd * 0.98:
             return False, "Public runs are paused: the project's model budget is used up."
