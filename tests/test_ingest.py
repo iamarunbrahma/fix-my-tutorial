@@ -189,3 +189,31 @@ async def test_cut_off_pages_are_flagged(settings, tmp_path):
     doc = await ingest(Source(markdown="# T\n\n```python\nprint(1)\n```\n" + "x" * 500), None, run_id="r",
                        public=True, max_chars=100)
     assert doc.truncated
+
+
+async def test_shared_address_space_is_blocked():
+    with pytest.raises(IngestError, match="private"):
+        await ingest(Source(url="http://meta.example/x"), None, run_id="r", public=True,
+                     resolver=lambda host: ["100.100.100.200"])
+
+
+async def test_a_slow_site_gives_a_clear_error_quickly():
+    import time
+
+    def slow(host):
+        time.sleep(2)
+        return ["93.184.216.34"]
+    t0 = time.monotonic()
+    with pytest.raises(IngestError, match="too long"):
+        await ingest(Source(url="https://slow.example/t"), None, run_id="r", public=True, resolver=slow,
+                     deadline_s=0.2)
+    assert time.monotonic() - t0 < 1.5
+
+
+@respx.mock
+async def test_unreadable_notebook_is_a_clear_error():
+    raw = "https://raw.githubusercontent.com/o/r/main/nb.ipynb"
+    respx.get(raw).mock(return_value=httpx.Response(200, text="version https://git-lfs.github.com/spec/v1\n"))
+    with pytest.raises(IngestError, match="notebook"):
+        await ingest(Source(url="https://github.com/o/r/blob/main/nb.ipynb"), None, run_id="r", public=True,
+                     resolver=public_resolver)

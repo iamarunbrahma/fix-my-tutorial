@@ -60,7 +60,8 @@ async def research(sig: FailureSignature, *, search, run_id: str, public: bool, 
         except Exception:
             continue
         for r in results:
-            seen.setdefault(r["url"], r)
+            if urlparse(r["url"]).scheme in ("http", "https"):  # quotes become clickable links
+                seen.setdefault(r["url"], r)
     ranked = sorted(seen.values(), key=lambda r: (domain_rank(r["url"]), -float(r.get("score") or 0)))
     extracted: dict[str, str] = {}
     top = ranked[:3]

@@ -238,15 +238,15 @@ def create_app(deps: Deps | None = None) -> FastAPI:
                 ),
                 status_code=400,
             )
+        if url:  # a recent report costs nothing to show, so it works even while public runs are paused
+            cached = d.store.find_recent_run(url, d.settings.cache_ttl_s)
+            if cached is not None:
+                return RedirectResponse(f"/run/{cached.id}", status_code=303)
         ok, _ = d.ledger.public_runs_open()
         if not ok:
             return templates.TemplateResponse(
                 request, "home.html", home_ctx(request, url=url, markdown=markdown), status_code=503
             )
-        if url:
-            cached = d.store.find_recent_run(url, d.settings.cache_ttl_s)
-            if cached is not None:
-                return RedirectResponse(f"/run/{cached.id}", status_code=303)
         if not d.limiter.allow(client_ip(request)):
             msg = (
                 f"You've started {d.settings.rate_limit_runs_per_hour} runs in the last hour. "
@@ -268,7 +268,7 @@ def create_app(deps: Deps | None = None) -> FastAPI:
         rec = D(request).store.get_run(run_id)
         if rec is None:
             return not_found(request)
-        initial = rec.model_dump_json().replace("</", "<\\/")
+        initial = rec.model_dump_json().replace("<", "\\u003c")  # no markup can reach the HTML parser
         return templates.TemplateResponse(request, "run.html", {"rec": rec, "initial": initial})
 
     @app.get("/run/{run_id}/events")

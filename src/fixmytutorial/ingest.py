@@ -114,7 +114,7 @@ async def _public_ips(host: str, resolver: Callable[[str], list[str]]) -> list[s
         raise IngestError("Couldn't find that website. Check the link.")
     for ip in ips:
         addr = ipaddress.ip_address(ip)
-        if addr.is_private or addr.is_loopback or addr.is_link_local or addr.is_reserved or addr.is_multicast:
+        if not addr.is_global or addr.is_multicast:  # also shared (100.64/10) and other non-public ranges
             raise IngestError("That link points to a private network address.")
     return ips
 
@@ -206,8 +206,27 @@ async def _client(http: httpx.AsyncClient | None, resolver: Callable[[str], list
             yield c
 
 
+def _notebook(body: str) -> str:
+    try:
+        return notebook_to_markdown(body)
+    except (ValueError, AttributeError, TypeError):  # not JSON (e.g. a Git LFS pointer) or not a notebook
+        raise IngestError("Couldn't read that notebook.") from None
+
+
 async def ingest(source: Source, search, *, run_id: str, public: bool, http: httpx.AsyncClient | None = None,
-                 resolver: Callable[[str], list[str]] | None = None, max_chars: int = 60_000) -> TutorialDoc:
+                 resolver: Callable[[str], list[str]] | None = None, max_chars: int = 60_000,
+                 deadline_s: float = 45) -> TutorialDoc:
+    """Read a tutorial, with one overall deadline so a slow or stalling site gives a clear answer quickly."""
+    try:
+        async with asyncio.timeout(deadline_s):
+            return await _ingest(source, search, run_id=run_id, public=public, http=http, resolver=resolver,
+                                 max_chars=max_chars)
+    except TimeoutError:
+        raise IngestError("That page took too long to load.") from None
+
+
+async def _ingest(source: Source, search, *, run_id: str, public: bool, http: httpx.AsyncClient | None,
+                  resolver: Callable[[str], list[str]] | None, max_chars: int) -> TutorialDoc:
     resolver = resolver or _default_resolver
     if source.markdown and source.markdown.strip():
         text = source.markdown
@@ -222,7 +241,7 @@ async def ingest(source: Source, search, *, run_id: str, public: bool, http: htt
         async with _client(http, resolver) as client:
             if raw:
                 body = await _safe_get(raw, client, resolver)
-                text = notebook_to_markdown(body) if raw.endswith(".ipynb") else body
+                text = _notebook(body) if raw.endswith(".ipynb") else body
                 title = first_heading(text) or raw.rsplit("/", 1)[-1]
             else:
                 if search is not None:
@@ -238,7 +257,7 @@ async def ingest(source: Source, search, *, run_id: str, public: bool, http: htt
                 if not text:
                     body = await _safe_get(url, client, resolver)
                     if url.endswith(".ipynb"):
-                        text = notebook_to_markdown(body)
+                        text = _notebook(body)
                         title = first_heading(text) or url
                     else:
                         title, text = html_to_markdown(body)

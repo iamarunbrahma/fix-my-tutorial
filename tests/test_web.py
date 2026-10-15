@@ -270,3 +270,20 @@ def test_report_page_says_when_a_check_was_partial(env):
     assert "Partly checked: we ran 80% of the code on this page." in client.get("/r/part1").text
     deps.store.save_run(rec)
     assert "Partly checked" not in client.get("/r/done1").text
+
+
+def test_inline_run_data_never_contains_markup(env):
+    client, deps = env
+    deps.store.save_run(done_record().model_copy(update={"id": "html1", "title": "x <!-- <script> y",
+                                                         "status": RunStatus.EXECUTING}))
+    page = client.get("/run/html1").text
+    data = page.split('id="initial">', 1)[1].split("</script>", 1)[0]
+    assert "<" not in data and json.loads(data)["title"] == "x <!-- <script> y"
+
+
+def test_cached_reports_still_open_while_public_runs_are_paused(env):
+    client, deps = env
+    deps.store.save_run(done_record())
+    deps.ledger.mark_unverified("past spend could not be loaded.")
+    r = client.post("/runs", data={"url": "https://a.example/t"}, follow_redirects=False)
+    assert r.status_code == 303 and r.headers["location"] == "/run/done1"

@@ -76,3 +76,12 @@ async def test_quotes_that_never_mention_the_symbol_are_dropped(settings, tmp_pa
          "content": "+ Adding New Column to Existing DataFrame in Pandas 6 min read + Python | DataFrame.drop"}]})
     ev = await research(APPEND_SIG, search=sc(settings, tmp_path, fake), run_id="r", public=True)
     assert [e.url for e in ev] == ["https://pandas.pydata.org/whatsnew/v2.0"]
+
+
+async def test_only_web_links_become_evidence(settings, tmp_path):
+    fake = FakeTavily(search_results={"pandas DataFrame.append removed": [
+        {"url": "javascript:alert(1)", "title": "x", "score": 0.99, "content": "DataFrame.append was removed."},
+        {"url": "https://pandas.pydata.org/whatsnew/v2.0", "title": "2.0", "score": 0.9,
+         "content": "DataFrame.append was removed; use pandas.concat instead."}]})
+    ev = await research(APPEND_SIG, search=sc(settings, tmp_path, fake), run_id="r", public=True)
+    assert [e.url for e in ev] == ["https://pandas.pydata.org/whatsnew/v2.0"]
