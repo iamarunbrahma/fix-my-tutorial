@@ -1,0 +1,35 @@
+{% extends "base.html" %}
+{% block title %}{{ rec.title or "Tutorial check" }}: {{ verdict_text }} · Fix My Tutorial{% endblock %}
+{% block description %}{{ rec.summary or verdict_text }}{% endblock %}
+{% block meta %}
+<meta property="og:title" content="{{ rec.title or 'Tutorial check' }}: {{ verdict_text }}">
+<meta property="og:description" content="{{ rec.summary or rec.reason }}">
+<meta property="og:image" content="{{ base }}/og/{{ rec.id }}.png">
+<meta name="twitter:card" content="summary_large_image">
+{% endblock %}
+{% block main %}
+{% set plan = rec.final_plan or rec.plan %}
+<div class="stage">Report</div>
+<h1>{{ rec.title or rec.source }}</h1>
+{% if rec.source.startswith("http") %}<a href="{{ rec.source }}" target="_blank" rel="noopener">Open the original tutorial</a>{% endif %}
+<div class="verdict"><span class="pill v-{{ rec.verdict.value }}">{{ verdict_text }}</span><span>{{ rec.summary or rec.reason }}</span></div>
+<p class="muted">{% if plan %}{{ "Python" if plan.language == "python" else "Node.js" }} {{ plan.runtime }} · {% endif %}checked {{ (rec.finished_at or rec.created_at).strftime("%d %b %Y") }} · model cost ${{ "%.3f"|format(rec.cost_usd) }}</p>
+{% if changes %}
+<h2>{{ changes|length }} change{{ "s" if changes|length != 1 }} to make it work today</h2>
+{% for c in changes %}
+<div class="change">
+  <div><strong>{{ c.title }}</strong> <span class="kind">{{ c.step_id }} · {{ c.kind }}</span> <span class="pill v-fixed">{{ c.strategy }}</span>{% if c.added %} <span class="implicit">new step</span>{% endif %}</div>
+  <p>{{ c.reason }}</p>
+  <div class="diff">{% for cls, line in diff_lines(c) %}<div class="{{ cls }}">{{ line }}</div>{% endfor %}</div>
+  {% if c.citations %}<ul class="sources">{% for e in c.citations %}<li><a href="{{ e.url }}" target="_blank" rel="noopener">{{ e.title }}</a><q>{{ e.quote }}</q></li>{% endfor %}</ul>{% endif %}
+</div>
+{% endfor %}
+{% endif %}
+{% if rec.verdict.value == "could_not_fix" and rec.repairs %}
+<h2>What we tried</h2>
+{% for r in rec.repairs %}<div class="change"><div class="keyline">{{ r.signature.key_line }}</div><p class="muted">{{ r.rounds|length }} round{{ "s" if r.rounds|length != 1 }} of fixes{% if not r.winner %}, none passed{% endif %}.</p></div>{% endfor %}
+{% endif %}
+<h2>Badge</h2>
+<div class="embed"><img src="/badge/{{ rec.id }}.svg" alt="Fix My Tutorial badge"><code>{{ badge_md }}</code><code>{{ badge_html }}</code></div>
+<p><a class="btn" href="/">Check another tutorial</a> <a href="/run/{{ rec.id }}">Watch the run again</a></p>
+{% endblock %}

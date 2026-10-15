@@ -1,0 +1,34 @@
+{% extends "base.html" %}
+{% block title %}{{ rec.title or "Checking a tutorial" }} · Fix My Tutorial{% endblock %}
+{% block main %}
+<div class="runhead">
+  <div>
+    <div class="stage" id="stage">Starting</div>
+    <h1 id="title">{{ rec.title or "Reading your tutorial" }}</h1>
+    {% if rec.source.startswith("http") %}<a class="muted" href="{{ rec.source }}" target="_blank" rel="noopener">{{ rec.source }}</a>{% endif %}
+    <div class="muted" id="note"></div>
+  </div>
+</div>
+<div class="replay" id="replaybar" hidden><span></span></div>
+<div class="verdict" id="verdict" hidden></div>
+<div class="grid">
+  <section class="panel"><h3>Steps</h3><ul class="steps" id="steps"></ul></section>
+  <section class="panel">
+    <h3 id="steptitle">Select a step</h3>
+    <pre class="term" id="code"></pre>
+    <pre class="term" id="output"></pre>
+    <div class="card" id="diagnosis" hidden>
+      <h3>What broke</h3>
+      <div id="diag-cat"></div>
+      <div class="keyline" id="diag-line"></div>
+      <ul class="sources" id="sources"></ul>
+    </div>
+    <div class="card" id="repair" hidden>
+      <h3>Fixes racing in parallel sandboxes · <span id="round"></span></h3>
+      <div class="race" id="race"></div>
+    </div>
+  </section>
+</div>
+<script type="application/json" id="initial">{{ initial|safe }}</script>
+{% endblock %}
+{% block scripts %}<script src="/static/run.js"></script>{% endblock %}

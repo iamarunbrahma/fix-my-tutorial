@@ -1,0 +1,22 @@
+{% extends "base.html" %}
+{% block title %}Rot Index · Fix My Tutorial{% endblock %}
+{% block main %}
+<div class="stage">Rot Index{% if generated_at %} · updated {{ generated_at }}{% endif %}</div>
+<h1>How many popular tutorials still work?</h1>
+<p class="lead">We ran {{ total }} popular Python and JavaScript tutorials step by step in fresh sandboxes with today's package versions. Here is what still works, what broke, and the fix for each.</p>
+{% if total %}
+<div class="stats">
+  <div class="stat"><b>{{ pct.still_works }}%</b>still work</div>
+  <div class="stat"><b>{{ pct.fixed }}%</b>broke, and we fixed them</div>
+  <div class="stat"><b>{{ pct.could_not_fix }}%</b>broke, could not fix</div>
+  <div class="stat"><b>{{ pct.not_runnable }}%</b>could not run here</div>
+</div>
+{% if causes %}<h2>Why tutorials break</h2><ul>{% for cat, n in causes %}<li>{{ cat_label(cat) }}: {{ n }}</li>{% endfor %}</ul>{% endif %}
+<h2>Every tutorial we checked</h2>
+<table><thead><tr><th>Tutorial</th><th>Language</th><th>Year</th><th>Result</th><th></th></tr></thead><tbody>
+{% for e in entries %}<tr><td><a href="{{ e.url }}" target="_blank" rel="noopener">{{ e.title }}</a><div class="muted">{{ e.source }}</div></td><td>{{ e.language }}</td><td>{{ e.year }}</td><td><span class="pill v-{{ e.verdict }}">{{ verdict_label(e.verdict) }}</span></td><td>{% if e.run_id %}<a href="/r/{{ e.run_id }}">Report</a>{% endif %}</td></tr>{% endfor %}
+</tbody></table>
+{% else %}
+<p class="muted">The index is being built. Check back soon.</p>
+{% endif %}
+{% endblock %}

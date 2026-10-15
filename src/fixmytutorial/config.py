@@ -65,6 +65,7 @@ class Settings(BaseSettings):
     # docker_allow_private_egress is set (only for our own trusted fixture tutorials on a dev laptop).
     docker_network: str = "fmt-sandbox"
     docker_allow_private_egress: bool = False
+    rot_index_path: Path = Path("rot_index/results.json")
     contree_python_image: str = ""  # UUID from `python -m fixmytutorial.sandbox.prepare`
     contree_node_image: str = ""
 
@@ -81,6 +82,11 @@ class Settings(BaseSettings):
     def db_path(self) -> Path:
         self.data_dir.mkdir(parents=True, exist_ok=True)
         return self.data_dir / "fixmytutorial.sqlite3"
+
+    @property
+    def ledger_db_path(self) -> Path:
+        self.data_dir.mkdir(parents=True, exist_ok=True)
+        return self.data_dir / "ledger.sqlite3"
 
 
 @lru_cache

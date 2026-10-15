@@ -1,0 +1,33 @@
+{% extends "base.html" %}
+{% block main %}
+<section class="hero">
+  <h1>Is that tutorial still working?</h1>
+  <p class="lead">Paste a Python or JavaScript tutorial. We run every step in a fresh sandbox, find what broke since it was written, and fix it with sources you can check.</p>
+  {% if paused %}<div class="banner warn">{{ paused }}</div>{% endif %}
+  {% if error %}<div class="banner err">{{ error }}</div>{% endif %}
+  <form method="post" action="/runs" class="submit">
+    <input type="url" name="url" value="{{ url }}" placeholder="Tutorial link: blog post, docs page, GitHub README or notebook" {% if paused %}disabled{% endif %}>
+    <details><summary>Or paste the tutorial as Markdown</summary>
+      <textarea name="markdown" rows="8" placeholder="# My tutorial" {% if paused %}disabled{% endif %}>{{ markdown }}</textarea>
+    </details>
+    <button type="submit" {% if paused %}disabled{% endif %}>Run it</button>
+  </form>
+  <p class="fine">Python 3.12 and Node.js 22. A run takes 1 to 6 minutes. Up to {{ per_hour }} runs per hour.</p>
+</section>
+{% if examples %}
+<section><h2>Tutorials we already checked</h2>
+  <ul class="cards">{% for e in examples %}
+    <li><a href="/r/{{ e.run_id }}"><span class="pill v-{{ e.verdict }}">{{ e.verdict_label }}</span><strong>{{ e.title }}</strong><span class="muted">{{ e.source }} · {{ e.year }}</span></a></li>
+  {% endfor %}</ul>
+</section>
+{% endif %}
+<section class="how"><h2>How it works</h2>
+  <ol>
+    <li><strong>Plan.</strong> Nemotron 3 Super reads the tutorial and turns it into runnable steps.</li>
+    <li><strong>Run.</strong> Each step runs in an isolated Token Factory Sandbox, with a snapshot saved after every step.</li>
+    <li><strong>Diagnose.</strong> When a step breaks, Nemotron 3.5 Lightning reads the error and Tavily finds the changelog that explains it.</li>
+    <li><strong>Repair.</strong> Nemotron 3 Ultra proposes fixes, and they race in parallel sandboxes from the last good snapshot.</li>
+    <li><strong>Prove it.</strong> The fixed tutorial is replayed from scratch before we call it fixed.</li>
+  </ol>
+</section>
+{% endblock %}
