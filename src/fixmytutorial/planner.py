@@ -41,6 +41,18 @@ def render_planner_input(doc: TutorialDoc, max_chars: int) -> str:
             f"=== CODE BLOCKS IN ORDER ===\n{blocks}")
 
 
+def _unflatten(content: str, shown: str) -> str:
+    """Undo code the model returned as one line of literal \\n escapes (it would fail as written and then be
+    "fixed" back to the page's own code). Only when the page itself has those lines and not the escaped one."""
+    if "\n" in content.strip() or "\\n" not in content:
+        return content
+    fixed = content.replace("\\n", "\n").replace("\\t", "\t")
+    lines = [squash(ln) for ln in fixed.splitlines() if ln.strip()]
+    if len(lines) > 1 and squash(content) not in shown and all(ln in shown for ln in lines):
+        return fixed
+    return content
+
+
 def normalize_plan(out: PlannerOutput, max_steps: int = 40, source_text: str | None = None) -> RunPlan:
     shown = squash(source_text) if source_text is not None else None
     steps: list[Step] = []
@@ -53,6 +65,8 @@ def normalize_plan(out: PlannerOutput, max_steps: int = 40, source_text: str | N
             s.path = safe_path(s.path) or f"file_{len(steps) + 1}.{ext}"
         if s.kind == "serve" and s.probe is None:
             s.probe = default_probe(s.content, out.language)
+        if shown is not None:
+            s.content = _unflatten(s.content, shown)
         if shown is not None:  # only literals the tutorial actually shows may gate a step
             s.expect.stdout_contains = [x for x in s.expect.stdout_contains if squash(x) and squash(x) in shown]
         s.source_excerpt = s.source_excerpt[:1200]

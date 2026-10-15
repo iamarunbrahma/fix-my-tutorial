@@ -163,3 +163,31 @@ async def test_verdict_event_carries_the_partial_note(settings, tmp_path):
     rec = await p.run(new_record(), Source(markdown=MD))
     verdict = next(e for e in events(store) if e["type"] == "verdict")
     assert verdict["note"].startswith("Partly checked") and rec.plan.coverage < 1.0
+
+
+COUNTER_MD = ("# Counting words\n\n```python\nfrom collections import Counter\n\nwords = 'the fox the'.split()\n"
+              "print(Counter(words).most_common(1))\n```\n")
+GOOD = "from collections import Counter\n\nwords = 'the fox the'.split()\nprint(Counter(words).most_common(1))"
+MISREAD = json.dumps({"language": "python", "runnable": True, "steps": [
+    {"id": "a", "title": "Count", "kind": "run_code", "content": GOOD[:-1]}]})  # the planner dropped a ")"
+TYPO = json.dumps({"category": "tutorial_typo", "error_type": "SyntaxError", "key_line": "SyntaxError: '(' was never closed",
+                   "search_queries": ["python SyntaxError was never closed"]})
+RESTORE = json.dumps({"candidates": [{"strategy": "workaround", "rationale": "close the call", "edits": [
+    {"op": "replace", "step_id": "s1", "new_content": GOOD, "reason": "a parenthesis was missing",
+     "evidence_ids": []}]}]})
+
+
+async def test_undoing_our_own_misreading_is_not_a_fix(settings, tmp_path):
+    def handler(script, files, image):
+        cells = json.loads(files["/opt/fmt/cells.json"])
+        ok = all(c["code"].count("(") == c["code"].count(")") for c in cells)
+        marker = json.dumps({"cell": "s1", "status": "ok" if ok else "error"})
+        return (0 if ok else 1), f"@@FMT {marker}\n" + ("[('the', 2)]\n" if ok else ""), \
+            "" if ok else "SyntaxError: '(' was never closed"
+    p, store, _, _ = build(settings, tmp_path, {
+        settings.model_planner: [MISREAD, MISREAD, SUMMARY], settings.model_triage: [TYPO],
+        settings.model_repair: [RESTORE]}, handler=handler)
+    rec = await p.run(new_record(), Source(markdown=COUNTER_MD))
+    assert rec.verdict == Verdict.STILL_WORKS
+    from fixmytutorial.report import build_changes
+    assert build_changes(rec) == []

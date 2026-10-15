@@ -197,3 +197,18 @@ async def test_a_cut_off_page_marks_the_plan_truncated(settings, tmp_path):
     plan = await plan_tutorial(PANDAS_DOC.model_copy(update={"truncated": True}), llm, settings, run_id="r",
                                public=True)
     assert plan.truncated
+
+
+def test_code_flattened_into_escaped_newlines_is_restored():
+    page = 'from collections import Counter\n\nwords = "a b a".split()\nprint(Counter(words).most_common(1))\n'
+    flat = page.strip().replace("\n", "\\n")
+    out = PlannerOutput.model_validate_json(planner_json([{"id": "a", "title": "t", "kind": "run_code",
+                                                           "content": flat}]))
+    assert normalize_plan(out, source_text=page).steps[0].content == page.strip()
+
+
+def test_real_escapes_in_code_are_left_alone():
+    page = 'print("a\\nb")\n'
+    out = PlannerOutput.model_validate_json(planner_json([{"id": "a", "title": "t", "kind": "run_code",
+                                                           "content": 'print("a\\nb")'}]))
+    assert normalize_plan(out, source_text=page).steps[0].content == 'print("a\\nb")'

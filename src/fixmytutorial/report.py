@@ -39,7 +39,7 @@ class Change:
 
 
 def build_changes(rec: RunRecord) -> list[Change]:
-    if not rec.plan or not rec.final_plan:
+    if not rec.plan or not rec.final_plan or rec.verdict == Verdict.STILL_WORKS:
         return []
     original = {s.id: s for s in rec.plan.steps}
     evidence = {e.id: e for r in rec.repairs for e in r.evidence}

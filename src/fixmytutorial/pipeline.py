@@ -7,7 +7,7 @@ import logging
 
 from .executor import ExecState, Executor, Trace, unit_index_of
 from .ingest import IngestError, Source, ingest
-from .judge import Judge
+from .judge import Judge, squash
 from .ledger import BudgetExceeded
 from .llm import LLMOutputError
 from .models import RunPlan, RunRecord, RunStatus, Step, StepOutcome, StepStatus, Summary, Verdict, utcnow
@@ -117,12 +117,22 @@ class Pipeline:
                     return
                 replay = await executor.execute(plan, base, run_id=rid, public=pub, phase="replay")
             record.final_plan = plan
-            if replay.failed_unit is None:
+            if replay.failed_unit is None and self._only_restores_the_page(record, plan, doc):
+                # the "fix" just undid our own misreading of the page: the tutorial works as written
+                record.verdict, record.repairs = Verdict.STILL_WORKS, []
+            elif replay.failed_unit is None:
                 record.verdict = Verdict.FIXED
             else:
                 record.verdict = Verdict.COULD_NOT_FIX
                 record.reason = f"The repaired tutorial did not pass a clean re-run (step {replay.failing_step_id})."
         record.summary = await self._summary(record)
+
+    @staticmethod
+    def _only_restores_the_page(record: RunRecord, plan: RunPlan, doc) -> bool:
+        original = {s.id: s.content for s in record.plan.steps} if record.plan else {}
+        changed = [s for s in plan.steps if original.get(s.id) != s.content]
+        page = squash("\n".join([doc.text, *(b.code for b in doc.code_blocks)]))
+        return bool(changed) and all(squash(s.content) in page for s in changed)
 
     async def _emit_plan(self, plan: RunPlan, record: RunRecord, emit) -> None:
         await emit({"type": "plan", "title": record.title, "language": plan.language, "runtime": plan.runtime,
