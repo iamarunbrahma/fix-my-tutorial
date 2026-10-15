@@ -1,0 +1,15 @@
+py_load_boston: {verdict: fixed, category: removed_api}
+py_pandas_append: {verdict: fixed, category: removed_api}
+py_np_float: {verdict: fixed, category: removed_api}
+py_openai_v0: {verdict: fixed, category: removed_api}
+py_langchain_llms: {verdict: fixed, category: renamed_package}
+py_flask_before_first_request: {verdict: fixed, category: removed_api}
+py_seaborn_style: {verdict: fixed, category: removed_api}
+py_pandas_iteritems: {verdict: fixed, category: removed_api}
+py_sklearn_ohe_sparse: {verdict: fixed, category: removed_api}
+py_still_works: {verdict: still_works}
+js_node_fetch_require: {verdict: fixed, category: version_conflict}
+js_express_wildcard: {verdict: fixed, category: removed_api}
+js_faker: {verdict: fixed, category: renamed_package}
+js_chalk_require: {verdict: fixed, category: version_conflict}
+js_still_works: {verdict: still_works}
