@@ -28,6 +28,16 @@
     {% set note = partial_note(rec) %}{% if note %}<div class="alert" role="status"><h2>{{ note }}</h2></div>{% endif %}
   </section>
 
+  {% set when = broke_in_text(rec) %}
+  {% if when %}
+  <section class="card mt-3 gap-2 p-6">
+    <h2 class="section-title text-base">When it broke</h2>
+    <p class="text-sm leading-relaxed text-pretty">{{ when }}</p>
+    {% set src = broke_in_source(rec) %}
+    {% if src %}<p class="text-muted-foreground text-sm">Source: <a class="text-foreground underline-offset-4 hover:underline" href="{{ src.url }}" target="_blank" rel="noopener">{{ src.title }}</a></p>{% endif %}
+  </section>
+  {% endif %}
+
   {% if changes %}
   <section class="mt-8 flex flex-col gap-4">
     <h2 class="section-title">{{ changes|length }} change{{ "s" if changes|length != 1 }} to make it work today</h2>

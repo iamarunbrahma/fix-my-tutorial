@@ -67,6 +67,9 @@ class Settings(BaseSettings):
     install_timeout_s: int = 300
     run_wall_clock_s: int = 720
     repair_rounds: int = 3
+    break_finder: bool = True  # after a Fixed / Could not fix verdict, find the release that broke it
+    break_finder_s: int = 240  # at most this long, and never past the run's own deadline
+    break_max_probes: int = 6  # sandbox runs of the failing step with other releases
     max_repaired_steps: int = 4
     candidates_per_round: int = 3
     max_steps: int = 40

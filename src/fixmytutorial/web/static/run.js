@@ -13,7 +13,8 @@
   const STAGES = {
     queued: "Waiting to start", ingesting: "Reading the tutorial", planning: "Planning the steps with Nemotron 3 Super",
     executing: `Running the steps in ${sandbox}`, repairing: "Repairing a broken step",
-    replaying: "Replaying the fixed tutorial from scratch", done: "Finished", failed: "Stopped",
+    replaying: "Replaying the fixed tutorial from scratch", dating: "Finding the release that broke it",
+    done: "Finished", failed: "Stopped",
   };
   const STATUS = { pending: "Waiting", running: "Running", passed: "Passed", failed: "Failed", repairing: "Repairing",
     repaired: "Repaired" };
@@ -138,6 +139,12 @@
     setCandidate(ev.index, "winner", "passed", "Applied", "Passed · applied to the tutorial");
   }
 
+  function onBrokeIn(ev) {
+    $("#diagnosis").hidden = false;
+    $("#when").hidden = false;
+    $("#when-text").textContent = ev.text || "";
+  }
+
   function onVerdict(ev) {
     setStage(ev.verdict === "error" ? "failed" : "done");
     $("#workspace").hidden = state.steps.length === 0;  // nothing ran: no empty step panels
@@ -169,6 +176,7 @@
   on("candidates", onCandidates);
   on("candidate_result", onCandidateResult);
   on("winner", onWinner);
+  on("broke_in", onBrokeIn);
   on("verdict", onVerdict);
   on("done", () => es.close());
 })();

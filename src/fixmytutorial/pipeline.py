@@ -5,6 +5,7 @@ import asyncio
 import json
 import logging
 
+from .breakage import BreakTarget, Registry, eligible, find_break, make_probe
 from .executor import ExecState, Executor, Trace, unit_index_of
 from .ingest import IngestError, Source, ingest
 from .judge import Judge, squash
@@ -14,7 +15,7 @@ from .models import RunPlan, RunRecord, RunStatus, Step, StepOutcome, StepStatus
 from .planner import plan_tutorial
 from .prompts import SUMMARY_SYSTEM
 from .repair import Repairer, run_deadline
-from .report import partial_note
+from .report import broke_in_text, partial_note
 from .research import research
 from .sandbox import PRELUDE
 from .triage import triage
@@ -28,7 +29,7 @@ def step_view(s: Step) -> dict:
 
 
 class Pipeline:
-    def __init__(self, *, settings, llm, search, backend, store, ledger, bus, snapshot=None):
+    def __init__(self, *, settings, llm, search, backend, store, ledger, bus, snapshot=None, registry=None):
         self.s = settings
         self.llm = llm
         self.search = search
@@ -38,6 +39,8 @@ class Pipeline:
         self.bus = bus
         self.snapshot = snapshot
         self.judge = Judge(llm)
+        self.registry = registry or Registry()
+        self._break_targets: dict[str, BreakTarget] = {}  # run id -> the first failure worth dating
 
     async def run(self, record: RunRecord, source: Source) -> RunRecord:
         async def emit(ev: dict) -> None:
@@ -54,6 +57,7 @@ class Pipeline:
         try:
             async with asyncio.timeout(self.s.run_wall_clock_s):
                 await self._run(record, source, emit, executor)
+                await self._date_break(record, emit, executor)
         except (BudgetExceeded, IngestError) as e:
             record.verdict, record.reason = Verdict.ERROR, str(e)
         except TimeoutError:
@@ -66,6 +70,7 @@ class Pipeline:
             log.exception("run %s failed", record.id)
             record.verdict, record.reason = Verdict.ERROR, "Something went wrong on our side. Please try again."
         finally:
+            self._break_targets.pop(record.id, None)
             if record.verdict is None:
                 record.verdict = Verdict.ERROR
             totals = self.ledger.totals(record.id)
@@ -167,6 +172,8 @@ class Pipeline:
                                           id_prefix=f"r{len(record.repairs) + 1}e")
                 await emit({"type": "evidence", "step_id": failing, "items": [e.model_dump() for e in evidence]})
                 versions = await self._versions(plan.language, trace.states[trace.failed_unit])
+                if record.id not in self._break_targets and eligible(plan, trace, sig):
+                    self._break_targets[record.id] = BreakTarget(plan, trace, failing, sig, evidence, versions)
                 rec, win = await Repairer(self.llm, executor, self.s).repair_step(
                     plan=plan, trace=trace, signature=sig, evidence=evidence, versions=versions, run_id=rid,
                     public=pub, emit=emit)
@@ -194,6 +201,25 @@ class Pipeline:
             trace = await executor.execute(plan, win.trace.states, from_unit=unit_index_of(plan, failing) + 1,
                                            run_id=rid, public=pub)
         return plan
+
+    async def _date_break(self, record: RunRecord, emit, executor: Executor) -> None:
+        """Which package release broke the tutorial. Best effort, and it never changes the verdict."""
+        target = self._break_targets.pop(record.id, None)
+        if target is None or not self.s.break_finder or record.verdict not in (Verdict.FIXED, Verdict.COULD_NOT_FIX):
+            return
+        deadline = run_deadline.get()
+        left = self.s.break_finder_s if deadline is None else deadline - asyncio.get_running_loop().time() - 45
+        time_s = min(self.s.break_finder_s, left)
+        if time_s < 30:
+            return
+        await emit({"type": "stage", "stage": "dating"})
+        lang, rid, pub = target.plan.language, record.id, record.public
+        record.broke_in = await find_break(
+            target, language=lang, llm=self.llm, registry=self.registry,
+            probe_for=lambda pkg: make_probe(executor, target, lang, pkg, run_id=rid, public=pub),
+            max_probes=self.s.break_max_probes, time_s=time_s, run_id=rid, public=pub)
+        if record.broke_in is not None:
+            await emit({"type": "broke_in", **record.broke_in.model_dump(mode="json"), "text": broke_in_text(record)})
 
     async def _versions(self, language: str, state: ExecState) -> str:
         cmd = ("pip list --format=freeze 2>/dev/null | head -150" if language == "python"

@@ -6,7 +6,7 @@ import re
 from urllib.parse import urlencode, urlparse
 
 from .models import RunRecord, Verdict
-from .report import build_changes
+from .report import broke_in_text, build_changes
 
 NAME = re.compile(r"^[A-Za-z0-9_.-]{1,100}$")
 NOT_REPOS = {"orgs", "organizations", "topics", "marketplace", "features", "settings", "sponsors", "apps", "login",
@@ -69,6 +69,9 @@ def author_note(rec: RunRecord, report_url: str) -> tuple[str, str]:
                      + _block(first.signature.key_line or "an error"))
     elif rec.reason:
         parts.append(f"**What we found:** {rec.reason}")
+    when = broke_in_text(rec)
+    if when:
+        parts.append(f"**When it broke:** {when}")
     changes = build_changes(rec) if rec.verdict == Verdict.FIXED else []
     if changes:
         parts.append("**A fix that works today.** We re-ran the whole tutorial from scratch with it:")

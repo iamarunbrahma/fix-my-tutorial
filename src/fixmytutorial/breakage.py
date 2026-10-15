@@ -146,8 +146,10 @@ def _series_start(rel: list[Release]) -> int:
     return len(rel) - 1
 
 
-def _same_error(line: str, sig: FailureSignature) -> bool:
-    if line.strip() and line.strip() == (sig.key_line or "").strip():
+def _same_error(line: str, sig: FailureSignature, original: str = "") -> bool:
+    """The probe failed the way the run did: same error line as the run's output (or the triage copy of it), or
+    the same failing symbol."""
+    if line.strip() and line.strip() in {original.strip(), (sig.key_line or "").strip()}:
         return True
     last = (sig.symbol or "").split(".")[-1]
     return bool(last) and last in line
@@ -173,6 +175,8 @@ def make_probe(executor, target: BreakTarget, language: str, package: str, *, ru
     assert trace is not None and trace.failed_unit, "make_probe needs the trace the step failed in"
     fu = trace.failed_unit
     prev = group_units(target.plan.steps)[fu - 1][-1]
+    first = trace.results.get(target.step_id)
+    original = key_line(failure_output(first)) if first else ""
 
     async def probe(version: str) -> str:
         spec = f"{package}=={version}" if language == "python" else f"{package}@{version}"
@@ -189,7 +193,7 @@ def make_probe(executor, target: BreakTarget, language: str, package: str, *, ru
         r = t.results.get(target.step_id)
         if t.failing_step_id != target.step_id or r is None:
             return "other"
-        return "same" if _same_error(key_line(failure_output(r)), target.signature) else "other"
+        return "same" if _same_error(key_line(failure_output(r)), target.signature, original) else "other"
 
     return probe
 

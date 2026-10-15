@@ -27,7 +27,9 @@ from ..ingest import Source
 from ..jobs import JobQueue, RateLimiter, StreamLimiter
 from ..ledger import Ledger
 from ..models import RunRecord, RunStatus, Verdict, utcnow
-from ..report import VERDICT_TEXT, badge_svg, build_changes, diff_lines, og_png, partial_note
+from ..report import (
+    VERDICT_TEXT, badge_svg, broke_in_source, broke_in_text, build_changes, diff_lines, og_png, partial_note,
+)
 from ..snapshot import NOT_CONFIGURED
 from ..store import Store
 
@@ -248,7 +250,8 @@ def create_app(deps: Deps | None = None) -> FastAPI:
     templates = Jinja2Templates(directory=HERE / "templates")
     templates.env.globals.update(
         verdict_label=verdict_label, cat_label=lambda c: CATEGORY_TEXT.get(c, c), diff_lines=diff_lines,
-        partial_note=partial_note, sandbox_label=sandbox_label, asset=asset,
+        partial_note=partial_note, sandbox_label=sandbox_label, asset=asset, broke_in_text=broke_in_text,
+        broke_in_source=broke_in_source,
     )
 
     def D(request: Request) -> Deps:

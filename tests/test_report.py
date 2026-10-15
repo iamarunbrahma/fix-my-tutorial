@@ -78,3 +78,43 @@ def test_partly_checked_runs_say_so_on_the_badge():
     assert partial_note(partial) == "Partly checked: we ran 80% of the code on this page."
     assert partial_note(cut) == "Partly checked: only the first part of this page was run."
     assert partial_note(rec) == ""
+
+
+def _broken(how="ran", last_good="1.5.3", published="2022-03-14"):
+    from datetime import date
+
+    from fixmytutorial.models import BreakPoint
+    bp = BreakPoint(package="pandas", step_id="s2", first_bad="2.0.0", first_bad_date=date(2023, 4, 3),
+                    last_good=last_good, last_good_date=date(2023, 1, 19) if last_good else None, how=how,
+                    evidence_id="r1e1")
+    return record().model_copy(update={"broke_in": bp, "published": published})
+
+
+def test_broke_in_text_when_confirmed_by_running():
+    from fixmytutorial.report import broke_in_text
+    assert broke_in_text(_broken()) == (
+        "Broke in pandas 2.0.0, released 3 Apr 2023. pandas 1.5.3 still runs this step, and 2.0.0 fails the "
+        "same way. The tutorial was published in Mar 2022, so it worked for about 13 months.")
+
+
+def test_broke_in_text_from_the_release_notes():
+    from fixmytutorial.report import broke_in_text
+    assert broke_in_text(_broken(how="release_notes", last_good=None, published=None)) == (
+        "Broke in pandas 2.0.0, released 3 Apr 2023, according to the cited release notes. Older releases "
+        "can't be installed here to check.")
+    assert broke_in_text(_broken(how="release_notes", published=None)) == (
+        "Broke in pandas 2.0.0, released 3 Apr 2023, according to the cited release notes. pandas 1.5.3 still "
+        "runs this step.")
+
+
+def test_broke_in_text_when_the_page_was_already_out_of_date():
+    from fixmytutorial.report import broke_in_text
+    assert broke_in_text(_broken(published="2023-06-01")).endswith(
+        "That release came out before this page was published (Jun 2023), so the page was already out of date then.")
+    assert broke_in_text(_broken(published="2023-04-01")).endswith("so it broke within a month of publishing.")
+
+
+def test_no_break_text_without_a_break():
+    from fixmytutorial.report import broke_in_text, broke_in_source
+    assert broke_in_text(record()) == "" and broke_in_source(record()) is None
+    assert broke_in_source(_broken()).url == "https://pandas.pydata.org/x"

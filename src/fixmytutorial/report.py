@@ -5,6 +5,7 @@ import difflib
 import io
 import textwrap
 from dataclasses import dataclass, field
+from datetime import date
 from html import escape
 
 from PIL import Image, ImageDraw, ImageFont
@@ -100,6 +101,45 @@ def partial_note(rec: RunRecord) -> str:
     if rec.plan.truncated:
         return "Partly checked: only the first part of this page was run."
     return f"Partly checked: we ran {int(rec.plan.coverage * 100)}% of the code on this page."
+
+
+def _day(d: date) -> str:
+    return f"{d.day} {d:%b %Y}"
+
+
+def broke_in_text(rec: RunRecord) -> str:
+    """One plain paragraph: which release broke the tutorial, how we know, and how long it had worked."""
+    b = rec.broke_in
+    if b is None:
+        return ""
+    if b.how == "ran":
+        text = (f"Broke in {b.package} {b.first_bad}, released {_day(b.first_bad_date)}. {b.package} {b.last_good} "
+                f"still runs this step, and {b.first_bad} fails the same way.")
+    else:
+        text = (f"Broke in {b.package} {b.first_bad}, released {_day(b.first_bad_date)}, according to the cited "
+                "release notes. " + (f"{b.package} {b.last_good} still runs this step." if b.last_good
+                                     else "Older releases can't be installed here to check."))
+    try:
+        published = date.fromisoformat(rec.published) if rec.published else None
+    except ValueError:
+        published = None
+    if published is None:
+        return text
+    if b.first_bad_date < published:
+        return (text + f" That release came out before this page was published ({published:%b %Y}), so the page was "
+                "already out of date then.")
+    months = (b.first_bad_date.year - published.year) * 12 + b.first_bad_date.month - published.month
+    if months < 1:
+        return text + f" The tutorial was published in {published:%b %Y}, so it broke within a month of publishing."
+    return (text + f" The tutorial was published in {published:%b %Y}, so it worked for about {months} "
+            f"month{'s' if months != 1 else ''}.")
+
+
+def broke_in_source(rec: RunRecord) -> Evidence | None:
+    b = rec.broke_in
+    if b is None or not b.evidence_id:
+        return None
+    return next((e for r in rec.repairs for e in r.evidence if e.id == b.evidence_id), None)
 
 
 def badge_label(rec: RunRecord) -> str:

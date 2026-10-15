@@ -409,3 +409,17 @@ def test_report_offers_a_note_elsewhere_and_only_for_broken_tutorials(env):
     assert "Copy note for the author" in r.text and "Open an issue" not in r.text
     deps.store.save_run(done_record().model_copy(update={"id": "ok1", "verdict": Verdict.STILL_WORKS}))
     assert "Tell the author" not in client.get("/r/ok1").text
+
+
+def test_report_says_when_the_tutorial_broke(env):
+    from datetime import date
+
+    from fixmytutorial.models import BreakPoint
+    client, deps = env
+    deps.store.save_run(done_record())
+    assert "When it broke" not in client.get("/r/done1").text
+    bp = BreakPoint(package="pandas", step_id="s1", first_bad="2.0.0", first_bad_date=date(2023, 4, 3),
+                    last_good="1.5.3", last_good_date=date(2023, 1, 19), how="ran")
+    deps.store.save_run(done_record().model_copy(update={"id": "dated", "broke_in": bp}))
+    r = client.get("/r/dated")
+    assert "When it broke" in r.text and "Broke in pandas 2.0.0, released 3 Apr 2023." in r.text

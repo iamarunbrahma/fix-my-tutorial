@@ -94,3 +94,15 @@ def test_issue_url_keeps_a_short_body_whole():
     _, body = author_note(record(Verdict.FIXED), REPORT)
     q = parse_qs(urlparse(issue_url("owner", "repo", "T", body, REPORT)).query)
     assert q["body"] == [body]
+
+
+def test_note_says_when_it_broke():
+    from datetime import date
+
+    from fixmytutorial.models import BreakPoint
+    bp = BreakPoint(package="pandas", step_id="s2", first_bad="2.0.0", first_bad_date=date(2023, 4, 3),
+                    last_good="1.5.3", last_good_date=date(2023, 1, 19), how="ran")
+    _, body = author_note(record(Verdict.FIXED).model_copy(update={"broke_in": bp}), REPORT)
+    assert "**When it broke:** Broke in pandas 2.0.0, released 3 Apr 2023." in body
+    _, plain = author_note(record(Verdict.FIXED), REPORT)
+    assert "When it broke" not in plain

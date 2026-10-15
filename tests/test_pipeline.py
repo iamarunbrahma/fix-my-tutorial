@@ -35,7 +35,14 @@ def needs_append(cell):
     return "df.append(" in cell["code"]
 
 
-def build(settings, tmp_path, by_model, handler=None, **overrides):
+class NoRegistry:
+    """No package registry: the break finder finds nothing, and tests never touch the network."""
+
+    async def releases(self, language, package):
+        return []
+
+
+def build(settings, tmp_path, by_model, handler=None, registry=None, **overrides):
     s = settings.model_copy(update=overrides)
     store = Store(tmp_path / "s.db")
     ledger = Ledger(tmp_path / "l.db", s)
@@ -43,7 +50,8 @@ def build(settings, tmp_path, by_model, handler=None, **overrides):
     llm = LLM(s, ledger, client=RoutingChatClient(by_model))
     search = SearchClient(s, ledger, store, client=TAVILY)
     backend = FakeBackend(handler or cells_handler(fail_cell=needs_append))
-    p = Pipeline(settings=s, llm=llm, search=search, backend=backend, store=store, ledger=ledger, bus=bus)
+    p = Pipeline(settings=s, llm=llm, search=search, backend=backend, store=store, ledger=ledger, bus=bus,
+                 registry=registry or NoRegistry())
     return p, store, backend, s
 
 
@@ -218,3 +226,88 @@ async def test_the_page_publish_date_is_kept_on_the_run(settings, tmp_path, monk
     p, store, _, _ = build(settings, tmp_path, {settings.model_planner: [PLAN, SUMMARY]}, handler=cells_handler())
     rec = await p.run(new_record(), Source(markdown=MD))
     assert rec.published == "2022-03-14" and store.get_run("run1").published == "2022-03-14"
+
+
+
+class PandasRegistry:
+    def __init__(self, error=None):
+        self.error = error
+
+    async def releases(self, language, package):
+        from datetime import date
+
+        from fixmytutorial.breakage import Release
+        if self.error:
+            raise self.error
+        return [Release(version="1.5.3", date=date(2023, 1, 19)), Release(version="2.0.0", date=date(2023, 4, 3)),
+                Release(version="2.2.3", date=date(2024, 9, 20))]
+
+
+def versioned_pandas():
+    """pandas >= 2 has no DataFrame.append. `pip install -q pandas==X` sets the version for the image it saves."""
+    by_image: dict[str, str] = {}
+    backend_ref: dict = {}
+
+    def other(script, files):
+        if "pip list --format=freeze" in script:
+            return (0, "numpy==2.1.0\npandas==2.2.3\n", "")
+        if "pip install -q pandas==" in script:
+            by_image[f"img-{backend_ref['b']._n + 1}"] = script.split("pandas==")[1].split()[0]
+        return (0, "ok", "")
+
+    def handler(script, files, image):
+        if "run_cells.py" in script:
+            version = by_image.get(image.ref, "2.2.3")
+            return cells_handler(fail_cell=needs_append if version >= "2" else None)(script, files, image)
+        return other(script, files)
+
+    return handler, backend_ref
+
+
+GUESS = json.dumps({"package": "pandas", "version": "", "evidence_id": ""})
+
+
+async def test_pipeline_finds_the_release_that_broke_the_tutorial(settings, tmp_path):
+    handler, ref = versioned_pandas()
+    p, store, backend, _ = build(settings, tmp_path, {
+        settings.model_planner: [PLAN, SUMMARY], settings.model_triage: [SIG, GUESS], settings.model_repair: [FIX]},
+        handler=handler, registry=PandasRegistry())
+    ref["b"] = backend
+    rec = await p.run(new_record(), Source(markdown=MD))
+    assert rec.verdict == Verdict.FIXED
+    b = rec.broke_in
+    assert (b.package, b.first_bad, b.last_good, b.how, b.step_id) == ("pandas", "2.0.0", "1.5.3", "ran", "s3")
+    assert store.get_run("run1").broke_in == b
+    evs = events(store)
+    assert {"type": "stage", "stage": "dating"} in evs
+    found = next(e for e in evs if e["type"] == "broke_in")
+    assert found["text"].startswith("Broke in pandas 2.0.0, released 3 Apr 2023.")
+    assert [e["type"] for e in evs][-2:] == ["verdict", "done"]
+
+
+async def test_the_break_finder_never_changes_the_verdict(settings, tmp_path):
+    handler, ref = versioned_pandas()
+    p, store, backend, _ = build(settings, tmp_path, {
+        settings.model_planner: [PLAN, SUMMARY], settings.model_triage: [SIG, GUESS], settings.model_repair: [FIX]},
+        handler=handler, registry=PandasRegistry(error=RuntimeError("registry down")))
+    ref["b"] = backend
+    rec = await p.run(new_record(), Source(markdown=MD))
+    assert rec.verdict == Verdict.FIXED and rec.broke_in is None and rec.reason == ""
+
+
+async def test_no_dating_when_the_tutorial_still_works(settings, tmp_path):
+    p, store, _, _ = build(settings, tmp_path, {settings.model_planner: [PLAN, SUMMARY]}, handler=cells_handler(),
+                           registry=PandasRegistry())
+    rec = await p.run(new_record(), Source(markdown=MD))
+    assert rec.verdict == Verdict.STILL_WORKS and rec.broke_in is None
+    assert {"type": "stage", "stage": "dating"} not in events(store)
+
+
+async def test_the_break_finder_can_be_switched_off(settings, tmp_path):
+    handler, ref = versioned_pandas()
+    p, store, backend, _ = build(settings, tmp_path, {
+        settings.model_planner: [PLAN, SUMMARY], settings.model_triage: [SIG], settings.model_repair: [FIX]},
+        handler=handler, registry=PandasRegistry(), break_finder=False)
+    ref["b"] = backend
+    rec = await p.run(new_record(), Source(markdown=MD))
+    assert rec.verdict == Verdict.FIXED and rec.broke_in is None
