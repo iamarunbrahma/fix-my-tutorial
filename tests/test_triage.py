@@ -58,3 +58,28 @@ async def test_timeout_skips_llm(settings, tmp_path):
     r = StepResult(exit_code=124, timed_out=True, stderr="[Fix My Tutorial] Step timed out after 180s")
     sig = await triage(STEP, r, language="python", llm=llm, run_id="r", public=True)
     assert sig.category == "timeout" and client.calls == []
+
+
+SKLEARN_REMOVED = ("Traceback (most recent call last):\n  File \"<cell s2>\", line 1, in <module>\n"
+                   "    raise ImportError(msg)\nImportError: \n"
+                   "`load_boston` has been removed from scikit-learn since version 1.2.\n\n"
+                   "The Boston housing prices dataset has an ethical problem.\n")
+
+
+def test_key_line_joins_a_bare_error_type_with_its_message():
+    assert key_line(SKLEARN_REMOVED) == "ImportError: `load_boston` has been removed from scikit-learn since version 1.2."
+
+
+def test_has_been_removed_message_is_a_removed_api():
+    sig = heuristic_signature(SKLEARN_REMOVED, "python")
+    assert (sig.category, sig.package, sig.symbol) == ("removed_api", "scikit-learn", "load_boston")
+
+
+async def test_bare_llm_key_line_is_replaced_by_the_fuller_one(settings, tmp_path):
+    client = FakeChatClient(['{"category": "unknown", "error_type": "ImportError", "key_line": "ImportError:",'
+                             ' "search_queries": []}'])
+    llm = LLM(settings, Ledger(tmp_path / "l.db", settings), client=client)
+    sig = await triage(STEP, StepResult(exit_code=1, stderr=SKLEARN_REMOVED), language="python", llm=llm,
+                       run_id="r", public=True)
+    assert "has been removed from scikit-learn" in sig.key_line
+    assert (sig.category, sig.package, sig.symbol) == ("removed_api", "scikit-learn", "load_boston")

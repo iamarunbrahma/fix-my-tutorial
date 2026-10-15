@@ -15,6 +15,8 @@ HEURISTICS = [
     (re.compile(r"timed out after (\d+)s"), "timeout", "Timeout", lambda m: {}),
     (re.compile(r"APIRemovedInV1"), "removed_api", "APIRemovedInV1",
      lambda m: {"package": "openai", "symbol": "openai.ChatCompletion"}),
+    (re.compile(r"`?(\w+)`? has been removed from ([\w\-\.]+)"), "removed_api", "Removed",
+     lambda m: {"symbol": m.group(1), "package": m.group(2).rstrip(".")}),
     (re.compile(r"cannot import name '(\w+)' from '([\w\.]+)'"), "removed_api", "ImportError",
      lambda m: {"symbol": m.group(1), "package": _pkg(m.group(2))}),
     (re.compile(r"No module named '([\w\.]+)'"), "renamed_package", "ModuleNotFoundError",
@@ -41,9 +43,15 @@ KEY_LINE_RE = re.compile(
 
 
 def key_line(output: str) -> str:
-    matches = KEY_LINE_RE.findall(output or "")
+    text = output or ""
+    matches = list(KEY_LINE_RE.finditer(text))
     if matches:
-        return matches[-1].strip()[:300]
+        m = matches[-1]
+        line = m.group(0).strip()
+        if line.endswith(":"):  # e.g. "ImportError:" with the message on the following lines
+            rest = next((ln.strip() for ln in text[m.end():].splitlines() if ln.strip()), "")
+            line = f"{line} {rest}".strip()
+        return line[:300]
     lines = [ln for ln in (output or "").strip().splitlines() if ln.strip()]
     return (lines[-1] if lines else "")[:300]
 
@@ -91,7 +99,10 @@ async def triage(step: Step, result: StepResult, *, language: str, llm, run_id: 
         raise
     except Exception:
         return base
-    if not sig.key_line:
+    if not sig.key_line or sig.key_line.rstrip().endswith(":"):
         sig.key_line = base.key_line
+    if sig.category == "unknown":  # the model added nothing; keep what the error text itself says
+        sig.category = base.category
+    sig.package, sig.symbol = sig.package or base.package, sig.symbol or base.symbol
     sig.search_queries = [q[:200] for q in (sig.search_queries or base.search_queries)[:3]]
     return sig
