@@ -30,16 +30,22 @@ class LLMOutputError(Exception):
     pass
 
 
+_DECODER = json.JSONDecoder()
+
+
 def extract_json(text: str) -> str:
+    """Return the first complete JSON object or array in a model reply, ignoring reasoning blocks, code fences and
+    any text before or after it (Nemotron 3.5 Lightning sometimes repeats the object after the JSON)."""
     text = _THINK.sub("", text or "")
     text = _FENCE.sub("", text).strip()
-    starts = [i for i in (text.find("{"), text.find("[")) if i != -1]
-    if starts:
-        text = text[min(starts):]
-    end = max(text.rfind("}"), text.rfind("]"))
-    if end != -1:
-        text = text[: end + 1]
-    return text.strip()
+    for i, ch in enumerate(text):
+        if ch in "{[":
+            try:
+                _, end = _DECODER.raw_decode(text, i)
+            except ValueError:
+                continue
+            return text[i:end]
+    return text
 
 
 def estimate_tokens(text: str) -> int:

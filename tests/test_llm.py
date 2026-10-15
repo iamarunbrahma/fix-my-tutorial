@@ -129,3 +129,13 @@ async def test_missing_api_key_fails_at_call_time_not_at_startup(settings, tmp_p
     with pytest.raises(RuntimeError, match="NEBIUS_API_KEY"):
         await llm.call("triage", "s", "u", Out, run_id="r", public=False)
     assert led.totals("r").run_usd == 0
+
+
+def test_extract_json_ignores_trailing_text_after_first_object():
+    raw = '{"ok": true, "n": 3}"\n Here it is again: `{"ok": true, "n": 3}`'
+    assert extract_json(raw) == '{"ok": true, "n": 3}'
+
+
+def test_extract_json_skips_a_broken_brace_before_the_real_object():
+    raw = 'Note {not json} then {"ok": false, "n": 1} done'
+    assert extract_json(raw) == '{"ok": false, "n": 1}'

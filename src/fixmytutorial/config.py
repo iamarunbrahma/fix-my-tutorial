@@ -31,10 +31,11 @@ class Settings(BaseSettings):
     sandbox_backend: Literal["contree", "docker", "fake"] = "docker"
     data_dir: Path = Path("data")
 
-    model_planner: str = "nvidia/Nemotron-3-Super-120b-a12b"
-    model_summary: str = "nvidia/Nemotron-3-Super-120b-a12b"
-    model_triage: str = "nvidia/Nemotron-3.5-Lightning"
-    model_judge: str = "nvidia/Nemotron-3-Nano-30B-A3B"
+    # Exact IDs from GET /v1/models on 2026-10-15.
+    model_planner: str = "nvidia/nemotron-3-super-120b-a12b"
+    model_summary: str = "nvidia/nemotron-3-super-120b-a12b"
+    model_triage: str = "nvidia/Nemotron-3_5-Lightning"
+    model_judge: str = "nvidia/NVIDIA-Nemotron-3-Nano-30B-A3B"
     model_repair: str = "nvidia/Nemotron-3-Ultra-550b-a55b"
     json_object_roles: str = ""  # comma list of roles that need json_object instead of json_schema
 
