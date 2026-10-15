@@ -97,6 +97,7 @@ Each run streams JSON events over SSE (`/run/{run_id}/events`). Every event has 
 | `evidence` | `step_id`, `items[]` | Cited sources (url, title, quote) found by research |
 | `candidates` | `step_id`, `round`, `candidates[]` | The fixes proposed for this round |
 | `candidate_result` | `step_id`, `round`, `index`, `passed`, `error` | Outcome of one racing candidate |
+| `winner` | `step_id`, `round`, `index` | The passing candidate that was applied to the tutorial |
 | `verdict` | `verdict`, `reason`, `summary`, `cost_usd` | Final result |
 | `done` | | Stream end |
 | `ping` | | Keep-alive while nothing new has happened |
