@@ -95,9 +95,10 @@ uv run python -m fixmytutorial.eval # live evaluation over the fixture tutorials
 A bank card sits behind the Token Factory account, so the app is built to never spend past its credits:
 
 - Every model and Tavily call goes through a ledger that reserves an upper-bound cost first, and refuses the call if it would cross a cap.
-- Caps: $28 lifetime, $3 a day, $0.50 per run, 30 Tavily credits per run and 5,000 lifetime.
+- The public demo and our own evaluation runs have separate budgets ($15 and $11 lifetime) that, with a margin for runs cut off by a restart, stay under the account's $30.50 of credits. So neither has to trust the other's records.
+- Daily and per-run caps: $3 a day, $0.50 per run, 30 Tavily credits per run and 5,000 lifetime.
 - Calls that fail after they may have been billed are charged at their upper bound.
-- If the ledger can't be restored after a restart, public runs pause instead of starting from zero.
+- If the demo's ledger can't be loaded or saved, public runs pause instead of starting from zero, and the app keeps retrying until it can.
 - Public runs are limited to 3 per hour per visitor.
 
 ## Limitations

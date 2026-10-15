@@ -202,3 +202,54 @@ def test_failed_restore_pauses_public_runs_on_boot(settings, tmp_path):
         assert "past spend could not be loaded" in client.get("/").text
         r = client.post("/runs", data={"url": "https://z.example/t"}, follow_redirects=False)
         assert r.status_code == 503 and deps.queue.submitted == []
+
+
+def test_space_without_spend_snapshots_keeps_public_runs_closed(tmp_path):
+    from fixmytutorial.config import Settings
+    s = Settings(_env_file=None, data_dir=tmp_path, sandbox_backend="fake", space_id="owner/space")
+    store = Store(tmp_path / "s3.db")
+    ledger = Ledger(tmp_path / "l3.db", s)
+    deps = Deps(settings=s, store=store, ledger=ledger, bus=EventBus(store, ping_s=0.05),
+                queue=FakeQueue(store), limiter=RateLimiter(2), snapshot=None)
+    with TestClient(create_app(deps)) as client:
+        assert "spend records are not set up" in client.get("/").text
+
+
+def test_heal_loop_reopens_public_runs_after_a_hub_error(settings, tmp_path):
+    import time
+
+    class RecoveringSnapshot:
+        enabled = True
+
+        def __init__(self, ledger):
+            self.ledger = ledger
+
+        def restore(self):
+            self.ledger.mark_unverified("past spend could not be loaded.")
+            return 0
+
+        def heal(self):
+            self.ledger.clear_unverified("past spend could not be loaded.")
+
+    s = settings.model_copy(update={"snapshot_heal_s": 0.05})
+    store = Store(tmp_path / "s4.db")
+    ledger = Ledger(tmp_path / "l4.db", s)
+    deps = Deps(settings=s, store=store, ledger=ledger, bus=EventBus(store, ping_s=0.05),
+                queue=FakeQueue(store), limiter=RateLimiter(2), snapshot=RecoveringSnapshot(ledger))
+    with TestClient(create_app(deps)) as client:
+        for _ in range(40):
+            if "paused" not in client.get("/").text:
+                break
+            time.sleep(0.05)
+        assert "paused" not in client.get("/").text
+
+
+def test_snapshots_only_run_inside_the_space(tmp_path):
+    from fixmytutorial.config import Settings
+    from fixmytutorial.web.app import snapshot_for
+    laptop = Settings(_env_file=None, data_dir=tmp_path, hf_token="hf_x")
+    space = Settings(_env_file=None, data_dir=tmp_path, hf_token="hf_x", space_id="owner/space")
+    store, ledger = Store(tmp_path / "s5.db"), Ledger(tmp_path / "l5.db", laptop)
+    assert snapshot_for(laptop, store, ledger) is None
+    snap = snapshot_for(space, store, ledger)
+    assert snap.enabled and snap.owns_ledger

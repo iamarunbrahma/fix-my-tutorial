@@ -141,3 +141,13 @@ def test_daily_cap_covers_all_runs_not_just_public(settings, tmp_path):
     assert e.value.scope == "daily_all"
     clock["t"] += 86_400
     led.reserve_llm("batch2", False, "planner", 20_000, 2_000)
+
+
+def test_pause_reasons_are_cleared_independently(settings, tmp_path):
+    led = Ledger(tmp_path / "l.db", settings)
+    led.mark_unverified("restore failed")
+    led.mark_unverified("save failed")
+    led.clear_unverified("save failed")
+    assert led.public_runs_open() == (False, "Public runs are paused: restore failed")
+    led.clear_unverified("restore failed")
+    assert led.public_runs_open()[0]

@@ -3,7 +3,7 @@
   python -m fixmytutorial.rot_index discover   # Tavily searches -> rot_index/candidates.yaml (for hand curation)
   python -m fixmytutorial.rot_index run [--force] [--concurrency 4]
   python -m fixmytutorial.rot_index export     # -> rot_index/results.json
-  python -m fixmytutorial.rot_index sync [--bootstrap]  # merge + upload local runs and ledger (one commit)
+  python -m fixmytutorial.rot_index sync [--bootstrap]  # upload local runs and events (never the ledger)
 """
 from __future__ import annotations
 
@@ -141,9 +141,8 @@ def sync(bootstrap: bool = False) -> None:
     ok = Snapshotter(s, store, ledger).save_all([r for r in store.list_runs(limit=5000) if not r.public],
                                                 bootstrap=bootstrap)
     if not ok:
-        raise SystemExit("Sync refused: the remote ledger could not be read and merged (use --bootstrap only for "
-                         "the very first upload).")
-    print("synced local runs and merged ledger to", s.hf_dataset_repo)
+        raise SystemExit("Sync failed: the Hub dataset could not be reached.")
+    print("synced local runs to", s.hf_dataset_repo, "(the Space keeps its own spend ledger)")
 
 
 def main() -> None:

@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import asyncio
 import ipaddress
 import json
 import logging
@@ -22,6 +23,7 @@ from ..jobs import JobQueue, RateLimiter
 from ..ledger import Ledger
 from ..models import RunRecord, RunStatus, Verdict, utcnow
 from ..report import VERDICT_TEXT, badge_svg, build_changes, diff_lines, og_png
+from ..snapshot import NOT_CONFIGURED
 from ..store import Store
 
 HERE = Path(__file__).parent
@@ -55,12 +57,11 @@ def build_deps(settings: Settings) -> Deps:
     from ..pipeline import Pipeline
     from ..sandbox import make_backend
     from ..search import SearchClient
-    from ..snapshot import Snapshotter
 
     store = Store(settings.db_path)
     ledger = Ledger(settings.ledger_db_path, settings)
     bus = EventBus(store)
-    snapshot = Snapshotter(settings, store, ledger)
+    snapshot = snapshot_for(settings, store, ledger)
     pipeline = Pipeline(
         settings=settings,
         llm=LLM(settings, ledger),
@@ -80,6 +81,26 @@ def build_deps(settings: Settings) -> Deps:
         limiter=RateLimiter(settings.rate_limit_runs_per_hour),
         snapshot=snapshot,
     )
+
+
+def snapshot_for(settings: Settings, store: Store, ledger: Ledger):
+    """Only the Space persists to the Hub dataset (and owns the remote ledger). A laptop server keeps everything
+    local, so a test run can never upload runs or touch the Space's spend records."""
+    if not settings.space_id:
+        return None
+    from ..snapshot import Snapshotter
+    return Snapshotter(settings, store, ledger, owns_ledger=True)
+
+
+async def heal_loop(d: Deps) -> None:
+    """While public runs are paused by a Hub error, keep retrying the load or save that failed."""
+    while True:
+        await asyncio.sleep(d.settings.snapshot_heal_s)
+        if d.ledger.unverified():
+            try:
+                await asyncio.to_thread(d.snapshot.heal)
+            except Exception:
+                log.exception("snapshot heal failed")
 
 
 def rate_key(addr: str) -> str | None:
@@ -133,14 +154,18 @@ def create_app(deps: Deps | None = None) -> FastAPI:
     @asynccontextmanager
     async def lifespan(app: FastAPI):
         d = deps or build_deps(get_settings())
+        heal = None
         if d.snapshot is not None and getattr(d.snapshot, "enabled", False):
-            import asyncio
-
             restored = await asyncio.to_thread(d.snapshot.restore)
             log.info("restored %d runs from snapshot", restored)
+            heal = asyncio.create_task(heal_loop(d))
+        elif d.settings.space_id:  # without snapshots the Space would forget its spend on every restart
+            d.ledger.mark_unverified(NOT_CONFIGURED)
         await recover_unfinished(d)
         app.state.deps = d
         yield
+        if heal is not None:
+            heal.cancel()
 
     app = FastAPI(title="Fix My Tutorial", lifespan=lifespan, docs_url=None, redoc_url=None)
     app.mount("/static", StaticFiles(directory=HERE / "static"), name="static")

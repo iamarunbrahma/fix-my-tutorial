@@ -2,8 +2,10 @@ from functools import lru_cache
 from pathlib import Path
 from typing import Literal
 
+from pydantic import model_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
+ACCOUNT_CREDITS_USD = 30.50  # $29.50 AI Builder Program credits + $1 trial on the Token Factory account
 ROLES = ("planner", "summary", "triage", "judge", "repair")
 
 # Token Factory list prices per 1M tokens (input, output), checked 2026-10-15.
@@ -39,7 +41,12 @@ class Settings(BaseSettings):
     model_repair: str = "nvidia/Nemotron-3-Ultra-550b-a55b"
     json_object_roles: str = ""  # comma list of roles that need json_object instead of json_schema
 
-    cap_lifetime_usd: float = 28.0  # real credits: $29.50 Builders + $1 trial; keep a margin
+    # The laptop (evals, Rot Index batch) and the public Space each keep their own ledger and budget. The budgets
+    # plus a margin for in-flight runs lost on a Space restart add up to less than ACCOUNT_CREDITS_USD, so neither
+    # process needs to know what the other spent.
+    space_id: str = ""  # set by Hugging Face inside a Space
+    cap_lifetime_usd: float = 11.0  # laptop budget; replaced by cap_lifetime_space_usd inside the Space
+    cap_lifetime_space_usd: float = 15.0
     cap_daily_usd: float = 3.0  # public runs per day
     cap_daily_all_usd: float = 3.0  # all runs per day (local evals and batches too), so credits last to judging
     cap_run_usd: float = 0.50
@@ -70,6 +77,14 @@ class Settings(BaseSettings):
     rot_index_path: Path = Path("rot_index/results.json")
     contree_python_image: str = ""  # UUID from `python -m fixmytutorial.sandbox.prepare`
     contree_node_image: str = ""
+
+    snapshot_heal_s: int = 300  # while public runs are paused by a Hub error, retry loading or saving this often
+
+    @model_validator(mode="after")
+    def _space_budget(self):
+        if self.space_id:
+            self.cap_lifetime_usd = self.cap_lifetime_space_usd
+        return self
 
     def model_for(self, role: str) -> str:
         return getattr(self, f"model_{role}")

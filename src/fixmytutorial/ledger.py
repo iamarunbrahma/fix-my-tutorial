@@ -60,7 +60,7 @@ class Ledger:
         self._s = settings
         self._clock = clock
         self._pending: dict[str, Reservation] = {}
-        self._unverified: str = ""  # set when past spend could not be loaded; public runs stay closed
+        self._unverified: list[str] = []  # why past spend can't be trusted (each cleared on its own); runs stay closed
 
     def _day(self) -> str:
         return datetime.fromtimestamp(self._clock(), timezone.utc).strftime("%Y-%m-%d")
@@ -165,15 +165,19 @@ class Ledger:
             self._pending.pop(res.id, None)
 
     def mark_unverified(self, reason: str) -> None:
-        self._unverified = reason
+        if reason not in self._unverified:
+            self._unverified.append(reason)
 
     def clear_unverified(self, reason: str) -> None:
-        if self._unverified == reason:
-            self._unverified = ""
+        if reason in self._unverified:
+            self._unverified.remove(reason)
+
+    def unverified(self) -> list[str]:
+        return list(self._unverified)
 
     def public_runs_open(self) -> tuple[bool, str]:
         if self._unverified:
-            return False, f"Public runs are paused: {self._unverified}"
+            return False, f"Public runs are paused: {self._unverified[0]}"
         t = self.totals()
         if t.lifetime_usd >= self._s.cap_lifetime_usd * 0.98:
             return False, "Public runs are paused: the project's model budget is used up."
