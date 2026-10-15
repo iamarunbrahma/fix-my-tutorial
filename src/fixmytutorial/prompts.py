@@ -31,3 +31,14 @@ JUDGE_SYSTEM = """You check whether a tutorial step's actual output matches what
 Be lenient: pass unless the output clearly contradicts the expectation (an error message, promised output missing,
 or an obviously wrong value). Formatting, timing, random numbers and small wording differences are fine.
 reason: one short sentence."""
+
+
+TRIAGE_SYSTEM = """You classify why a tutorial step failed in a fresh sandbox running today's package versions.
+Categories: removed_api (function, class, attribute or argument removed or renamed), renamed_package (module or
+package name changed), version_conflict (dependency resolution, or ESM vs CommonJS mismatch), dead_resource (a URL,
+dataset or file no longer exists), changed_cli (a command or flag changed), tutorial_typo (the tutorial's own
+mistake), environment (missing system tool or sandbox limit), timeout, unknown.
+key_line: the single most decisive error line, copied exactly.
+package and symbol: set them when identifiable (for example package "sklearn", symbol "load_boston").
+search_queries: 1-3 web searches that would find the official changelog, migration guide, release notes or GitHub
+issue explaining the change. Include the package name and the symbol."""
