@@ -82,6 +82,19 @@ def build_deps(settings: Settings) -> Deps:
     )
 
 
+def rate_key(addr: str) -> str | None:
+    """Normalize an address for rate limiting; IPv6 clients usually hold a whole /64, so bucket by that."""
+    try:
+        ip = ipaddress.ip_address(addr)
+    except ValueError:
+        return None
+    if ip.version == 6 and ip.ipv4_mapped:
+        ip = ip.ipv4_mapped
+    if ip.version == 6:
+        return str(ipaddress.ip_network(f"{ip}/64", strict=False))
+    return str(ip)
+
+
 def load_index(settings: Settings) -> dict:
     try:
         return json.loads(Path(settings.rot_index_path).read_text())
@@ -145,11 +158,12 @@ def create_app(deps: Deps | None = None) -> FastAPI:
             behind_proxy = ipaddress.ip_address(peer).is_private
         except ValueError:
             behind_proxy = False
-        if not behind_proxy:  # a direct client writes the whole header, so ignore it
-            return peer
-        # The rightmost entry is the one our proxy appended; anything left of it is client-supplied.
-        hops = [h.strip() for h in request.headers.get("x-forwarded-for", "").split(",") if h.strip()]
-        return hops[-1] if hops else peer
+        # Our proxy appends the real client to the last header line; everything before it is client-supplied.
+        # A direct client writes the whole header, so it is ignored then.
+        hops = [h.strip() for line in request.headers.getlist("x-forwarded-for") for h in line.split(",")]
+        hops = [h for h in hops if h]
+        candidate = hops[-1] if behind_proxy and hops else peer
+        return rate_key(candidate) or rate_key(peer) or peer
 
     def home_ctx(request: Request, **extra) -> dict:
         d = D(request)

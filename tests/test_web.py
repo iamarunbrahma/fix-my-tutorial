@@ -99,9 +99,13 @@ def test_rate_limit_ignores_spoofed_forwarded_for(env):
 
 
 def post_from(deps, peer, forwarded, n=3):
+    def headers(i):
+        values = forwarded(i)
+        return [("X-Forwarded-For", v) for v in ([values] if isinstance(values, str) else values)]
+
     with TestClient(create_app(deps), client=(peer, 5000)) as c:
         return [c.post("/runs", data={"url": f"https://{peer}-{i}.example/t"}, follow_redirects=False,
-                       headers={"X-Forwarded-For": forwarded(i)}).status_code for i in range(n)]
+                       headers=headers(i)).status_code for i in range(n)]
 
 
 def test_direct_public_peer_cannot_spoof_forwarded_for(env):
@@ -112,6 +116,21 @@ def test_direct_public_peer_cannot_spoof_forwarded_for(env):
 def test_users_behind_private_proxy_get_separate_limits(env):
     _, deps = env
     assert post_from(deps, "10.1.2.3", lambda i: f"1.1.1.1, 203.0.113.{i}") == [303, 303, 303]
+
+
+def test_proxy_header_line_wins_over_a_client_header_line(env):
+    _, deps = env
+    assert post_from(deps, "10.1.2.3", lambda i: [f"203.0.113.{i}", "8.8.8.8"])[-1] == 429
+
+
+def test_unparsable_forwarded_value_falls_back_to_the_proxy(env):
+    _, deps = env
+    assert post_from(deps, "10.1.2.3", lambda i: f"not-an-ip-{i}")[-1] == 429
+
+
+def test_ipv6_addresses_in_one_slash_64_share_a_limit(env):
+    _, deps = env
+    assert post_from(deps, "10.1.2.3", lambda i: f"2a00:1450:4001:81c::{i + 1}")[-1] == 429
 
 def test_run_page_and_404(env):
     client, deps = env
