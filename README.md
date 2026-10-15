@@ -59,9 +59,9 @@ Four Nemotron sizes split the work so the expensive model only runs when somethi
 
 Every call uses JSON-schema structured output, validated with pydantic.
 
-**Live evaluation** ([docs/eval-results.md](docs/eval-results.md)): 15 fixture tutorials, 13 broken by real library changes (pandas `append` and `iteritems`, NumPy `np.float`, scikit-learn `load_boston` and `OneHotEncoder(sparse=)`, openai 0.x, LangChain `langchain.llms`, Flask `before_first_request`, seaborn styles, chalk and node-fetch ESM, Express 5 wildcards, faker) and 2 that still work. On the final run, all 13 broken tutorials were fixed in the first repair round, and both working tutorials were left untouched. A fixed tutorial cost about $0.011 in model calls on average and took about a minute.
+**Live evaluation** ([docs/eval-results.md](docs/eval-results.md)): 15 fixture tutorials, 13 broken by real library changes (pandas `append` and `iteritems`, NumPy `np.float`, scikit-learn `load_boston` and `OneHotEncoder(sparse=)`, openai 0.x, LangChain `langchain.llms`, Flask `before_first_request`, seaborn styles, chalk and node-fetch ESM, Express 5 wildcards, faker) and 2 that still work. On the final run, all 13 broken tutorials were fixed (12 in the first repair round) and both working tutorials were left untouched. A fixed tutorial cost about $0.012 in model calls on average and took a little over a minute.
 
-Earlier runs during the build scored 12, 11, 13 and 11 out of 13. Each miss traced back to a gap we then closed in code: the planner inventing output checks, marking outdated code as "not runnable" or dropping the tutorial's code block, and our judge rejecting the stand-in API server's placeholder reply. The model findings are in [docs/feedback.md](docs/feedback.md).
+Earlier runs during the build scored 12, 11, 13, 11, 13, 13 and 12 out of 13, and one of them called a working tutorial "fixed". Each miss traced back to a gap we then closed in code: the planner inventing output checks, marking outdated code as "not runnable", dropping the tutorial's code block, mangling code into escaped newlines, or never running a file the tutorial only says to run in prose, and our judge rejecting the stand-in API server's placeholder reply. The model findings are in [docs/feedback.md](docs/feedback.md).
 
 ## Where Nebius Token Factory accelerated the work
 
