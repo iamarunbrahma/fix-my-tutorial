@@ -10,6 +10,7 @@ import socket
 import zlib
 from contextlib import asynccontextmanager
 from dataclasses import dataclass
+from datetime import date
 from typing import Callable
 from urllib.parse import urljoin, urlparse
 
@@ -73,6 +74,40 @@ def notebook_to_markdown(nb_json: str) -> str:
         elif cell.get("cell_type") == "code" and src.strip():
             parts.append(f"```{lang}\n{src}\n```")
     return "\n\n".join(parts)
+
+
+DATE_META = [("property", "article:published_time"), ("itemprop", "datePublished"),
+             ("property", "og:published_time"), ("name", "date"), ("name", "publish-date"), ("name", "pubdate"),
+             ("name", "publication_date"), ("name", "dc.date.issued")]
+LD_DATE = re.compile(r'"datePublished"\s*:\s*"([^"]{8,40})"')
+ISO_DAY = re.compile(r"^(\d{4})-(\d{2})-(\d{2})")
+
+
+def _day(value: str | None) -> str | None:
+    m = ISO_DAY.match((value or "").strip())
+    if not m:
+        return None
+    try:
+        d = date(int(m[1]), int(m[2]), int(m[3]))
+    except ValueError:
+        return None
+    return d.isoformat() if d.year >= 1995 and d <= date.today() else None
+
+
+def published_date(html: str) -> str | None:
+    """The page's own publish date (YYYY-MM-DD) from its metadata, or None."""
+    tree = HTMLParser(html)
+    for attr, value in DATE_META:
+        for node in tree.css(f"[{attr}]"):
+            if (node.attributes.get(attr) or "").lower() == value.lower():
+                d = _day(node.attributes.get("content") or node.attributes.get("datetime"))
+                if d:
+                    return d
+    m = LD_DATE.search(html)
+    if m and _day(m.group(1)):
+        return _day(m.group(1))
+    first = tree.css_first("time[datetime]")
+    return _day(first.attributes.get("datetime")) if first else None
 
 
 def html_to_markdown(html: str) -> tuple[str, str]:
@@ -228,6 +263,7 @@ async def ingest(source: Source, search, *, run_id: str, public: bool, http: htt
 async def _ingest(source: Source, search, *, run_id: str, public: bool, http: httpx.AsyncClient | None,
                   resolver: Callable[[str], list[str]] | None, max_chars: int) -> TutorialDoc:
     resolver = resolver or _default_resolver
+    published: str | None = None
     if source.markdown and source.markdown.strip():
         text = source.markdown
         title = first_heading(text) or "Pasted tutorial"
@@ -254,6 +290,10 @@ async def _ingest(source: Source, search, *, run_id: str, public: bool, http: ht
                     if res and res[0]["raw_content"].strip():
                         text = res[0]["raw_content"]
                         title = first_heading(text) or url
+                        try:  # the extracted text has no metadata; the date is a nice-to-have, never a blocker
+                            published = published_date(await asyncio.wait_for(_safe_get(url, client, resolver), 8))
+                        except Exception:
+                            published = None
                 if not text:
                     body = await _safe_get(url, client, resolver)
                     if url.endswith(".ipynb"):
@@ -261,6 +301,7 @@ async def _ingest(source: Source, search, *, run_id: str, public: bool, http: ht
                         title = first_heading(text) or url
                     else:
                         title, text = html_to_markdown(body)
+                        published = published_date(body)
     else:
         raise IngestError("Paste a tutorial link or its Markdown.")
     if not text.strip():
@@ -268,4 +309,5 @@ async def _ingest(source: Source, search, *, run_id: str, public: bool, http: ht
     truncated = len(text) > max_chars
     text = text[:max_chars]
     return TutorialDoc(source=label, title=title[:200], text=text, code_blocks=markdown_code_blocks(text),
-                       content_hash=hashlib.sha256(text.encode()).hexdigest()[:16], truncated=truncated)
+                       content_hash=hashlib.sha256(text.encode()).hexdigest()[:16], truncated=truncated,
+                       published=published)

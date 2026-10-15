@@ -91,7 +91,7 @@ class Pipeline:
         rid, pub = record.id, record.public
         await self._stage(record, RunStatus.INGESTING, emit)
         doc = await ingest(source, self.search, run_id=rid, public=pub, max_chars=self.s.max_tutorial_chars)
-        record.title, record.content_hash = doc.title, doc.content_hash
+        record.title, record.content_hash, record.published = doc.title, doc.content_hash, doc.published
         await self._stage(record, RunStatus.PLANNING, emit)
         plan = await plan_tutorial(doc, self.llm, self.s, run_id=rid, public=pub)
         record.plan = plan

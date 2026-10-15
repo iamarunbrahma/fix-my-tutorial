@@ -206,6 +206,7 @@ class RunRecord(BaseModel):
     verdict: Verdict | None = None
     title: str = ""
     content_hash: str = ""
+    published: str | None = None  # the tutorial page's own publish date (YYYY-MM-DD), when it states one
     plan: RunPlan | None = None
     final_plan: RunPlan | None = None
     outcomes: dict[str, StepOutcome] = Field(default_factory=dict)

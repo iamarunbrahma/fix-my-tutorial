@@ -204,3 +204,17 @@ async def test_every_step_a_fix_edited_is_marked_repaired(settings, tmp_path):
     rec = await p.run(new_record(), Source(markdown=MD))
     assert rec.verdict == Verdict.FIXED
     assert rec.outcomes["s2"].status == StepStatus.REPAIRED and rec.outcomes["s3"].status == StepStatus.REPAIRED
+
+
+async def test_the_page_publish_date_is_kept_on_the_run(settings, tmp_path, monkeypatch):
+    from fixmytutorial import pipeline as pipeline_mod
+    from fixmytutorial.ingest import ingest as real_ingest
+
+    async def dated(source, search, **kw):
+        doc = await real_ingest(source, search, **kw)
+        return doc.model_copy(update={"published": "2022-03-14"})
+
+    monkeypatch.setattr(pipeline_mod, "ingest", dated)
+    p, store, _, _ = build(settings, tmp_path, {settings.model_planner: [PLAN, SUMMARY]}, handler=cells_handler())
+    rec = await p.run(new_record(), Source(markdown=MD))
+    assert rec.published == "2022-03-14" and store.get_run("run1").published == "2022-03-14"

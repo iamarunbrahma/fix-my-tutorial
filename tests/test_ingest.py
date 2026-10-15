@@ -4,7 +4,7 @@ import httpx
 import pytest
 import respx
 
-from fixmytutorial.ingest import IngestError, Source, github_raw_url, html_to_markdown, ingest
+from fixmytutorial.ingest import IngestError, Source, github_raw_url, html_to_markdown, ingest, published_date
 from fixmytutorial.ledger import Ledger
 from fixmytutorial.search import SearchClient
 from fixmytutorial.store import Store
@@ -43,6 +43,7 @@ async def test_markdown_source(settings, tmp_path):
     assert len(doc.content_hash) == 16
 
 
+@respx.mock  # the best-effort date fetch must not reach the real network
 async def test_tavily_extract_is_used_first(settings, tmp_path):
     fake = FakeTavily(extract_results={"https://ex.com/t": "# T\n\n```python\nprint(1)\n```"})
     doc = await ingest(Source(url="https://ex.com/t"), search_client(settings, tmp_path, fake),
@@ -217,3 +218,51 @@ async def test_unreadable_notebook_is_a_clear_error():
     with pytest.raises(IngestError, match="notebook"):
         await ingest(Source(url="https://github.com/o/r/blob/main/nb.ipynb"), None, run_id="r", public=True,
                      resolver=public_resolver)
+
+
+@pytest.mark.parametrize("head,expected", [
+    ('<meta property="article:published_time" content="2022-03-14T09:00:00Z">', "2022-03-14"),
+    ('<meta itemprop="datePublished" content="2021-07-02">', "2021-07-02"),
+    ('<time itemprop="datePublished" datetime="2021-08-09T10:00">Aug 9</time>', "2021-08-09"),
+    ('<script type="application/ld+json">{"@type": "Article", "datePublished": "2020-01-05T10:00:00+05:30"}</script>',
+     "2020-01-05"),
+    ('<meta name="date" content="2019-11-30">', "2019-11-30"),
+    ('<meta name="publish-date" content="2019-10-01">', "2019-10-01"),
+    ('<time datetime="2018-06-01T12:00">June 1</time>', "2018-06-01"),
+    ('<meta property="article:published_time" content="soon">', None),
+    ('<meta property="article:published_time" content="2999-01-01">', None),
+    ('<meta property="article:published_time" content="1990-01-01">', None),
+    ('<meta property="article:published_time" content="2021-02-30">', None),
+    ("<title>No date here</title>", None),
+])
+def test_published_date(head, expected):
+    assert published_date(f"<html><head>{head}</head><body><p>x</p></body></html>") == expected
+
+
+@respx.mock
+async def test_publish_date_is_read_from_the_page_when_tavily_supplies_the_text(settings, tmp_path):
+    respx.get("https://ex.com/t").mock(return_value=httpx.Response(
+        200, text='<html><head><meta property="article:published_time" content="2022-03-14T09:00:00Z"></head></html>'))
+    fake = FakeTavily(extract_results={"https://ex.com/t": "# T\n\n```python\nprint(1)\n```"})
+    doc = await ingest(Source(url="https://ex.com/t"), search_client(settings, tmp_path, fake),
+                       run_id="r", public=True, resolver=public_resolver)
+    assert doc.title == "T" and doc.published == "2022-03-14"
+
+
+@respx.mock
+async def test_a_page_that_refuses_the_date_fetch_still_ingests(settings, tmp_path):
+    respx.get("https://ex.com/t").mock(return_value=httpx.Response(403))
+    fake = FakeTavily(extract_results={"https://ex.com/t": "# T\n\n```python\nprint(1)\n```"})
+    doc = await ingest(Source(url="https://ex.com/t"), search_client(settings, tmp_path, fake),
+                       run_id="r", public=True, resolver=public_resolver)
+    assert doc.title == "T" and doc.published is None
+
+
+@respx.mock
+async def test_publish_date_from_the_fetched_page(settings, tmp_path):
+    page = (PAGES / "tutorial.html").read_text().replace(
+        "<head>", '<head><meta property="article:published_time" content="2021-05-04">', 1)
+    respx.get("https://ex.com/t").mock(return_value=httpx.Response(200, text=page))
+    doc = await ingest(Source(url="https://ex.com/t"), search_client(settings, tmp_path, FakeTavily()),
+                       run_id="r", public=True, resolver=public_resolver)
+    assert doc.published == "2021-05-04"
