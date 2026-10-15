@@ -93,3 +93,22 @@ def cells_handler(fail_cell=None, outputs=None, other=None):
         return other(script, files) if other else (0, "ok", "")
 
     return handler
+
+
+class RoutingChatClient(FakeChatClient):
+    """Returns the next canned response for whichever model is requested."""
+
+    def __init__(self, by_model, usage=(100, 50)):
+        super().__init__([], usage)
+        self.by_model = {k: list(v) for k, v in by_model.items()}
+
+    async def _create(self, **kw):
+        self.calls.append(kw)
+        queue = self.by_model.get(kw["model"])
+        if not queue:
+            raise AssertionError(f"unexpected call to {kw['model']}")
+        item = queue.pop(0)
+        if isinstance(item, Exception):
+            raise item
+        usage = SimpleNamespace(prompt_tokens=self._usage[0], completion_tokens=self._usage[1])
+        return SimpleNamespace(choices=[SimpleNamespace(message=SimpleNamespace(content=item))], usage=usage)
