@@ -9,28 +9,94 @@
 {% endblock %}
 {% block main %}
 {% set plan = rec.final_plan or rec.plan %}
-<div class="stage">Report</div>
-<h1>{{ rec.title or rec.source }}</h1>
-{% if rec.source.startswith("http") %}<a href="{{ rec.source }}" target="_blank" rel="noopener">Open the original tutorial</a>{% endif %}
-<div class="verdict"><span class="pill v-{{ rec.verdict.value }}">{{ verdict_text }}</span><span>{{ rec.summary or rec.reason }}</span></div>
-<p class="muted">{% if plan %}{{ "Python" if plan.language == "python" else "Node.js" }} {{ plan.runtime }} · {% endif %}checked {{ (rec.finished_at or rec.created_at).strftime("%d %b %Y") }} · model cost ${{ "%.3f"|format(rec.cost_usd) }}</p>
-{% set note = partial_note(rec) %}{% if note %}<p class="banner warn">{{ note }}</p>{% endif %}
-{% if changes %}
-<h2>{{ changes|length }} change{{ "s" if changes|length != 1 }} to make it work today</h2>
-{% for c in changes %}
-<div class="change">
-  <div><strong>{{ c.title }}</strong> <span class="kind">{{ c.step_id }} · {{ c.kind }}</span> <span class="pill v-fixed">{{ c.strategy }}</span>{% if c.added %} <span class="implicit">new step</span>{% endif %}</div>
-  <p>{{ c.reason }}</p>
-  <div class="diff">{% for cls, line in diff_lines(c) %}<div class="{{ cls }}">{{ line }}</div>{% endfor %}</div>
-  {% if c.citations %}<ul class="sources">{% for e in c.citations %}<li><a href="{{ e.url }}" target="_blank" rel="noopener">{{ e.title }}</a><q>{{ e.quote }}</q></li>{% endfor %}</ul>{% endif %}
+<div class="mx-auto flex max-w-4xl flex-col gap-3">
+  <span class="eyebrow">Report</span>
+  <h1 class="page-title">{{ rec.title or rec.source }}</h1>
+  {% if rec.source.startswith("http") %}
+  <a class="text-muted-foreground hover:text-foreground inline-flex w-fit items-center gap-1 text-sm underline-offset-4 hover:underline" href="{{ rec.source }}" target="_blank" rel="noopener">
+    Open the original tutorial
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="size-3.5" aria-hidden="true"><path d="M7 7h10v10"/><path d="M7 17 17 7"/></svg>
+  </a>
+  {% endif %}
+
+  <section class="card mt-3 gap-4 p-6">
+    <div class="flex flex-wrap items-center gap-x-3 gap-y-2">
+      <span class="status" data-status="{{ rec.verdict.value }}">{{ verdict_text }}</span>
+      <span class="text-muted-foreground text-xs">{% if plan %}{{ "Python" if plan.language == "python" else "Node.js" }} {{ plan.runtime }} · {% endif %}checked {{ (rec.finished_at or rec.created_at).strftime("%d %b %Y") }} · model cost ${{ "%.3f"|format(rec.cost_usd) }}</span>
+    </div>
+    <p class="leading-relaxed text-pretty">{{ rec.summary or rec.reason }}</p>
+    {% set note = partial_note(rec) %}{% if note %}<div class="alert" role="status"><h2>{{ note }}</h2></div>{% endif %}
+  </section>
+
+  {% if changes %}
+  <section class="mt-8 flex flex-col gap-4">
+    <h2 class="section-title">{{ changes|length }} change{{ "s" if changes|length != 1 }} to make it work today</h2>
+    {% for c in changes %}
+    <article class="card gap-4 p-6">
+      <div class="flex flex-wrap items-center gap-2">
+        <h3 class="font-semibold">{{ c.title }}</h3>
+        <span class="text-muted-foreground font-mono text-xs">{{ c.step_id }} · {{ c.kind }}</span>
+        <span class="badge capitalize" data-variant="secondary">{{ c.strategy }}</span>
+        {% if c.added %}<span class="badge" data-variant="outline">new step</span>{% endif %}
+      </div>
+      <p class="text-sm leading-relaxed">{{ c.reason }}</p>
+      <div class="diff">{% for cls, line in diff_lines(c) %}<div class="{{ cls }}">{{ line }}</div>{% endfor %}</div>
+      {% if c.citations %}
+      <div class="flex flex-col gap-3">
+        <h4 class="text-sm font-semibold">Sources</h4>
+        <ul class="flex flex-col gap-4">{% for e in c.citations %}<li class="source"><a href="{{ e.url }}" target="_blank" rel="noopener">{{ e.title }}</a><q>{{ e.quote }}</q></li>{% endfor %}</ul>
+      </div>
+      {% endif %}
+    </article>
+    {% endfor %}
+  </section>
+  {% endif %}
+
+  {% if rec.verdict.value == "could_not_fix" and rec.repairs %}
+  <section class="mt-8 flex flex-col gap-4">
+    <h2 class="section-title">What we tried</h2>
+    {% for r in rec.repairs %}
+    <article class="card gap-3 p-6">
+      <pre class="term border-red-500/30 bg-red-500/5 text-red-800 dark:text-red-200">{{ r.signature.key_line }}</pre>
+      <p class="text-muted-foreground text-sm">{{ r.rounds|length }} round{{ "s" if r.rounds|length != 1 }} of fixes{% if not r.winner %}, none passed{% endif %}.</p>
+    </article>
+    {% endfor %}
+  </section>
+  {% endif %}
+
+  {% if rec.verdict.value not in ("error", "not_runnable") %}
+  <section class="card mt-8 gap-4 p-6">
+    <div>
+      <h2 class="section-title text-base">Badge</h2>
+      <p class="text-muted-foreground text-sm">Add it to the tutorial so readers know when it was last checked.</p>
+    </div>
+    <img src="/badge/{{ rec.id }}.svg" alt="Fix My Tutorial badge" class="h-5 w-fit">
+    {% for label, code in [("Markdown", badge_md), ("HTML", badge_html)] %}
+    <div class="flex flex-col gap-1.5">
+      <span class="text-muted-foreground text-xs font-medium">{{ label }}</span>
+      <div class="flex items-start gap-2">
+        <code class="term max-h-none flex-1 py-2.5 text-xs">{{ code }}</code>
+        <button type="button" class="btn copy" data-variant="outline" data-size="sm" data-copy="{{ code }}">Copy</button>
+      </div>
+    </div>
+    {% endfor %}
+  </section>
+  {% endif %}
+
+  <div class="mt-6 flex flex-wrap gap-2">
+    <a class="btn" href="/">Check another tutorial</a>
+    <a class="btn" data-variant="outline" href="/run/{{ rec.id }}">Watch the run again</a>
+  </div>
 </div>
-{% endfor %}
-{% endif %}
-{% if rec.verdict.value == "could_not_fix" and rec.repairs %}
-<h2>What we tried</h2>
-{% for r in rec.repairs %}<div class="change"><div class="keyline">{{ r.signature.key_line }}</div><p class="muted">{{ r.rounds|length }} round{{ "s" if r.rounds|length != 1 }} of fixes{% if not r.winner %}, none passed{% endif %}.</p></div>{% endfor %}
-{% endif %}
-<h2>Badge</h2>
-<div class="embed"><img src="/badge/{{ rec.id }}.svg" alt="Fix My Tutorial badge"><code>{{ badge_md }}</code><code>{{ badge_html }}</code></div>
-<p><a class="btn" href="/">Check another tutorial</a> <a href="/run/{{ rec.id }}">Watch the run again</a></p>
+{% endblock %}
+{% block scripts %}
+<script>
+  for (const b of document.querySelectorAll("button.copy")) {
+    b.addEventListener("click", async () => {
+      try { await navigator.clipboard.writeText(b.dataset.copy); b.textContent = "Copied"; }
+      catch (_) { b.textContent = "Select and copy"; }
+      setTimeout(() => { b.textContent = "Copy"; }, 1800);
+    });
+  }
+</script>
 {% endblock %}

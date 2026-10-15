@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import asyncio
+import hashlib
 import ipaddress
 import json
 import logging
@@ -8,7 +9,9 @@ import secrets
 from collections import Counter
 from contextlib import asynccontextmanager
 from dataclasses import dataclass
+from functools import lru_cache
 from pathlib import Path
+from urllib.parse import urlparse
 
 from fastapi import FastAPI, Form, Request
 from fastapi.responses import HTMLResponse, JSONResponse, RedirectResponse, Response
@@ -103,6 +106,21 @@ async def heal_loop(d: Deps) -> None:
                 log.exception("snapshot heal failed")
 
 
+@lru_cache(maxsize=None)
+def asset(path: str) -> str:
+    """A static file's URL with a short content hash, so a redeploy never serves visitors a stale copy."""
+    digest = hashlib.sha256((HERE / "static" / path).read_bytes()).hexdigest()[:10]
+    return f"/static/{path}?v={digest}"
+
+
+SANDBOX_LABELS = {"contree": "Token Factory Sandboxes", "docker": "isolated Docker sandboxes"}
+
+
+def sandbox_label(request: Request) -> str:
+    """What runs the tutorials, in words, so the pages never claim Sandboxes while running on Docker."""
+    return SANDBOX_LABELS.get(request.app.state.deps.settings.sandbox_backend, "isolated sandboxes")
+
+
 def rate_key(addr: str) -> str | None:
     """Normalize an address for rate limiting; IPv6 clients usually hold a whole /64, so bucket by that."""
     try:
@@ -172,7 +190,7 @@ def create_app(deps: Deps | None = None) -> FastAPI:
     templates = Jinja2Templates(directory=HERE / "templates")
     templates.env.globals.update(
         verdict_label=verdict_label, cat_label=lambda c: CATEGORY_TEXT.get(c, c), diff_lines=diff_lines,
-        partial_note=partial_note,
+        partial_note=partial_note, sandbox_label=sandbox_label, asset=asset,
     )
 
     def D(request: Request) -> Deps:
@@ -225,6 +243,11 @@ def create_app(deps: Deps | None = None) -> FastAPI:
                 request,
                 "home.html",
                 home_ctx(request, error="Paste a tutorial link or its Markdown."),
+                status_code=400,
+            )
+        if url and urlparse(url).scheme.lower() not in ("http", "https"):
+            return templates.TemplateResponse(
+                request, "home.html", home_ctx(request, url=url, error="Only http and https links are supported."),
                 status_code=400,
             )
         if len(markdown) > d.settings.max_tutorial_chars:

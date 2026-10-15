@@ -1,7 +1,9 @@
 (() => {
   const initial = JSON.parse(document.getElementById("initial").textContent);
   const runId = initial.id;
+  const sandbox = document.querySelector("main").dataset.sandbox || "a sandbox";
   const $ = (s) => document.querySelector(s);
+  // Builds DOM with text nodes only: tutorial titles, model output and quotes are untrusted.
   const el = (tag, attrs = {}, ...kids) => {
     const n = document.createElement(tag);
     for (const [k, v] of Object.entries(attrs)) k === "class" ? (n.className = v) : n.setAttribute(k, v);
@@ -10,9 +12,11 @@
   };
   const STAGES = {
     queued: "Waiting to start", ingesting: "Reading the tutorial", planning: "Planning the steps with Nemotron 3 Super",
-    executing: "Running the steps in a Token Factory Sandbox", repairing: "Repairing a broken step",
+    executing: `Running the steps in ${sandbox}`, repairing: "Repairing a broken step",
     replaying: "Replaying the fixed tutorial from scratch", done: "Finished", failed: "Stopped",
   };
+  const STATUS = { pending: "Waiting", running: "Running", passed: "Passed", failed: "Failed", repairing: "Repairing",
+    repaired: "Repaired" };
   const VERDICTS = { still_works: "Still works", fixed: "Fixed", could_not_fix: "Could not fix",
     not_runnable: "Not runnable", error: "Check failed" };
   const CATEGORY = {
@@ -24,25 +28,29 @@
   const state = { steps: [], status: {}, output: {}, selected: null, replayDone: 0 };
 
   const setStage = (s) => { $("#stage").textContent = STAGES[s] || s; };
+  const pill = (status, label) => el("span", { class: "status", "data-status": status }, label);
 
   function renderSteps() {
-    const ul = $("#steps");
-    ul.replaceChildren();
+    const list = $("#steps");
+    list.replaceChildren();
     for (const s of state.steps) {
       const st = state.status[s.id] || "pending";
-      const li = el("li", { class: s.id === state.selected ? "sel" : "" },
-        el("span", { class: `chip ${st}` }, st), el("span", {}, s.title), el("span", { class: "kind" }, s.kind));
-      if (s.implicit) li.append(el("span", { class: "implicit" }, "added"));
-      li.addEventListener("click", () => { state.selected = s.id; renderSteps(); renderOutput(); });
-      ul.append(li);
+      const button = el("button", { type: "button", class: "step", "aria-current": String(s.id === state.selected) },
+        pill(st, STATUS[st] || st),
+        el("span", { class: "min-w-0 flex-1 truncate" }, s.title),
+        el("span", { class: "text-muted-foreground font-mono text-[11px]" }, s.kind));
+      if (s.implicit) button.append(el("span", { class: "badge", "data-variant": "outline" }, "added"));
+      button.addEventListener("click", () => { state.selected = s.id; renderSteps(); renderOutput(); });
+      list.append(el("li", {}, button));
     }
   }
 
   function renderOutput() {
     const s = state.steps.find((x) => x.id === state.selected);
-    $("#steptitle").textContent = s ? `${s.id} · ${s.title}` : "Select a step";
+    $("#steptitle").textContent = s ? s.title : "Select a step";
+    $("#stepmeta").textContent = s ? `${s.id} · ${s.kind}${s.path ? ` · ${s.path}` : ""}` : "";
     $("#code").textContent = s ? s.content : "";
-    $("#output").textContent = state.output[state.selected] || (s ? "No output yet." : "");
+    $("#output").textContent = (state.output[state.selected] || (s ? "No output yet." : "")).replace(/^\s*\n/, "");
   }
 
   function onPlan(ev) {
@@ -55,10 +63,11 @@
 
   function onStep(ev) {
     if (ev.phase === "replay") {
-      const bar = $("#replaybar");
-      bar.hidden = false;
+      $("#replay").hidden = false;
       if (ev.status === "passed") state.replayDone += 1;
-      bar.firstElementChild.style.width = `${Math.min(100, (100 * state.replayDone) / Math.max(1, state.steps.length))}%`;
+      const total = Math.max(1, state.steps.length);
+      $("#replaybar").firstElementChild.style.width = `${Math.min(100, (100 * state.replayDone) / total)}%`;
+      $("#replay-count").textContent = `${Math.min(state.replayDone, total)} / ${total} steps`;
       return;
     }
     state.status[ev.step_id] = ev.status;
@@ -71,57 +80,78 @@
     $("#diagnosis").hidden = false;
     $("#diag-cat").textContent = CATEGORY[ev.category] || ev.category;
     $("#diag-line").textContent = ev.key_line || "";
-    $("#sources").replaceChildren(el("li", { class: "muted" }, "Searching docs, changelogs and issues with Tavily"));
+    $("#sources").replaceChildren(el("li", { class: "text-muted-foreground text-sm" },
+      "Searching docs, changelogs and issues with Tavily…"));
   }
 
   function onEvidence(ev) {
-    const ul = $("#sources");
-    ul.replaceChildren();
-    if (!ev.items.length) ul.append(el("li", { class: "muted" }, "No sources found. Repairing from the error alone."));
+    const list = $("#sources");
+    list.replaceChildren();
+    if (!ev.items.length) {
+      list.append(el("li", { class: "text-muted-foreground text-sm" }, "No sources found. Repairing from the error alone."));
+    }
     for (const e of ev.items) {
       let host = "";
       try { host = new URL(e.url).hostname; } catch (_) { host = ""; }
-      ul.append(el("li", {}, el("a", { href: e.url, target: "_blank", rel: "noopener" }, e.title),
-        el("span", { class: "muted" }, host ? ` · ${host}` : ""), el("q", {}, e.quote)));
+      list.append(el("li", { class: "source" },
+        el("a", { href: e.url, target: "_blank", rel: "noopener" }, e.title),
+        el("span", { class: "text-muted-foreground ml-2 text-xs" }, host),
+        el("q", {}, e.quote)));
     }
   }
 
   function onCandidates(ev) {
     $("#repair").hidden = false;
-    $("#round").textContent = `round ${ev.round}`;
+    $("#round").textContent = `Round ${ev.round}`;
     const box = $("#race");
     box.replaceChildren();
-    if (!ev.candidates.length) box.append(el("p", { class: "muted" }, "No usable fix was proposed this round."));
+    if (!ev.candidates.length) {
+      box.append(el("p", { class: "text-muted-foreground text-sm" }, "No usable fix was proposed this round."));
+    }
     ev.candidates.forEach((c, i) => {
-      const edits = el("ul", {});
-      for (const e of c.edits) edits.append(el("li", {}, `${e.op === "replace" ? "Change" : "Add after"} ${e.step_id}: ${e.reason}`));
-      box.append(el("div", { class: "cand", id: `cand-${i}` }, el("div", { class: "strategy" }, c.strategy),
-        el("div", { class: "muted" }, c.rationale), edits, el("div", { class: "result muted" }, "Running")));
+      const edits = el("ul", { class: "text-muted-foreground flex list-disc flex-col gap-1 pl-4 text-xs" });
+      for (const e of c.edits) {
+        edits.append(el("li", {}, `${e.op === "replace" ? "Change" : "Add after"} ${e.step_id}: ${e.reason}`));
+      }
+      box.append(el("div", { class: "candidate", id: `cand-${i}`, "data-result": "running" },
+        el("div", { class: "flex items-center justify-between gap-2" },
+          el("span", { class: "font-semibold capitalize" }, c.strategy), pill("running", "Running")),
+        el("p", { class: "text-muted-foreground leading-relaxed" }, c.rationale), edits,
+        el("p", { class: "result text-muted-foreground text-xs" }, "")));
     });
   }
 
-  function onCandidateResult(ev) {
-    const n = document.getElementById(`cand-${ev.index}`);
+  function setCandidate(index, result, status, label, text) {
+    const n = document.getElementById(`cand-${index}`);
     if (!n) return;
-    n.classList.add(ev.passed ? "passed" : "failed");
-    n.querySelector(".result").textContent = ev.passed ? "Passed" : `Failed: ${ev.error || ""}`;
+    n.dataset.result = result;
+    n.querySelector(".status").replaceWith(pill(status, label));
+    n.querySelector(".result").textContent = text;
+  }
+
+  function onCandidateResult(ev) {
+    if (ev.passed) setCandidate(ev.index, "passed", "passed", "Passed", "");
+    else setCandidate(ev.index, "failed", "failed", "Failed", ev.error || "");
   }
 
   function onWinner(ev) {
-    const n = document.getElementById(`cand-${ev.index}`);
-    if (!n) return;
-    n.classList.add("winner");
-    n.querySelector(".result").textContent = "Passed · applied to the tutorial";
+    setCandidate(ev.index, "winner", "passed", "Applied", "Passed · applied to the tutorial");
   }
 
   function onVerdict(ev) {
     setStage(ev.verdict === "error" ? "failed" : "done");
+    $("#workspace").hidden = state.steps.length === 0;  // nothing ran: no empty step panels
+    $("#stage-dot").replaceWith(Object.assign(pill(ev.verdict, VERDICTS[ev.verdict] || ev.verdict), { id: "stage-dot" }));
     const v = $("#verdict");
     v.hidden = false;
-    v.replaceChildren(el("span", { class: `pill v-${ev.verdict}` }, VERDICTS[ev.verdict] || ev.verdict),
-      el("span", { class: "muted" }, ev.summary || ev.reason || ""));
-    if (ev.note) v.append(el("p", { class: "banner warn" }, ev.note));
-    v.append(el("a", { class: "btn", href: `/r/${runId}` }, "See the report"));
+    v.replaceChildren(
+      el("div", { class: "flex flex-col gap-3" },
+        el("div", {}, pill(ev.verdict, VERDICTS[ev.verdict] || ev.verdict)),
+        el("p", { class: "leading-relaxed text-pretty" }, ev.summary || ev.reason || "")));
+    if (ev.note) {
+      v.append(el("div", { class: "alert", role: "status" }, el("h2", {}, ev.note)));
+    }
+    v.append(el("div", {}, el("a", { class: "btn", href: `/r/${runId}` }, "See the report")));
   }
 
   if (initial.plan) onPlan({ steps: initial.plan.steps, title: initial.title, note: initial.plan.note });

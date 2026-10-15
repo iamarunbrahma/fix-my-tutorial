@@ -6,15 +6,53 @@
 <title>{% block title %}Fix My Tutorial{% endblock %}</title>
 <meta name="description" content="{% block description %}Paste any Python or JavaScript tutorial. Fix My Tutorial runs it step by step, finds what broke, and fixes it with sources you can check.{% endblock %}">
 {% block meta %}{% endblock %}
-<link rel="stylesheet" href="/static/app.css">
+<meta name="color-scheme" content="light dark">
+<script>
+  // Apply the saved theme (or the system one) before the first paint, so dark mode never flashes white.
+  (() => {
+    let saved = null;
+    try { saved = localStorage.getItem("theme"); } catch (_) {}
+    const dark = saved ? saved === "dark" : matchMedia("(prefers-color-scheme: dark)").matches;
+    document.documentElement.classList.toggle("dark", dark);
+  })();
+</script>
+<link rel="preload" href="/static/fonts/Geist-Variable.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="stylesheet" href="{{ asset('app.css') }}">
 </head>
-<body>
-<header class="top">
-  <a class="brand" href="/"><span class="logo">&#10227;</span> Fix My Tutorial</a>
-  <nav><a href="/index">Rot Index</a><a href="https://github.com/iamarunbrahma/fix-my-tutorial">GitHub</a></nav>
+<body class="flex min-h-svh flex-col">
+<header class="bg-background/80 supports-[backdrop-filter]:bg-background/60 sticky top-0 z-40 border-b backdrop-blur">
+  <div class="container-page flex h-14 items-center justify-between gap-4">
+    <a href="/" class="flex items-center gap-2.5 font-semibold tracking-tight">
+      <span class="bg-foreground text-background grid size-7 place-items-center rounded-md">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="size-4" aria-hidden="true"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/></svg>
+      </span>
+      Fix My Tutorial
+    </a>
+    <nav class="flex items-center gap-1" aria-label="Main">
+      <a href="/index" class="btn" data-variant="ghost" data-size="sm">Rot Index</a>
+      <a href="https://github.com/iamarunbrahma/fix-my-tutorial" class="btn" data-variant="ghost" data-size="icon-sm" aria-label="Source code on GitHub">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="size-4" aria-hidden="true"><path d="M12 .3a12 12 0 0 0-3.8 23.4c.6.1.8-.3.8-.6v-2c-3.3.7-4-1.6-4-1.6-.6-1.4-1.4-1.8-1.4-1.8-1-.7.1-.7.1-.7 1.2.1 1.8 1.2 1.8 1.2 1 1.8 2.8 1.3 3.5 1 0-.8.4-1.3.7-1.6-2.7-.3-5.5-1.3-5.5-6 0-1.2.5-2.3 1.3-3.1-.2-.4-.6-1.6 0-3.2 0 0 1-.3 3.3 1.2a11.5 11.5 0 0 1 6 0C17 4.7 18 5 18 5c.6 1.6.2 2.8.1 3.2.8.8 1.3 1.9 1.3 3.1 0 4.6-2.8 5.6-5.5 5.9.4.4.8 1.1.8 2.2v3.3c0 .3.2.7.8.6A12 12 0 0 0 12 .3"/></svg>
+      </a>
+      <button type="button" id="theme-toggle" class="btn" data-variant="ghost" data-size="icon-sm" aria-label="Switch light or dark theme">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="size-4 dark:hidden" aria-hidden="true"><path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"/></svg>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="hidden size-4 dark:block" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 2v2"/><path d="M12 20v2"/><path d="m4.93 4.93 1.41 1.41"/><path d="m17.66 17.66 1.41 1.41"/><path d="M2 12h2"/><path d="M20 12h2"/><path d="m6.34 17.66-1.41 1.41"/><path d="m19.07 4.93-1.41 1.41"/></svg>
+      </button>
+    </nav>
+  </div>
 </header>
-<main>{% block main %}{% endblock %}</main>
-<footer class="foot">Runs on <strong>Nebius Token Factory</strong>: NVIDIA Nemotron models for planning, diagnosis and repair, and Token Factory Sandboxes for running code. Sources found with Tavily.</footer>
+<main class="container-page flex-1 py-10 sm:py-14" data-sandbox="{{ sandbox_label(request) }}">{% block main %}{% endblock %}</main>
+<footer class="border-t">
+  <div class="container-page text-muted-foreground flex flex-col gap-1 py-6 text-sm sm:flex-row sm:items-center sm:justify-between">
+    <p>Runs on <span class="text-foreground font-medium">Nebius Token Factory</span> with NVIDIA Nemotron models. Code runs in {{ sandbox_label(request) }}. Sources found with Tavily.</p>
+    <p><a href="https://github.com/iamarunbrahma/fix-my-tutorial" class="hover:text-foreground underline-offset-4 hover:underline">Open source, MIT</a></p>
+  </div>
+</footer>
+<script>
+  document.getElementById("theme-toggle").addEventListener("click", () => {
+    const dark = document.documentElement.classList.toggle("dark");
+    try { localStorage.setItem("theme", dark ? "dark" : "light"); } catch (_) {}
+  });
+</script>
 {% block scripts %}{% endblock %}
 </body>
 </html>

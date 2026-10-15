@@ -19,8 +19,9 @@ VERDICT_TEXT = {
     Verdict.ERROR: "Check failed",
 }
 VERDICT_COLOR = {
-    Verdict.STILL_WORKS: "#2e7d32", Verdict.FIXED: "#1565c0", Verdict.COULD_NOT_FIX: "#b26a00",
-    Verdict.NOT_RUNNABLE: "#616161", Verdict.ERROR: "#9e2a2b",
+    # Same hues as the site's status pills.
+    Verdict.STILL_WORKS: "#059669", Verdict.FIXED: "#7c3aed", Verdict.COULD_NOT_FIX: "#dc2626",
+    Verdict.NOT_RUNNABLE: "#71717a", Verdict.ERROR: "#b91c1c",
 }
 
 
@@ -117,10 +118,10 @@ def badge_label(rec: RunRecord) -> str:
 def badge_svg(rec: RunRecord) -> str:
     left, right = "Fix My Tutorial", badge_label(rec)
     lw, rw = 7 * len(left) + 16, 7 * len(right) + 16
-    color = VERDICT_COLOR.get(rec.verdict, "#616161")
+    color = VERDICT_COLOR.get(rec.verdict, "#71717a")
     label = escape(f"{left}: {right}")
     return (f'<svg xmlns="http://www.w3.org/2000/svg" width="{lw + rw}" height="20" role="img" aria-label="{label}">'
-            f'<title>{label}</title><rect width="{lw}" height="20" fill="#24292f"/>'
+            f'<title>{label}</title><rect width="{lw}" height="20" fill="#18181b"/>'
             f'<rect x="{lw}" width="{rw}" height="20" fill="{color}"/>'
             f'<g fill="#fff" font-family="Verdana,DejaVu Sans,sans-serif" font-size="11">'
             f'<text x="{lw / 2}" y="14" text-anchor="middle">{escape(left)}</text>'
@@ -128,20 +129,20 @@ def badge_svg(rec: RunRecord) -> str:
 
 
 def og_png(rec: RunRecord) -> bytes:
-    img = Image.new("RGB", (1200, 630), "#0f1115")
+    img = Image.new("RGB", (1200, 630), "#09090b")
     d = ImageDraw.Draw(img)
     big, mid, small = (ImageFont.load_default(size=s) for s in (60, 40, 30))
-    d.text((70, 60), "Fix My Tutorial", font=small, fill="#9aa4b2")
+    d.text((70, 60), "Fix My Tutorial", font=small, fill="#a1a1aa")
     title = textwrap.shorten(rec.title or rec.source, 90, placeholder="...")
     for i, line in enumerate(textwrap.wrap(title, 34)[:3]):
-        d.text((70, 130 + i * 74), line, font=big, fill="#f5f7fa")
+        d.text((70, 130 + i * 74), line, font=big, fill="#fafafa")
     label = VERDICT_TEXT.get(rec.verdict, "Checked")
     width = d.textlength(label, font=mid) + 48
-    d.rounded_rectangle((70, 420, 70 + width, 492), radius=16, fill=VERDICT_COLOR.get(rec.verdict, "#616161"))
+    d.rounded_rectangle((70, 420, 70 + width, 492), radius=16, fill=VERDICT_COLOR.get(rec.verdict, "#71717a"))
     d.text((94, 434), label, font=mid, fill="#ffffff")
     n = len(build_changes(rec))
     sub = f"{n} change{'s' if n != 1 else ''}, each with a cited reason" if n else _runtime(rec)
-    d.text((70, 530), sub, font=small, fill="#9aa4b2")
+    d.text((70, 530), sub, font=small, fill="#a1a1aa")
     buf = io.BytesIO()
     img.save(buf, "PNG")
     return buf.getvalue()

@@ -1,2 +1,15 @@
 {% extends "base.html" %}
-{% block main %}<h1>We couldn't find that</h1><p class="lead">The link may be old. <a href="/">Check a tutorial</a> or browse the <a href="/index">Rot Index</a>.</p>{% endblock %}
+{% block main %}
+<div class="empty mx-auto max-w-xl py-16">
+  <header>
+    <h1 class="page-title">We couldn't find that</h1>
+    <p>The link may be old. Check a tutorial, or browse the Rot Index.</p>
+  </header>
+  <section>
+    <div class="flex flex-wrap justify-center gap-2">
+      <a class="btn" href="/">Check a tutorial</a>
+      <a class="btn" data-variant="outline" href="/index">Rot Index</a>
+    </div>
+  </section>
+</div>
+{% endblock %}

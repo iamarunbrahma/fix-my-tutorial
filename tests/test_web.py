@@ -287,3 +287,34 @@ def test_cached_reports_still_open_while_public_runs_are_paused(env):
     deps.ledger.mark_unverified("past spend could not be loaded.")
     r = client.post("/runs", data={"url": "https://a.example/t"}, follow_redirects=False)
     assert r.status_code == 303 and r.headers["location"] == "/run/done1"
+
+
+def test_pages_name_the_sandbox_that_actually_runs_the_code(env):
+    client, deps = env
+    assert "Token Factory Sandboxes" not in client.get("/").text
+    deps.settings = deps.settings.model_copy(update={"sandbox_backend": "contree"})
+    assert "Token Factory Sandboxes" in client.get("/").text
+    deps.settings = deps.settings.model_copy(update={"sandbox_backend": "docker"})
+    assert "isolated Docker sandboxes" in client.get("/").text
+
+
+def test_static_assets_are_versioned_so_redeploys_reach_returning_visitors(env):
+    client, _ = env
+    page = client.get("/").text
+    assert "/static/app.css?v=" in page and "/static/vendor/tabs.min.js?v=" in page
+
+
+def test_non_web_links_are_rejected_on_the_form(env):
+    client, deps = env
+    r = client.post("/runs", data={"url": "ftp://example.com/tutorial"}, follow_redirects=False)
+    assert r.status_code == 400 and "Only http and https links are supported." in r.text
+    assert deps.queue.submitted == []
+
+
+def test_failed_and_unrunnable_checks_offer_no_badge(env):
+    client, deps = env
+    for i, verdict in enumerate([Verdict.ERROR, Verdict.NOT_RUNNABLE]):
+        deps.store.save_run(done_record().model_copy(update={"id": f"nb{i}", "verdict": verdict}))
+        assert "/badge/nb" not in client.get(f"/r/nb{i}").text
+    deps.store.save_run(done_record())
+    assert "/badge/done1.svg" in client.get("/r/done1").text
