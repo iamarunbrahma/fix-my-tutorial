@@ -115,8 +115,9 @@ def create_app(deps: Deps | None = None) -> FastAPI:
         return request.app.state.deps
 
     def client_ip(request: Request) -> str:
-        fwd = request.headers.get("x-forwarded-for", "")
-        return fwd.split(",")[0].strip() if fwd else (request.client.host if request.client else "unknown")
+        # The rightmost entry is the one our proxy appended; anything left of it is client-supplied.
+        hops = [h.strip() for h in request.headers.get("x-forwarded-for", "").split(",") if h.strip()]
+        return hops[-1] if hops else (request.client.host if request.client else "unknown")
 
     def home_ctx(request: Request, **extra) -> dict:
         d = D(request)

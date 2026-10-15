@@ -89,6 +89,14 @@ def test_rate_limit(env):
     assert r.status_code == 429 and "runs in the last hour" in r.text
 
 
+
+def test_rate_limit_ignores_spoofed_forwarded_for(env):
+    client, _ = env
+    for i in range(3):
+        r = client.post("/runs", data={"url": f"https://y{i}.example/t"}, follow_redirects=False,
+                        headers={"X-Forwarded-For": f"10.0.0.{i}, 203.0.113.7"})
+    assert r.status_code == 429
+
 def test_run_page_and_404(env):
     client, deps = env
     deps.store.save_run(done_record())
