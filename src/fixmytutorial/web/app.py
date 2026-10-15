@@ -274,10 +274,13 @@ def create_app(deps: Deps | None = None) -> FastAPI:
             for e in load_index(d.settings).get("entries", [])
             if e.get("featured") and e.get("run_id")
         ][:3]
+        base = d.settings.public_base_url.rstrip("/")
         return {
             "paused": None if ok else why,
             "per_hour": d.settings.rate_limit_runs_per_hour,
             "examples": featured,
+            "bookmarklet": f"javascript:location.href='{base}/?url='+encodeURIComponent(location.href)",
+            "recent": None,
             "error": None,
             "url": "",
             "markdown": "",
@@ -288,8 +291,13 @@ def create_app(deps: Deps | None = None) -> FastAPI:
         return templates.TemplateResponse(request, "notfound.html", {}, status_code=404)
 
     @app.get("/", response_class=HTMLResponse)
-    async def home(request: Request):
-        return templates.TemplateResponse(request, "home.html", home_ctx(request))
+    async def home(request: Request, url: str = ""):
+        # A shared ?url= link only fills in the form: starting a run (and spending) always takes a click.
+        url = url.strip()
+        if len(url) > 2000 or urlparse(url).scheme.lower() not in ("http", "https"):
+            url = ""
+        recent = D(request).store.find_recent_run(url, D(request).settings.cache_ttl_s) if url else None
+        return templates.TemplateResponse(request, "home.html", home_ctx(request, url=url, recent=recent))
 
     @app.post("/runs")
     async def create_run(request: Request, url: str = Form(""), markdown: str = Form("")):

@@ -361,3 +361,33 @@ def test_the_largest_allowed_markdown_still_gets_through(env):
     client, deps = env
     r = client.post("/runs", data={"markdown": "é" * 59_999}, follow_redirects=False)
     assert r.status_code == 303 and len(deps.queue.submitted) == 1
+
+
+def test_url_query_prefills_the_form_without_starting_a_run(env):
+    client, deps = env
+    r = client.get("/", params={"url": "https://c.example/guide?x=1&y=2"})
+    assert r.status_code == 200
+    assert 'name="url" value="https://c.example/guide?x=1&amp;y=2"' in r.text
+    assert deps.queue.submitted == [] and deps.store.list_runs(limit=10) == []
+
+
+def test_url_query_ignores_non_web_links(env):
+    client, _ = env
+    for bad in ["javascript:alert(1)", "ftp://x.example/a", "https://x.example/" + "a" * 2100]:
+        r = client.get("/", params={"url": bad})
+        assert r.status_code == 200 and 'name="url" value=""' in r.text
+
+
+def test_url_query_links_a_recent_report(env):
+    client, deps = env
+    deps.store.save_run(done_record())
+    r = client.get("/", params={"url": "https://a.example/t"})
+    assert "We already checked this page" in r.text and 'href="/r/done1">See the report' in r.text
+    assert "We already checked this page" not in client.get("/", params={"url": "https://c.example/t"}).text
+
+
+def test_home_offers_the_bookmark(env):
+    client, deps = env
+    base = deps.settings.public_base_url.rstrip("/")
+    r = client.get("/")
+    assert f"javascript:location.href=&#39;{base}/?url=&#39;+encodeURIComponent(location.href)" in r.text

@@ -13,6 +13,13 @@
     <h2>{{ paused }}</h2>
   </div>
   {% endif %}
+  {% if recent %}
+  <div class="alert mb-4" role="status">
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>
+    <h2>We already checked this page on {{ (recent.finished_at or recent.created_at).strftime("%d %b %Y") }}.</h2>
+    <section><a class="underline underline-offset-4" href="/r/{{ recent.id }}">See the report</a></section>
+  </div>
+  {% endif %}
   {% if error %}
   <div class="alert mb-4" data-variant="destructive" role="alert">
     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><path d="M12 8v4"/><path d="M12 16h.01"/></svg>
@@ -43,6 +50,11 @@
       </button>
     </footer>
   </form>
+  <p class="text-muted-foreground mt-4 text-center text-sm">
+    Check a tutorial from its own page: drag
+    <a class="btn mx-1 align-middle" data-variant="outline" data-size="sm" href="{{ bookmarklet }}" title="Drag me to your bookmarks bar">Check this tutorial</a>
+    to your bookmarks bar.
+  </p>
 </section>
 
 {% if examples %}
