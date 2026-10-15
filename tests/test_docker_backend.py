@@ -4,11 +4,11 @@ from fixmytutorial.executor import ExecState, Executor
 from fixmytutorial.judge import Judge
 from fixmytutorial.models import RunPlan, Step
 from fixmytutorial.sandbox.docker_backend import DockerBackend
-from tests.sandbox_contract import ALL_CHECKS
+from tests.sandbox_contract import ALL_CHECKS, DOCKER_ONLY_CHECKS
 
 
 @pytest.mark.docker
-@pytest.mark.parametrize("check", ALL_CHECKS, ids=lambda c: c.__name__)
+@pytest.mark.parametrize("check", ALL_CHECKS + DOCKER_ONLY_CHECKS, ids=lambda c: c.__name__)
 async def test_docker_contract(check, settings):
     await check(DockerBackend(settings.model_copy(update={"sandbox_backend": "docker"})))
 

@@ -80,3 +80,12 @@ def test_cap_output_keeps_tail():
     big = "a" * 70_000 + "TAIL"
     out = cap_output(big)
     assert out.endswith("TAIL") and out.startswith("[output truncated]") and len(out) < 66_000
+
+
+async def test_capped_subprocess_read_keeps_memory_bounded():
+    from fixmytutorial.sandbox import OUTPUT_CAP
+    from fixmytutorial.sandbox.docker_backend import run_capped
+    rc, out, err = await run_capped(
+        [sys.executable, "-c", "import sys; sys.stdout.write('x' * 5_000_000 + 'END'); sys.stderr.write('e')"],
+        timeout=30)
+    assert rc == 0 and out.endswith("END") and len(out) <= OUTPUT_CAP + 64 and err == "e"

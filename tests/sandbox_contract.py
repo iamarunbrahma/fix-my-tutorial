@@ -62,3 +62,19 @@ async def check_node_image(b):
 
 ALL_CHECKS = [check_echo, check_nonzero_exit, check_save_and_reuse, check_files,
               check_parallel_branches_are_isolated, check_timeout, check_openai_stub, check_node_image]
+
+
+async def check_output_is_capped(b):
+    base = await b.base_image("python")
+    r = await b.run(base, f"{PRELUDE}\npython3 -c \"print('z' * 3_000_000)\"", save=False)
+    assert r.exit_code == 0 and len(r.stdout) <= 70_000
+
+
+async def check_no_linux_capabilities(b):
+    base = await b.base_image("python")
+    r = await b.run(base, f"{PRELUDE}\ngrep CapEff /proc/self/status", save=False)
+    assert r.stdout.split()[-1] == "0000000000000000"
+
+
+ALL_CHECKS += [check_output_is_capped]
+DOCKER_ONLY_CHECKS = [check_no_linux_capabilities]

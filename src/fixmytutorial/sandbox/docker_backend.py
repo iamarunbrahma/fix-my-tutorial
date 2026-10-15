@@ -10,7 +10,36 @@ from asyncio.subprocess import DEVNULL, PIPE
 from pathlib import Path
 
 from ..models import ImageRef, StepResult
-from . import ASSETS_DIR, cap_output
+from . import ASSETS_DIR, OUTPUT_CAP
+
+
+async def run_capped(args: list[str], timeout: float | None = None, cap: int = OUTPUT_CAP) -> tuple[int, str, str]:
+    """Run a command, keeping only the last `cap` bytes of each stream so a noisy tutorial cannot exhaust memory."""
+    proc = await asyncio.create_subprocess_exec(*args, stdin=DEVNULL, stdout=PIPE, stderr=PIPE)
+
+    async def drain(stream) -> str:
+        buf, truncated = bytearray(), False
+        while chunk := await stream.read(65536):
+            buf.extend(chunk)
+            if len(buf) > cap:
+                del buf[: len(buf) - cap]
+                truncated = True
+        text = buf.decode(errors="replace")
+        return "[output truncated]\n" + text if truncated else text
+
+    try:
+        out, err = await asyncio.wait_for(asyncio.gather(drain(proc.stdout), drain(proc.stderr)), timeout)
+        await proc.wait()
+    except TimeoutError:
+        proc.kill()
+        await proc.wait()
+        raise
+    return proc.returncode, out, err
+
+
+# Untrusted tutorial code: no Linux capabilities, no privilege escalation, bounded processes, memory and logs.
+HARDENING = ["--memory", "4g", "--memory-swap", "4g", "--cpus", "2", "--pids-limit", "512", "--cap-drop", "ALL",
+             "--security-opt", "no-new-privileges", "--log-opt", "max-size=10m"]
 
 
 class DockerBackend:
@@ -22,14 +51,7 @@ class DockerBackend:
         self._build_lock = asyncio.Lock()
 
     async def _docker(self, *args: str, timeout: float | None = None) -> tuple[int, str, str]:
-        proc = await asyncio.create_subprocess_exec("docker", *args, stdin=DEVNULL, stdout=PIPE, stderr=PIPE)
-        try:
-            out, err = await asyncio.wait_for(proc.communicate(), timeout)
-        except TimeoutError:
-            proc.kill()
-            await proc.wait()
-            raise
-        return proc.returncode, out.decode(errors="replace"), err.decode(errors="replace")
+        return await run_capped(["docker", *args], timeout)
 
     @staticmethod
     def _assets_hash() -> str:
@@ -58,7 +80,7 @@ class DockerBackend:
 
     async def run(self, image: ImageRef, script: str, *, files: dict[str, bytes] | None = None,
                   timeout_s: int = 180, save: bool = True, env: dict[str, str] | None = None) -> StepResult:
-        args = ["create", "--memory", "4g", "--cpus", "2"]
+        args = ["create", *HARDENING, "--network", self.s.docker_network]
         for k, v in (env or {}).items():
             args += ["-e", f"{k}={v}"]
         rc, out, err = await self._docker(*args, image.ref, "bash", "-c", script)
@@ -91,7 +113,7 @@ class DockerBackend:
                 rc, img, _ = await self._docker("commit", cid)
                 if rc == 0:
                     new_image = ImageRef(backend="docker", ref=img.strip())
-            return StepResult(exit_code=exit_code, stdout=cap_output(sout), stderr=cap_output(serr),
+            return StepResult(exit_code=exit_code, stdout=sout, stderr=serr,
                               timed_out=timed_out, duration_s=duration, image=new_image)
         finally:
             await self._docker("rm", "-f", cid)

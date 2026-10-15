@@ -12,6 +12,7 @@ from dataclasses import dataclass
 from typing import Callable
 from urllib.parse import urljoin, urlparse
 
+import httpcore
 import httpx
 from markdown_it import MarkdownIt
 from selectolax.lexbor import LexborHTMLParser as HTMLParser
@@ -103,44 +104,86 @@ def _default_resolver(host: str) -> list[str]:
     return [info[4][0] for info in socket.getaddrinfo(host, None)]
 
 
-async def _check_public(url: str, resolver: Callable[[str], list[str]]) -> None:
-    p = urlparse(url)
-    if p.scheme not in ("http", "https") or not p.hostname:
-        raise IngestError("Only http and https links are supported.")
+async def _public_ips(host: str, resolver: Callable[[str], list[str]]) -> list[str]:
     try:
-        ips = await asyncio.to_thread(resolver, p.hostname)
+        ips = await asyncio.to_thread(resolver, host)
     except OSError:
         raise IngestError("Couldn't find that website. Check the link.") from None
+    if not ips:
+        raise IngestError("Couldn't find that website. Check the link.")
     for ip in ips:
         addr = ipaddress.ip_address(ip)
         if addr.is_private or addr.is_loopback or addr.is_link_local or addr.is_reserved or addr.is_multicast:
             raise IngestError("That link points to a private network address.")
+    return ips
 
 
-async def _safe_get(url: str, client: httpx.AsyncClient, resolver) -> httpx.Response:
+async def _check_public(url: str, resolver: Callable[[str], list[str]]) -> None:
+    p = urlparse(url)
+    if p.scheme not in ("http", "https") or not p.hostname:
+        raise IngestError("Only http and https links are supported.")
+    await _public_ips(p.hostname, resolver)
+
+
+class SafeNetworkBackend(httpcore.AsyncNetworkBackend):
+    """Resolves the host itself, refuses private addresses, and connects to the exact address it checked, so a
+    DNS answer cannot change between the check and the connection (DNS rebinding). TLS still verifies the
+    certificate against the original hostname."""
+
+    def __init__(self, resolver: Callable[[str], list[str]] | None = None, inner=None):
+        self._resolver = resolver or _default_resolver
+        self._inner = inner or httpcore.AnyIOBackend()
+
+    async def connect_tcp(self, host, port, timeout=None, local_address=None, socket_options=None):
+        ips = await _public_ips(host, self._resolver)
+        return await self._inner.connect_tcp(ips[0], port, timeout=timeout, local_address=local_address,
+                                             socket_options=socket_options)
+
+    async def connect_unix_socket(self, path, timeout=None, socket_options=None):
+        raise IngestError("Unix sockets are not allowed.")
+
+    async def sleep(self, seconds: float) -> None:
+        await self._inner.sleep(seconds)
+
+
+def _safe_client(resolver: Callable[[str], list[str]]) -> httpx.AsyncClient:
+    transport = httpx.AsyncHTTPTransport(retries=0)
+    transport._pool = httpcore.AsyncConnectionPool(ssl_context=httpx.create_ssl_context(), max_connections=10,
+                                                   network_backend=SafeNetworkBackend(resolver))
+    return httpx.AsyncClient(transport=transport, trust_env=False)  # no env proxies: they would skip the pinning
+
+
+async def _safe_get(url: str, client: httpx.AsyncClient, resolver) -> str:
     for _ in range(4):
         await _check_public(url, resolver)
         try:
-            r = await client.get(url, follow_redirects=False, timeout=20, headers={"User-Agent": USER_AGENT})
+            async with client.stream("GET", url, follow_redirects=False, timeout=20,
+                                     headers={"User-Agent": USER_AGENT}) as r:
+                if r.is_redirect and "location" in r.headers:
+                    url = urljoin(url, r.headers["location"])
+                    continue
+                if r.status_code >= 400:
+                    raise IngestError(f"Couldn't read that page (HTTP {r.status_code}).")
+                declared = r.headers.get("content-length", "")
+                if declared.isdigit() and int(declared) > MAX_BYTES:
+                    raise IngestError("That page is too large to read.")
+                body = bytearray()
+                async for chunk in r.aiter_bytes():
+                    body.extend(chunk)
+                    if len(body) > MAX_BYTES:
+                        raise IngestError("That page is too large to read.")
+                return body.decode(r.encoding or "utf-8", errors="replace")
         except httpx.HTTPError:
             raise IngestError("Couldn't read that page (the site did not respond).") from None
-        if r.is_redirect and "location" in r.headers:
-            url = urljoin(url, r.headers["location"])
-            continue
-        if r.status_code >= 400:
-            raise IngestError(f"Couldn't read that page (HTTP {r.status_code}).")
-        if len(r.content) > MAX_BYTES:
-            raise IngestError("That page is too large to read.")
-        return r
     raise IngestError("Couldn't read that page (too many redirects).")
 
 
 @asynccontextmanager
-async def _client(http: httpx.AsyncClient | None):
+async def _client(http: httpx.AsyncClient | None, resolver: Callable[[str], list[str]]):
     if http is not None:
         yield http
     else:
-        async with httpx.AsyncClient() as c:
+        async with _safe_client(resolver) as c:
             yield c
 
 
@@ -157,10 +200,10 @@ async def ingest(source: Source, search, *, run_id: str, public: bool, http: htt
         await _check_public(url, resolver)
         raw = github_raw_url(url)
         text, title = "", ""
-        async with _client(http) as client:
+        async with _client(http, resolver) as client:
             if raw:
-                r = await _safe_get(raw, client, resolver)
-                text = notebook_to_markdown(r.text) if raw.endswith(".ipynb") else r.text
+                body = await _safe_get(raw, client, resolver)
+                text = notebook_to_markdown(body) if raw.endswith(".ipynb") else body
                 title = first_heading(text) or raw.rsplit("/", 1)[-1]
             else:
                 if search is not None:
@@ -174,12 +217,12 @@ async def ingest(source: Source, search, *, run_id: str, public: bool, http: htt
                         text = res[0]["raw_content"]
                         title = first_heading(text) or url
                 if not text:
-                    r = await _safe_get(url, client, resolver)
+                    body = await _safe_get(url, client, resolver)
                     if url.endswith(".ipynb"):
-                        text = notebook_to_markdown(r.text)
+                        text = notebook_to_markdown(body)
                         title = first_heading(text) or url
                     else:
-                        title, text = html_to_markdown(r.text)
+                        title, text = html_to_markdown(body)
     else:
         raise IngestError("Paste a tutorial link or its Markdown.")
     if not text.strip():

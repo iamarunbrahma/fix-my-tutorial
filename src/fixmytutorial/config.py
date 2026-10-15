@@ -60,6 +60,7 @@ class Settings(BaseSettings):
 
     python_base_image: str = "docker.io/library/python:3.12-slim"
     node_base_image: str = "docker.io/library/node:22"
+    docker_network: str = "bridge"  # production fallback uses a firewalled network (no private/metadata ranges)
     contree_python_image: str = ""  # UUID from `python -m fixmytutorial.sandbox.prepare`
     contree_node_image: str = ""
 

@@ -92,3 +92,60 @@ async def test_non_http_scheme_rejected():
 async def test_empty_source_rejected():
     with pytest.raises(IngestError):
         await ingest(Source(), None, run_id="r", public=True)
+
+
+async def test_connect_time_check_blocks_rebinding_to_private_ip():
+    from fixmytutorial.ingest import SafeNetworkBackend
+    backend = SafeNetworkBackend(resolver=lambda host: ["127.0.0.1"])
+    with pytest.raises(IngestError, match="private"):
+        await backend.connect_tcp("rebind.example", 80)
+
+
+async def test_connect_goes_to_the_validated_ip():
+    from fixmytutorial.ingest import SafeNetworkBackend
+
+    class Inner:
+        hosts = []
+
+        async def connect_tcp(self, host, port, **kw):
+            self.hosts.append(host)
+            return "stream"
+
+    inner = Inner()
+    backend = SafeNetworkBackend(resolver=public_resolver, inner=inner)
+    assert await backend.connect_tcp("ex.com", 443) == "stream"
+    assert inner.hosts == ["93.184.216.34"]
+
+
+@respx.mock
+async def test_oversized_page_rejected_by_content_length_before_reading(monkeypatch):
+    monkeypatch.setattr("fixmytutorial.ingest.MAX_BYTES", 100)
+    consumed = []
+
+    async def body():
+        for _ in range(50):
+            consumed.append(1)
+            yield b"x" * 10
+
+    respx.get("https://ex.com/big").mock(
+        return_value=httpx.Response(200, headers={"content-length": "500"}, content=body()))
+    with pytest.raises(IngestError, match="too large"):
+        await ingest(Source(url="https://ex.com/big"), None, run_id="r", public=True, resolver=public_resolver)
+    assert consumed == []
+
+
+@respx.mock
+async def test_oversized_stream_without_length_is_cut_off(monkeypatch):
+    monkeypatch.setattr("fixmytutorial.ingest.MAX_BYTES", 100)
+
+    consumed = []
+
+    async def chunks():
+        for _ in range(50):
+            consumed.append(1)
+            yield b"y" * 10
+
+    respx.get("https://ex.com/stream").mock(return_value=httpx.Response(200, content=chunks()))
+    with pytest.raises(IngestError, match="too large"):
+        await ingest(Source(url="https://ex.com/stream"), None, run_id="r", public=True, resolver=public_resolver)
+    assert len(consumed) <= 12  # stopped right after crossing the cap, not after reading everything
