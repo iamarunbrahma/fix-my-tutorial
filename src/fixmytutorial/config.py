@@ -55,6 +55,8 @@ class Settings(BaseSettings):
     cap_tavily_lifetime_credits: int = 5000  # 9,000 Tavily credits available (free plan + BBDEVPOST coupon)
 
     rate_limit_runs_per_hour: int = 3
+    max_streams_per_client: int = 8  # open live-progress pages per visitor (several tabs)
+    max_streams_total: int = 500
     max_concurrent_runs: int = 4
     max_sandbox_ops: int = 12
     cache_ttl_s: int = 24 * 3600

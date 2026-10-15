@@ -44,3 +44,14 @@ async def test_queue_limits_concurrency_and_reports_position(settings, tmp_path)
     pipe.gate.set()
     await q.drain()
     assert pipe.running == 0
+
+
+def test_stream_limiter_caps_per_visitor_and_in_total():
+    from fixmytutorial.jobs import StreamLimiter
+    s = StreamLimiter(per_client=2, total=3)
+    assert s.acquire("a") and s.acquire("a") and not s.acquire("a")
+    assert s.acquire("b") and not s.acquire("c")  # total reached
+    s.release("a")
+    assert s.acquire("c")
+    s.release("zzz")  # releasing an unknown key is harmless
+    assert not s.acquire("d")

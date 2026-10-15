@@ -23,6 +23,33 @@ class RateLimiter:
         return True
 
 
+class StreamLimiter:
+    """Caps open live-progress streams per visitor and in total, so one visitor can't tie up the server."""
+
+    def __init__(self, per_client: int, total: int):
+        self.per_client = per_client
+        self.total = total
+        self._open: dict[str, int] = {}
+        self._count = 0
+
+    def acquire(self, key: str) -> bool:
+        if self._count >= self.total or self._open.get(key, 0) >= self.per_client:
+            return False
+        self._open[key] = self._open.get(key, 0) + 1
+        self._count += 1
+        return True
+
+    def release(self, key: str) -> None:
+        n = self._open.get(key, 0)
+        if n <= 0:
+            return
+        if n == 1:
+            del self._open[key]
+        else:
+            self._open[key] = n - 1
+        self._count -= 1
+
+
 class JobQueue:
     def __init__(self, pipeline, store, bus, settings):
         self.pipeline = pipeline

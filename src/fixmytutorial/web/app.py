@@ -17,12 +17,13 @@ from fastapi import FastAPI, Form, Request
 from fastapi.responses import HTMLResponse, JSONResponse, RedirectResponse, Response
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
+from starlette.background import BackgroundTask
 from sse_starlette.sse import EventSourceResponse
 
 from ..config import Settings, get_settings
 from ..events import EventBus
 from ..ingest import Source
-from ..jobs import JobQueue, RateLimiter
+from ..jobs import JobQueue, RateLimiter, StreamLimiter
 from ..ledger import Ledger
 from ..models import RunRecord, RunStatus, Verdict, utcnow
 from ..report import VERDICT_TEXT, badge_svg, build_changes, diff_lines, og_png, partial_note
@@ -53,6 +54,7 @@ class Deps:
     queue: object
     limiter: RateLimiter
     snapshot: object | None = None
+    streams: StreamLimiter | None = None
 
 
 def build_deps(settings: Settings) -> Deps:
@@ -111,6 +113,58 @@ def asset(path: str) -> str:
     """A static file's URL with a short content hash, so a redeploy never serves visitors a stale copy."""
     digest = hashlib.sha256((HERE / "static" / path).read_bytes()).hexdigest()[:10]
     return f"/static/{path}?v={digest}"
+
+
+# The largest legitimate form: 60,000 characters of multi-byte text, URL-encoded (about 720 KB), plus a link.
+MAX_REQUEST_BYTES = 1024 * 1024
+
+
+class _BodyTooLarge(BaseException):
+    """BaseException on purpose: form parsing turns any Exception into a generic 400 and keeps going."""
+
+
+class BodySizeLimit:
+    """Refuse request bodies over max_bytes before they are buffered, whether the size is declared or chunked."""
+
+    def __init__(self, app, max_bytes: int):
+        self.app = app
+        self.max_bytes = max_bytes
+
+    async def __call__(self, scope, receive, send):
+        if scope["type"] != "http":
+            return await self.app(scope, receive, send)
+        declared = dict(scope.get("headers") or []).get(b"content-length", b"")
+        if declared.isdigit() and int(declared) > self.max_bytes:
+            return await self._refuse(send)
+        seen, started = 0, False
+
+        async def counted_receive():
+            nonlocal seen
+            message = await receive()
+            if message["type"] == "http.request":
+                seen += len(message.get("body", b""))
+                if seen > self.max_bytes:
+                    raise _BodyTooLarge()
+            return message
+
+        async def tracked_send(message):
+            nonlocal started
+            started = started or message["type"] == "http.response.start"
+            await send(message)
+
+        try:
+            await self.app(scope, counted_receive, tracked_send)
+        except _BodyTooLarge:
+            if not started:
+                await self._refuse(send)
+
+    @staticmethod
+    async def _refuse(send) -> None:
+        body = b"That request is too large."
+        await send({"type": "http.response.start", "status": 413,
+                    "headers": [(b"content-type", b"text/plain; charset=utf-8"),
+                                (b"content-length", str(len(body)).encode())]})
+        await send({"type": "http.response.body", "body": body})
 
 
 SANDBOX_LABELS = {"contree": "Token Factory Sandboxes", "docker": "isolated Docker sandboxes"}
@@ -172,6 +226,8 @@ def create_app(deps: Deps | None = None) -> FastAPI:
     @asynccontextmanager
     async def lifespan(app: FastAPI):
         d = deps or build_deps(get_settings())
+        if d.streams is None:
+            d.streams = StreamLimiter(d.settings.max_streams_per_client, d.settings.max_streams_total)
         heal = None
         if d.snapshot is not None and getattr(d.snapshot, "enabled", False):
             restored = await asyncio.to_thread(d.snapshot.restore)
@@ -186,6 +242,7 @@ def create_app(deps: Deps | None = None) -> FastAPI:
             heal.cancel()
 
     app = FastAPI(title="Fix My Tutorial", lifespan=lifespan, docs_url=None, redoc_url=None)
+    app.add_middleware(BodySizeLimit, max_bytes=MAX_REQUEST_BYTES)
     app.mount("/static", StaticFiles(directory=HERE / "static"), name="static")
     templates = Jinja2Templates(directory=HERE / "templates")
     templates.env.globals.update(
@@ -301,17 +358,30 @@ def create_app(deps: Deps | None = None) -> FastAPI:
             return JSONResponse({"error": "not found"}, status_code=404)
         last = request.headers.get("last-event-id", "")
         start = int(last) if last.isdigit() else after
+        key = client_ip(request)
+        if not d.streams.acquire(key):  # a non-200 answer also stops the browser from reconnecting
+            return JSONResponse({"error": "Too many live pages open. Close some tabs and reload."}, status_code=429)
+        released = False
+
+        def release() -> None:  # runs from whichever finishes first: the stream or the response
+            nonlocal released
+            if not released:
+                released = True
+                d.streams.release(key)
 
         async def gen():
-            async for seq, ev in d.bus.subscribe(run_id, start):
-                if await request.is_disconnected():
-                    break
-                if ev["type"] == "ping":
-                    yield {"event": "ping", "data": "{}"}
-                    continue
-                yield {"id": str(seq), "event": ev["type"], "data": json.dumps(ev)}
+            try:
+                async for seq, ev in d.bus.subscribe(run_id, start):
+                    if await request.is_disconnected():
+                        break
+                    if ev["type"] == "ping":
+                        yield {"event": "ping", "data": "{}"}
+                        continue
+                    yield {"id": str(seq), "event": ev["type"], "data": json.dumps(ev)}
+            finally:
+                release()
 
-        return EventSourceResponse(gen(), ping=20)
+        return EventSourceResponse(gen(), ping=20, background=BackgroundTask(release))
 
     @app.get("/r/{run_id}", response_class=HTMLResponse)
     async def report(request: Request, run_id: str):

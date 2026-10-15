@@ -318,3 +318,44 @@ def test_failed_and_unrunnable_checks_offer_no_badge(env):
         assert "/badge/nb" not in client.get(f"/r/nb{i}").text
     deps.store.save_run(done_record())
     assert "/badge/done1.svg" in client.get("/r/done1").text
+
+
+def test_live_streams_are_capped_per_visitor_and_released_when_done(env):
+    client, deps = env
+    deps.store.save_run(done_record())
+    deps.store.append_event("done1", {"type": "done"})
+    deps.streams.per_client = 1
+    assert deps.streams.acquire("testclient")  # another tab already streaming
+    assert client.get("/run/done1/events").status_code == 429
+    deps.streams.release("testclient")
+    for _ in range(2):  # a finished stream gives its slot back
+        with client.stream("GET", "/run/done1/events") as r:
+            assert r.status_code == 200
+            "".join(r.iter_text())
+
+
+def test_oversized_request_bodies_are_refused_before_parsing(env):
+    from fixmytutorial.web.app import MAX_REQUEST_BYTES
+    client, deps = env
+    r = client.post("/runs", data={"markdown": "x" * (MAX_REQUEST_BYTES + 10)}, follow_redirects=False)
+    assert r.status_code == 413 and deps.queue.submitted == []
+
+
+def test_oversized_chunked_bodies_are_refused_too(env):
+    from fixmytutorial.web.app import MAX_REQUEST_BYTES
+    client, deps = env
+
+    def chunks():
+        yield b"markdown="
+        for _ in range(MAX_REQUEST_BYTES // 65536 + 2):
+            yield b"x" * 65536
+
+    r = client.post("/runs", content=chunks(), headers={"content-type": "application/x-www-form-urlencoded"},
+                    follow_redirects=False)
+    assert r.status_code == 413 and deps.queue.submitted == []
+
+
+def test_the_largest_allowed_markdown_still_gets_through(env):
+    client, deps = env
+    r = client.post("/runs", data={"markdown": "é" * 59_999}, follow_redirects=False)
+    assert r.status_code == 303 and len(deps.queue.submitted) == 1
