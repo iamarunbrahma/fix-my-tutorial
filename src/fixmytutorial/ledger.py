@@ -162,6 +162,10 @@ class Ledger:
     def mark_unverified(self, reason: str) -> None:
         self._unverified = reason
 
+    def clear_unverified(self, reason: str) -> None:
+        if self._unverified == reason:
+            self._unverified = ""
+
     def public_runs_open(self) -> tuple[bool, str]:
         if self._unverified:
             return False, f"Public runs are paused: {self._unverified}"
