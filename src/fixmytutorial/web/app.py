@@ -277,6 +277,11 @@ def create_app(deps: Deps | None = None) -> FastAPI:
         hops = [h.strip() for line in request.headers.getlist("x-forwarded-for") for h in line.split(",")]
         hops = [h for h in hops if h]
         candidate = hops[-1] if behind_proxy and hops else peer
+        # Some hosts sit behind a CDN that appends its own address last (Render: Cloudflare). The CDN's own header
+        # carries the visitor and is overwritten on every request, so it is trusted only when we are behind a proxy.
+        trusted = D(request).settings.client_ip_header
+        if behind_proxy and trusted and request.headers.get(trusted):
+            candidate = request.headers[trusted].strip()
         return rate_key(candidate) or rate_key(peer) or peer
 
     def home_ctx(request: Request, **extra) -> dict:

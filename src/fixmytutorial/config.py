@@ -59,6 +59,7 @@ class Settings(BaseSettings):
     cap_tavily_lifetime_credits: int = 5000  # 9,000 Tavily credits available (free plan + BBDEVPOST coupon)
 
     rate_limit_runs_per_hour: int = 3
+    client_ip_header: str = ""  # e.g. cf-connecting-ip where the host's proxy chain ends in a CDN (Render)
     max_streams_per_client: int = 8  # open live-progress pages per visitor (several tabs)
     max_streams_total: int = 10_000  # memory safety net only: idle streams are cheap, and a low cap is a lockout lever
     max_concurrent_runs: int = 4
