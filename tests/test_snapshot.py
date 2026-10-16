@@ -318,3 +318,29 @@ def test_bootstrap_never_recreates_a_ledger_for_a_dataset_that_has_runs(settings
     l_store, l_ledger = deps(settings, tmp_path, "laptop")
     assert Snapshotter(settings, l_store, l_ledger, api=hub).save_all([], bootstrap=True) is False
     assert not (tmp_path / "hub" / "ledger.json").exists()
+
+
+def test_restore_passes_each_run_its_own_time(tmp_path):
+    import json as _json
+    from datetime import datetime, timezone
+
+    from fixmytutorial.snapshot import Snapshotter
+    calls = []
+
+    class Store:
+        def get_run(self, rid):
+            return None
+
+        def save_run(self, rec, at=None):
+            calls.append((rec.id, at))
+
+        def events_after(self, rid, seq):
+            return []
+
+    (tmp_path / "runs").mkdir()
+    done = datetime(2026, 10, 15, 8, tzinfo=timezone.utc)
+    (tmp_path / "runs" / "a.json").write_text(_json.dumps({"id": "a", "source": "https://a", "created_at": done.isoformat(),
+                                                          "finished_at": done.isoformat()}))
+    snap = Snapshotter.__new__(Snapshotter)
+    snap.store = Store()
+    assert snap._restore_runs(tmp_path) == 1 and calls == [("a", done.timestamp())]

@@ -70,6 +70,12 @@ def normalize_plan(out: PlannerOutput, max_steps: int = 40, source_text: str | N
             s.content = _unflatten(s.content, shown)
         if shown is not None:  # only literals the tutorial actually shows may gate a step
             s.expect.stdout_contains = [x for x in s.expect.stdout_contains if squash(x) and squash(x) in shown]
+        # A step is expected to do what the tutorial intends. A planner that predicts the breakage ("exit 1, it will
+        # fail because...") would make every working fix look wrong.
+        s.expect.exit_code = 0
+        if s.expect.description and (PREDICTED_FAILURE.search(s.expect.description)
+                                     or VISUAL.search(s.expect.description)):  # pictures can't be checked from text
+            s.expect.description = None
         s.source_excerpt = s.source_excerpt[:1200]
         steps.append(s)
     note, truncated = "", len(steps) > max_steps
@@ -92,6 +98,14 @@ async def plan_tutorial(doc: TutorialDoc, llm, settings, *, run_id: str, public:
     user = render_planner_input(doc, settings.max_tutorial_chars)
     out = await llm.call("planner", PLANNER_SYSTEM, user, PlannerOutput, run_id=run_id, public=public,
                          max_tokens=12000, temperature=0.1)
+    if not out.runnable and _skipped_for_plots(doc, out.not_runnable_reason):  # charts run headless: ask again
+        retry = (f"{user}\n\n=== CHECK ===\nYou set runnable=false because of plots ({out.not_runnable_reason}). "
+                 "The sandbox is headless with a non-interactive backend: plt.show() simply returns and figures "
+                 "render fine. Plan the tutorial as runnable unless something else in rule 5 applies.")
+        again = await llm.call("planner", PLANNER_SYSTEM, retry, PlannerOutput, run_id=run_id, public=public,
+                               max_tokens=12000, temperature=0.1)
+        if again.runnable:
+            out = again
     ratio, missing = code_coverage(doc, out)
     if out.runnable and ratio < 1.0:  # dropped or quietly "modernized" code would hide the rot: ask once more
         unrun = unrun_files(out)
@@ -117,6 +131,17 @@ async def plan_tutorial(doc: TutorialDoc, llm, settings, *, run_id: str, public:
         plan.runnable = False
         plan.not_runnable_reason = "We couldn't turn enough of this page's code into steps we can run."
     return plan
+
+
+PREDICTED_FAILURE = re.compile(r"\b(fail|fails|failing|error|exception|crash|raises?|traceback)\b", re.I)
+VISUAL = re.compile(r"\b(plot|plots|plotted|chart|graph|figure|histogram|scatter|heatmap|image|visuali[sz]ation|"
+                    r"legend|axes|line plot|bar plot|pie)\b", re.I)
+PLOT_LIBS = re.compile(r"\b(matplotlib|seaborn|plotly|pyplot|plt\.)")
+PLOT_REASON = re.compile(r"show\(|plot|chart|figure|display|gui|headless|window|graphic", re.I)
+
+
+def _skipped_for_plots(doc: TutorialDoc, reason: str | None) -> bool:
+    return bool(reason and PLOT_REASON.search(reason) and any(PLOT_LIBS.search(b.code) for b in doc.code_blocks))
 
 
 def _code_lines(code: str) -> list[str]:

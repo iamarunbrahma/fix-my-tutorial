@@ -194,13 +194,17 @@ class Pipeline:
             await self._emit_plan(plan, record, emit)
             edited = {s.id for s in plan.steps if before.get(s.id) != s.content}
             for sid, r in win.trace.results.items():
-                status = "repaired" if sid == failing or sid in edited else "passed"
+                status = ("failed" if sid == win.trace.failing_step_id
+                          else "repaired" if sid == failing or sid in edited else "passed")
                 await emit({"type": "step", "step_id": sid, "status": status, "phase": "run",
                             "output": (r.stdout + ("\n" + r.stderr if r.stderr else ""))[-4000:],
                             "duration_s": r.duration_s})
             await self._stage(record, RunStatus.EXECUTING, emit)
-            trace = await executor.execute(plan, win.trace.states, from_unit=unit_index_of(plan, failing) + 1,
-                                           run_id=rid, public=pub)
+            if win.trace.failed_unit is not None:  # the fix worked; a later cell of the same group broke next
+                trace = win.trace
+            else:
+                trace = await executor.execute(plan, win.trace.states, from_unit=unit_index_of(plan, failing) + 1,
+                                               run_id=rid, public=pub)
         return plan
 
     async def _date_break(self, record: RunRecord, emit, executor: Executor) -> None:

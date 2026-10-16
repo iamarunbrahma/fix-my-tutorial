@@ -3,7 +3,7 @@ import asyncio
 import os
 
 from ..config import get_settings
-from . import ASSETS_DIR
+from . import ASSETS_DIR, TOOLS_SETUP
 
 
 async def prepare() -> dict[str, str]:
@@ -16,7 +16,7 @@ async def prepare() -> dict[str, str]:
     ids = {}
     for lang, ref in (("python", s.python_base_image), ("javascript", s.node_base_image)):
         base = await client.images.oci(ref)
-        res = await base.run(shell="mkdir -p /work && python3 --version && (node --version || true)",
+        res = await base.run(shell=f"{TOOLS_SETUP} && mkdir -p /work && python3 --version && (node --version || true)",
                              files=files, disposable=False, timeout=600)
         if res.exit_code != 0 or res.uuid is None:
             raise RuntimeError(f"Preparing {lang} image failed: {res.stderr}")

@@ -95,3 +95,15 @@ On our live test set of thirteen tutorials broken by real library changes, it fi
 ---
 
 For learners, it means the tutorial finally works. For the people who write docs, it means knowing the day a tutorial breaks. Try it on the one that broke for you.
+
+---
+
+## Proposed changes for the 2026-10-15 features (NOT approved yet: show Arun before recording)
+
+Beat 9, replacing the current line (about 6 seconds longer, still under 3:00):
+
+> You get a report with the exact change, the reason and the source behind it, and when it broke: WHEN_STAT. One click sends the fix to the tutorial's author as a GitHub issue. Across our Rot Index of real tutorials, ROT_INDEX_STAT.
+
+- WHEN_STAT comes from the live demo run's "When it broke" card, word for word (for the scikit-learn Boston housing tutorial, expect a release-notes answer, since scikit-learn releases before Python 3.12 support can't install in the sandbox). Never write it from memory.
+- On screen: zoom-punch on the "When it broke" card, then the "Open an issue" button.
+- Optional for beat 9's second half: the Rot Index "Releases that broke the most tutorials" list instead of only the headline number.

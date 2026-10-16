@@ -1,13 +1,28 @@
 # Deploying Fix My Tutorial
 
-## Production: Hugging Face Space + Token Factory Sandboxes
+## Production: Render + Token Factory Sandboxes
 
-1. `uv run python -m fixmytutorial.rot_index sync` (first time ever: add `--bootstrap`). This uploads local runs and their events so the Space can show Rot Index reports. The laptop never uploads spend: the Space owns the remote `ledger.json` and its own budget ($15 lifetime), the laptop keeps a separate local budget ($11), and both together stay under the account's credits. `--bootstrap` creates an empty `ledger.json` if none exists, so the Space's first boot can verify its (zero) past spend.
-2. `uv run python scripts/deploy_space.py`. It creates the Space and sets secrets and variables (`SANDBOX_BACKEND=contree`), then uploads the app.
-3. Check `/healthz`, then `/admin/ledger?token=...` (lifetime spend is the Space's own; `reserve.held` is true until 1 December, with `caps.public` at $7.50), then run one fixture tutorial.
-4. Open every "Tutorials we already checked" card on the live home page and every report link on `/index`. Each must open its report on the Space: these saved reports are what visitors and judges still see when public runs are paused.
+The public demo is a Render web service (`fix-my-tutorial`, Starter plan, Frankfurt), built from this repo's Dockerfile.
+Tutorial code never runs on it: every step runs in a Token Factory Sandboxes microVM. Hugging Face Docker Spaces now need a
+PRO subscription, so the demo moved to Render; the private Hugging Face dataset still holds its runs and spend ledger.
 
-Tutorial code runs inside Token Factory Sandboxes microVMs, never on the Space itself.
+1. `uv run python -m fixmytutorial.sandbox.prepare` and put the two image IDs in `.env` (`CONTREE_PYTHON_IMAGE`,
+   `CONTREE_NODE_IMAGE`). Re-run it whenever `src/fixmytutorial/sandbox/assets/` or `TOOLS_SETUP` changes.
+2. `uv run python -m fixmytutorial.rot_index sync` (first time ever: add `--bootstrap`). This uploads local runs and their
+   events so the demo can show Rot Index reports. The laptop never uploads spend: the demo owns the remote `ledger.json`
+   and its own budget ($15 lifetime, $7.50 held until 1 December), the laptop keeps a separate local budget ($11).
+3. Service environment: `NEBIUS_API_KEY`, `NEBIUS_PROJECT_ID`, `TAVILY_API_KEY`, `ADMIN_TOKEN`, `CONTREE_PYTHON_IMAGE`,
+   `CONTREE_NODE_IMAGE`, `HF_TOKEN` (the fine-grained dataset token, never the laptop token), `SANDBOX_BACKEND=contree`,
+   `PORT=7860`, `PUBLIC_BASE_URL=https://fix-my-tutorial.onrender.com`. The Dockerfile sets `PUBLIC_DEMO=true`.
+4. Auto-deploy is off: deploy with `render deploys create <service id> --confirm` after pushing the branch.
+5. Check `/healthz`, then `/admin/ledger?token=...` (`reserve.held` is true until 1 December, with `caps.public` at
+   $7.50), then run one tutorial through the home page.
+6. Open every "Tutorials we already checked" card on the home page and every report link on `/index`. These saved
+   reports are what visitors and judges still see when public runs are paused.
+
+The `render-guard` workflow (every 3 hours, `RENDER_API_KEY` repo secret) suspends the service on or after 2026-12-16,
+at 30 GB of monthly bandwidth, on any plan other than Starter, or when scaled past one instance, so Render never bills
+more than the Starter plan the account credit covers. Scheduled workflows only run from the default branch.
 
 ## Fallback: Docker sandbox on a Linux VM
 

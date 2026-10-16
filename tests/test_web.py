@@ -178,6 +178,7 @@ def test_admin_requires_token(env):
     assert "lifetime_usd" in data and data["public_runs_open"] is True
     assert data["caps"]["public"] == data["caps"]["lifetime"]  # the test app is not the public demo: no reserve
     assert data["reserve"] == {"usd": 7.5, "until": "2026-12-01", "held": False}
+    assert data["rate_limit_key"] == "testclient"  # whose bucket this request counts against (checks the proxy setup)
 
 
 def test_healthz(env):
@@ -443,3 +444,30 @@ def test_malformed_links_never_crash_the_home_page_or_the_form(env):
     assert r.status_code == 200 and 'name="url" value=""' in r.text
     r = client.post("/runs", data={"url": "http://[abc"})
     assert r.status_code == 400 and deps.queue.submitted == []
+
+
+def post_with(deps, peer, n=3, xff=None, cf=None):
+    with TestClient(create_app(deps), client=(peer, 5000)) as c:
+        out = []
+        for i in range(n):
+            h = {}
+            if xff:
+                h["X-Forwarded-For"] = xff(i)
+            if cf:
+                h["CF-Connecting-IP"] = cf(i)
+            out.append(c.post("/runs", data={"url": f"https://cf-{peer}-{i}.example/t"}, follow_redirects=False,
+                              headers=h).status_code)
+        return out
+
+
+def test_visitors_behind_cloudflare_get_their_own_limits(env):
+    _, deps = env
+    deps.settings = deps.settings.model_copy(update={"client_ip_header": "cf-connecting-ip"})
+    assert post_with(deps, "10.1.2.3", xff=lambda i: f"203.0.113.{i}, 172.69.122.176",
+                     cf=lambda i: f"203.0.113.{i}") == [303, 303, 303]
+
+
+def test_a_direct_visitor_cannot_fake_the_cloudflare_header(env):
+    _, deps = env
+    deps.settings = deps.settings.model_copy(update={"client_ip_header": "cf-connecting-ip"})
+    assert post_with(deps, "8.8.4.4", cf=lambda i: f"203.0.113.{i}")[-1] == 429

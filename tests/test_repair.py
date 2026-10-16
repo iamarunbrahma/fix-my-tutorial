@@ -201,3 +201,34 @@ def test_server_ports_default_to_the_framework_default():
     assert default_probe("uvicorn main:app --reload", "python").port == 8000
     assert default_probe("npm run dev", "javascript").port == 3000
     assert default_probe("python app.py --port 7000", "python").port == 7000
+
+
+async def test_a_fix_passes_when_its_cell_passes_even_if_a_later_cell_breaks(settings, tmp_path):
+    plan = PLAN.model_copy(update={"steps": PLAN.steps + [S("s4", "run_code", "for k, v in df.iteritems(): print(k)")]})
+    backend = FakeBackend(cells_handler(fail_cell=lambda c: bad_append(c) or "iteritems" in c["code"]))
+    ex = Executor(backend, settings, Judge(None))
+    trace = await ex.execute(plan, [ExecState(ImageRef(backend="fake", ref="base"))], run_id="r", public=True)
+    assert trace.failing_step_id == "s3"
+    good = Candidate(strategy="migrate", rationale="concat", edits=[edit("s3", "df = pd.concat([df])\nprint(1)")])
+    [res] = await Repairer(None, ex, settings).race(plan=plan, trace=trace, candidates=[good], failing_step_id="s3",
+                                                    run_id="r", public=True)
+    assert res.passed and res.trace.failing_step_id == "s4"  # the next break is left for the next repair
+
+
+async def test_an_unusable_repair_answer_costs_one_round_not_the_run(settings, tmp_path):
+    backend = FakeBackend(cells_handler(fail_cell=bad_append))
+    ex = Executor(backend, settings, Judge(None))
+    trace = await failing_trace(ex)
+    good = {"candidates": [{"strategy": "migrate", "rationale": "b", "edits": [
+        {"op": "replace", "step_id": "s3", "new_content": "df = pd.concat([df])\nprint(1)", "reason": "r",
+         "evidence_ids": ["r1e1"]}]}]}
+    client = FakeChatClient(['{"candidates": [{"strategy": "migr', "cut off again", json.dumps(good)])
+    llm = LLM(settings, Ledger(tmp_path / "l.db", settings), client=client)
+    events = []
+
+    async def emit(ev):
+        events.append(ev)
+    record, win = await Repairer(llm, ex, settings).repair_step(
+        plan=PLAN, trace=trace, signature=SIG, evidence=EVID, versions="", run_id="r", public=True, emit=emit)
+    assert win is not None and len(record.rounds) == 2 and record.rounds[0].candidates == []
+    assert "cut off" in client.calls[2]["messages"][1]["content"]  # the next round is told why

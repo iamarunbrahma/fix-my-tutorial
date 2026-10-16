@@ -5,7 +5,7 @@ Fields marked ARUN need Arun's own answer or confirmation.
 - Submitter type: Individual. Organization: N/A. Country: India. Canada province: N/A.
 - Track: Coding and agentic engineering. New or existing: New.
 - Repository: https://github.com/iamarunbrahma/fix-my-tutorial (private until approved to go public).
-- Demo URL: (after deploy).
+- Demo URL: https://fix-my-tutorial.onrender.com (saved in the draft 16 Oct 2026, also as the Try it out link).
 - Tavily: Yes. IRL city: none.
 
 ## Which model(s) did you use, and why that size/variant?
@@ -32,8 +32,10 @@ Token Factory's OpenAI-compatible inference API: one client and one key for four
 3. Clearer promo-code errors: ours said only "Promocode apply limit exceeded".
 4. Consistent model IDs between the catalog and the API (Nemotron-3.5-Lightning vs nvidia/Nemotron-3_5-Lightning).
 5. Faster or self-serve Sandboxes beta access for hackathon participants.
-6. Lightning sometimes appends text after a valid JSON object in json_schema mode.
+6. Lightning sometimes appends text after a valid JSON object in json_schema mode, and sometimes echoes part of its input (a JSON list) or writes a long plain-text reasoning passage before the object, so a 300-token cap ran out before any JSON.
 7. The Structured output Python sample in the docs is missing two commas.
+8. One clear path to Sandboxes activation: the beta form gives no timeline, and the "email contree@nebius.com" route is only in the Set up access page.
+9. A promo code that fails with "Promocode apply limit exceeded" should say which limit was hit and whether another program's credits can still be applied.
 
 ## What do you most hope to see from the Nemotron team next? - ARUN (suggestion)
 Stronger faithfulness in structured output when asked to preserve content exactly, and a small, fast model with Ultra-level code repair.

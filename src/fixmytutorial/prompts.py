@@ -24,6 +24,8 @@ Rules:
    or hardware, set runnable=false with a short reason. Otherwise skip only the parts that need them.
    Never set runnable=false because the code looks outdated, deprecated, removed or likely to break with current
    package versions: running it as written is how that breakage gets found and fixed.
+   Charts are not a GUI: the sandbox draws matplotlib, seaborn and plotly figures headless, and plt.show() simply
+   returns, so plotting is never a reason for runnable=false.
 6. expect: exit_code 0. Use stdout_contains only for short, deterministic literal strings that the tutorial
    explicitly shows as output. Otherwise give a short description of the expected outcome, or leave it empty.
 7. Never use interactive commands (REPL prompts, input(), editors, `read`). Turn REPL sessions into run_code cells.

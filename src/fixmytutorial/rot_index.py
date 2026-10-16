@@ -1,7 +1,7 @@
 """Rot Index: discover candidate tutorials, run them in batch, export the public board data.
 
   python -m fixmytutorial.rot_index discover   # Tavily searches -> rot_index/candidates.yaml (for hand curation)
-  python -m fixmytutorial.rot_index run [--force] [--concurrency 4]
+  python -m fixmytutorial.rot_index run [--force] [--concurrency 4] [--limit N]
   python -m fixmytutorial.rot_index export     # -> rot_index/results.json
   python -m fixmytutorial.rot_index sync [--bootstrap]  # upload local runs and events (never the ledger)
 """
@@ -105,7 +105,25 @@ def check_batch_backend(settings) -> None:
                          "SANDBOX_BACKEND=contree or a firewalled Docker network for the Rot Index.")
 
 
-async def run_batch(force: bool, concurrency: int) -> None:
+def pick_entries(entries: list[dict], done: set[str], force: bool, limit: int | None,
+                 only: set[str] | None = None) -> list[dict]:
+    """Tutorials still to run, taken round-robin across topics, so a short slice covers many kinds of breakage.
+    Tutorials named in `only` run again even if finished (after a fix to how pages are read, say)."""
+    if only:
+        return [e for e in entries if e["url"] in only]
+    by_topic: dict[str, list[dict]] = {}
+    for e in entries:
+        if force or e["url"] not in done:
+            by_topic.setdefault(e.get("topic", ""), []).append(e)
+    queues, out = list(by_topic.values()), []
+    while any(queues):
+        for q in queues:
+            if q:
+                out.append(q.pop(0))
+    return out if limit is None else out[:limit]
+
+
+async def run_batch(force: bool, concurrency: int, limit: int | None = None, only: set[str] | None = None) -> None:
     s = get_settings()
     check_batch_backend(s)
     store, ledger = _core(s)
@@ -120,17 +138,17 @@ async def run_batch(force: bool, concurrency: int) -> None:
     done = {r.source for r in store.list_runs(limit=5000)
             if not r.public and r.status == RunStatus.DONE}
     sem = asyncio.Semaphore(concurrency)
+    todo = pick_entries(entries, done, force, limit, only)
+    print(f"running {len(todo)} of {len(entries)} tutorials")
 
     async def one(e: dict) -> None:
-        if not force and e["url"] in done:
-            return
         async with sem:
             rec = RunRecord(id="ri-" + secrets.token_urlsafe(6), source=e["url"], public=False, created_at=utcnow())
             store.save_run(rec)
             rec = await pipeline.run(rec, Source(url=e["url"]))
             print(f"{rec.verdict.value:14} ${rec.cost_usd:.3f}  {e['url']}")
 
-    await asyncio.gather(*(one(e) for e in entries))
+    await asyncio.gather(*(one(e) for e in todo))
     t = ledger.totals()
     print(f"lifetime model spend: ${t.lifetime_usd:.2f}; tavily credits: {t.lifetime_credits}")
 
@@ -160,11 +178,13 @@ def main() -> None:
     ap.add_argument("--force", action="store_true")
     ap.add_argument("--bootstrap", action="store_true")
     ap.add_argument("--concurrency", type=int, default=4)
+    ap.add_argument("--limit", type=int, default=None, help="run at most N tutorials (round-robin across topics)")
+    ap.add_argument("--only", nargs="+", default=None, help="run exactly these tutorial URLs, even if finished")
     a = ap.parse_args()
     if a.command == "discover":
         asyncio.run(discover())
     elif a.command == "run":
-        asyncio.run(run_batch(a.force, a.concurrency))
+        asyncio.run(run_batch(a.force, a.concurrency, a.limit, set(a.only) if a.only else None))
     elif a.command == "export":
         export()
     else:

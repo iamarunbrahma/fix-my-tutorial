@@ -31,10 +31,29 @@ async def test_run_maps_arguments_and_result(settings):
     base = await b.base_image("python")
     r = await b.run(base, "echo 'hi there'", files={"/work/a": b"x"}, timeout_s=9, save=True)
     call = fake.log[0]
-    assert call["image"] == "py-uuid" and call["disposable"] is False and call["timeout"] == 9
-    assert call["shell"] == "bash -c 'echo '\"'\"'hi there'\"'\"''"
+    # the step's own limit is enforced in the sandbox; the SDK gets headroom for start-up and polling
+    assert call["image"] == "py-uuid" and call["disposable"] is False and call["timeout"] == 9 + 60
+    assert call["shell"] == "timeout --kill-after=5 9 bash -c 'echo '\"'\"'hi there'\"'\"''"
     assert call["files"] == {"/work/a": b"x"}
     assert r.image == ImageRef(backend="contree", ref="new-uuid") and r.stdout == "out"
+
+
+class TimingOutContree(FakeContree):
+    async def _use(self, uuid, strict=True):
+        log = self.log
+
+        class Img:
+            async def run(self, **kw):
+                from contree_sdk.sdk.exceptions.operation import OperationTimedOutError
+                log.append(kw)
+                raise OperationTimedOutError(operation_uuid="op-1")
+        return Img()
+
+
+async def test_an_sdk_wait_timeout_is_a_timed_out_step(settings):
+    b = ContreeBackend(settings.model_copy(update={"contree_python_image": "py"}), client=TimingOutContree())
+    r = await b.run(await b.base_image("python"), "sleep 600", timeout_s=5, save=True)
+    assert r.timed_out and r.exit_code == 124 and r.image is None
 
 
 async def test_disposable_run_returns_no_image(settings):

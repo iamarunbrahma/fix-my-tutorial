@@ -54,10 +54,12 @@ class Settings(BaseSettings):
     cap_daily_usd: float = 3.0  # public runs per day
     cap_daily_all_usd: float = 3.0  # all runs per day (local evals and batches too), so credits last to judging
     cap_run_usd: float = 0.50
+    tax_rate: float = 0.18  # VAT Token Factory adds on top of usage (seen on the usage page), paid from the same credits
     cap_tavily_run_credits: int = 30
     cap_tavily_lifetime_credits: int = 5000  # 9,000 Tavily credits available (free plan + BBDEVPOST coupon)
 
     rate_limit_runs_per_hour: int = 3
+    client_ip_header: str = ""  # e.g. cf-connecting-ip where the host's proxy chain ends in a CDN (Render)
     max_streams_per_client: int = 8  # open live-progress pages per visitor (several tabs)
     max_streams_total: int = 10_000  # memory safety net only: idle streams are cheap, and a low cap is a lockout lever
     max_concurrent_runs: int = 4

@@ -52,3 +52,16 @@ def test_cache_expiry(tmp_path):
     assert st.cache_get("k") == {"v": [1, 2]}
     t["now"] = 11
     assert st.cache_get("k") is None
+
+
+def test_restored_runs_keep_their_own_finish_time(tmp_path):
+    from datetime import datetime, timezone
+    t = {"now": datetime(2026, 10, 16, 12, tzinfo=timezone.utc).timestamp()}
+    st = Store(tmp_path / "s.db", clock=lambda: t["now"])
+    newer = rec("newer").model_copy(update={"finished_at": datetime(2026, 10, 16, 9, tzinfo=timezone.utc)})
+    older = rec("older").model_copy(update={"finished_at": datetime(2026, 10, 16, 8, tzinfo=timezone.utc)})
+    stale = rec("stale", source="https://b").model_copy(update={"finished_at": datetime(2026, 10, 13, tzinfo=timezone.utc)})
+    for r in (newer, older, stale):  # restore order must not decide which report is "most recent"
+        st.save_run(r, at=r.finished_at.timestamp())
+    assert st.find_recent_run("https://a", within_s=86_400).id == "newer"
+    assert st.find_recent_run("https://b", within_s=86_400) is None  # three days old is not recent

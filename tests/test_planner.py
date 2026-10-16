@@ -255,3 +255,56 @@ async def test_planner_is_told_when_it_never_runs_a_file(settings, tmp_path):
 def test_planner_prompt_asks_for_commands_mentioned_only_in_text():
     from fixmytutorial.prompts import PLANNER_SYSTEM
     assert "mentioned only in the text" in PLANNER_SYSTEM
+
+
+PLOT_DOC = TutorialDoc(source="https://x", title="Plots", text="Plot it.", content_hash="h", code_blocks=[
+    CodeBlock(lang="python", code="import matplotlib.pyplot as plt\nplt.plot([1, 2])\nplt.show()")])
+PLOT_SKIPPED = json.dumps({"language": "python", "runnable": False, "steps": [],
+                           "not_runnable_reason": "uses plt.show() which requires a GUI display, but the sandbox is headless"})
+PLOT_FULL = planner_json([{"id": "a", "title": "Plot", "kind": "run_code",
+                           "content": "import matplotlib.pyplot as plt\nplt.plot([1, 2])\nplt.show()"}])
+
+
+def test_planner_prompt_says_plots_render_headlessly():
+    from fixmytutorial.prompts import PLANNER_SYSTEM
+    assert "plt.show()" in PLANNER_SYSTEM and "headless" in PLANNER_SYSTEM
+
+
+async def test_plotting_is_never_a_reason_to_skip_a_tutorial(settings, tmp_path):
+    client = FakeChatClient([PLOT_SKIPPED, PLOT_FULL])
+    llm = LLM(settings, Ledger(tmp_path / "l.db", settings), client=client)
+    plan = await plan_tutorial(PLOT_DOC, llm, settings, run_id="r", public=True)
+    assert len(client.calls) == 2 and "headless" in client.calls[1]["messages"][1]["content"]
+    assert plan.runnable and plan.steps[0].kind == "run_code"
+
+
+async def test_a_real_gui_tutorial_is_not_asked_again(settings, tmp_path):
+    gui = PLOT_DOC.model_copy(update={"code_blocks": [CodeBlock(lang="python", code="import tkinter\ntkinter.Tk().mainloop()")]})
+    skipped = json.dumps({"language": "python", "runnable": False, "steps": [],
+                          "not_runnable_reason": "needs a GUI window (tkinter)"})
+    client = FakeChatClient([skipped])
+    llm = LLM(settings, Ledger(tmp_path / "l.db", settings), client=client)
+    plan = await plan_tutorial(gui, llm, settings, run_id="r", public=True)
+    assert len(client.calls) == 1 and not plan.runnable
+
+
+def test_steps_are_expected_to_succeed_never_to_fail():
+    out = PlannerOutput.model_validate(json.loads(planner_json([
+        {"id": "a", "title": "t", "kind": "run_code", "content": "print(1)",
+         "expect": {"exit_code": 1, "description": "The code will fail due to a missing import of numpy (np)."}},
+        {"id": "b", "title": "t", "kind": "run_code", "content": "print(2)",
+         "expect": {"exit_code": 0, "description": "prints the class counts"}}])))
+    plan = normalize_plan(out, 40)
+    assert [s.expect.exit_code for s in plan.steps] == [0, 0]
+    assert plan.steps[0].expect.description is None  # a predicted failure is not what the tutorial intends
+    assert plan.steps[1].expect.description == "prints the class counts"
+
+
+def test_expectations_about_pictures_are_dropped():
+    out = PlannerOutput.model_validate(json.loads(planner_json([
+        {"id": "a", "title": "t", "kind": "run_code", "content": "plt.plot(x)",
+         "expect": {"description": "Displays a line plot of the data"}},
+        {"id": "b", "title": "t", "kind": "run_code", "content": "df.head()",
+         "expect": {"description": "shows the first five rows"}}])))
+    plan = normalize_plan(out, 40)
+    assert plan.steps[0].expect.description is None and plan.steps[1].expect.description == "shows the first five rows"
