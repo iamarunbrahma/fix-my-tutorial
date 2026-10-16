@@ -20,7 +20,7 @@ from .models import (
     RunPlan,
     Step,
 )
-from .judge import code_lines, squash
+from .judge import code_lines
 from .llm import LLMOutputError
 from .planner import default_probe, is_data_file, safe_path
 from .prompts import REPAIR_SYSTEM
