@@ -74,7 +74,8 @@ def normalize_plan(out: PlannerOutput, max_steps: int = 40, source_text: str | N
         # A step is expected to do what the tutorial intends. A planner that predicts the breakage ("exit 1, it will
         # fail because...") would make every working fix look wrong.
         s.expect.exit_code = 0
-        if s.expect.description and (PREDICTED_FAILURE.search(s.expect.description)
+        s.expect.stdout_contains = [x for x in s.expect.stdout_contains if not predicts_failure(x)]
+        if s.expect.description and (predicts_failure(s.expect.description)
                                      or VISUAL.search(s.expect.description)):  # pictures can't be checked from text
             s.expect.description = None
         s.source_excerpt = s.source_excerpt[:1200]
@@ -140,7 +141,15 @@ async def plan_tutorial(doc: TutorialDoc, llm, settings, *, run_id: str, public:
 
 COMPACT = ("Reply with compact JSON only: no reasoning text, keep each source_excerpt under 200 characters, and do "
            "not repeat yourself.")
-PREDICTED_FAILURE = re.compile(r"\b(fail|fails|failing|error|exception|crash|raises?|traceback)\b", re.I)
+PREDICTED_FAILURE = re.compile(r"\b(fail|fails|failing|error|errors|exception|crash|raises?|traceback|removed|deprecated|"
+                               r"no longer)\b|\bno (attribute|module)\b", re.I)
+EXCEPTION_NAME = re.compile(r"[a-z](Error|Exception)\b")  # AttributeError, ModuleNotFoundError; case matters here
+
+
+def predicts_failure(text: str) -> bool:
+    """An expectation that names the breakage ("AttributeError: ... has no attribute 'append'") isn't what the
+    tutorial intends, and would reject every working fix."""
+    return bool(PREDICTED_FAILURE.search(text) or EXCEPTION_NAME.search(text))
 VISUAL = re.compile(r"\b(plot|plots|plotted|chart|graph|figure|histogram|scatter|heatmap|image|visuali[sz]ation|"
                     r"legend|axes|line plot|bar plot|pie)\b", re.I)
 PLOT_LIBS = re.compile(r"\b(matplotlib|seaborn|plotly|pyplot|plt\.)")

@@ -1,5 +1,7 @@
 import json
 
+import pytest
+
 from fixmytutorial.ledger import Ledger
 from fixmytutorial.llm import LLM
 from fixmytutorial.models import CodeBlock, PlannerOutput, TutorialDoc
@@ -298,6 +300,25 @@ def test_steps_are_expected_to_succeed_never_to_fail():
     assert [s.expect.exit_code for s in plan.steps] == [0, 0]
     assert plan.steps[0].expect.description is None  # a predicted failure is not what the tutorial intends
     assert plan.steps[1].expect.description == "prints the class counts"
+
+
+@pytest.mark.parametrize("predicted", [
+    # the live demo, 16 Oct: GfG's own "append() has been removed" note made every working fix look wrong
+    "AttributeError: 'DataFrame' object has no attribute 'append' (since pandas>=2.0 removed append)",
+    "ModuleNotFoundError: No module named 'sklearn.externals'",
+    "load_boston is no longer available in recent scikit-learn",
+])
+def test_an_expectation_that_names_the_breakage_is_dropped(predicted):
+    out = PlannerOutput.model_validate(json.loads(planner_json([
+        {"id": "a", "title": "t", "kind": "run_code", "content": "res = a.append(b)",
+         "expect": {"description": predicted, "stdout_contains": ["has no attribute 'append'", "a  b"]}},
+        {"id": "b", "title": "t", "kind": "run_code", "content": "print(df)",
+         "expect": {"description": "prints the combined DataFrame with rows from both", "stdout_contains": ["a  b"]}}])))
+    plan = normalize_plan(out, 40)
+    assert plan.steps[0].expect.description is None
+    assert plan.steps[0].expect.stdout_contains == ["a  b"]
+    assert plan.steps[1].expect.description == "prints the combined DataFrame with rows from both"
+    assert plan.steps[1].expect.stdout_contains == ["a  b"]
 
 
 def test_expectations_about_pictures_are_dropped():
