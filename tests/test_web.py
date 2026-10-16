@@ -178,6 +178,7 @@ def test_admin_requires_token(env):
     assert "lifetime_usd" in data and data["public_runs_open"] is True
     assert data["caps"]["public"] == data["caps"]["lifetime"]  # the test app is not the public demo: no reserve
     assert data["reserve"] == {"usd": 7.5, "until": "2026-12-01", "held": False}
+    assert data["rate_limit_key"] == "testclient"  # whose bucket this request counts against (checks the proxy setup)
 
 
 def test_healthz(env):

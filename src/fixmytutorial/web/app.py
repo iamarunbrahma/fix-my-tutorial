@@ -494,6 +494,7 @@ def create_app(deps: Deps | None = None) -> FastAPI:
                 "run": d.settings.cap_run_usd,
                 "public": d.ledger.public_cap_usd(),
             },
+            "rate_limit_key": client_ip(request),  # behind a proxy this must be the visitor's own address
             "reserve": {
                 "usd": d.settings.demo_reserve_usd,
                 "until": d.settings.demo_reserve_until.isoformat(),
