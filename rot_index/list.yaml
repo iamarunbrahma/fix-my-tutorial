@@ -1,10 +1,4 @@
 tutorials:
-- url: https://medium.com/@heyamit10/pandas-add-row-to-end-of-dataframe-8c390e32e207
-  title: pandas add row to end of dataframe | by Hey Amit | Medium
-  language: python
-  source: medium.com
-  year: 2025
-  topic: pandas DataFrame append rows tutorial
 - url: https://www.geeksforgeeks.org/pandas/how-to-create-an-empty-dataframe-and-append-rows-columns-to-it-in-pandas
   title: Pandas Append Rows & Columns to Empty DataFrame
   language: python
@@ -35,12 +29,6 @@ tutorials:
   source: medium.com
   year: 2025
   topic: scikit-learn linear regression boston housing tutorial
-- url: https://medium.com/data-science/predict-housing-price-using-linear-regression-in-python-bfc0fcfff640
-  title: Predict Housing Price using Linear Regression in Python
-  language: python
-  source: medium.com
-  year: 2024
-  topic: scikit-learn linear regression boston housing tutorial
 - url: https://www.geeksforgeeks.org/machine-learning/how-to-load-boston-housing-data-in-python
   title: How to load Boston Housing data in python?
   language: python
@@ -48,13 +36,8 @@ tutorials:
   year: 2025
   topic: scikit-learn linear regression boston housing tutorial
 - url: https://medium.com/@pradeepchirumamilla01/integrating-azure-openai-chat-completions-with-python-and-managing-conversation-history-ca0a8ae131bb
-  title: Integrating Azure OpenAI Chat Completions with Python and Managing Conversation History | by Pradeep chirumamilla | Medi
-  language: python
-  source: medium.com
-  year: 2025
-  topic: openai python ChatCompletion tutorial
-- url: https://medium.com/@laoluoyefolu/the-openai-api-chat-completions-22349b3df941
-  title: 'The OpenAI API: Chat Completions. In this blog post, we’ll explore the… | by Ola Oyefolu | Medium'
+  title: Integrating Azure OpenAI Chat Completions with Python and Managing Conversation History | by Pradeep chirumamilla
+    | Medi
   language: python
   source: medium.com
   year: 2025
@@ -83,12 +66,6 @@ tutorials:
   source: towardsdatascience.com
   year: 2020
   topic: matplotlib style seaborn plot tutorial
-- url: https://medium.com/@amit25173/understanding-iteritems-in-pandas-with-code-examples-18bdcfe0b045
-  title: Understanding iteritems() in Pandas (With Code Examples) | by Amit Yadav | Medium
-  language: python
-  source: medium.com
-  year: 2025
-  topic: pandas iteritems loop tutorial
 - url: https://www.geeksforgeeks.org/pandas/iterating-over-rows-and-columns-in-pandas-dataframe
   title: Iterating over rows and columns in Pandas DataFrame
   language: python
@@ -125,20 +102,9 @@ tutorials:
   source: geeksforgeeks.org
   year: 2025
   topic: numpy dtype float tutorial
-- url: https://medium.com/@heyamit10/numpy-data-types-8e565cdb31d1
-  title: NumPy Data Types. If you think you need to spend $2,000… | by Hey Amit | Medium
-  language: python
-  source: medium.com
-  year: 2025
-  topic: numpy dtype float tutorial
 - url: https://medium.com/@aricajain05/mastering-data-loading-in-pandas-16-essential-read-csv-parameters-every-data-scientist-must-know-cd2c4a45f972
-  title: 'Mastering Data Loading in Pandas: 16 Essential read_csv() Parameters Every Data Scientist Must Know | by aryikajain | Me'
-  language: python
-  source: medium.com
-  year: 2025
-  topic: pandas read_csv error_bad_lines tutorial
-- url: https://medium.com/@heyamit10/handling-bad-lines-in-pandas-f98ddc8e9dcb
-  title: Handling Bad Lines in Pandas. The biggest lie in data science? That… | by Hey Amit | Medium
+  title: 'Mastering Data Loading in Pandas: 16 Essential read_csv() Parameters Every Data Scientist Must Know | by aryikajain
+    | Me'
   language: python
   source: medium.com
   year: 2025
@@ -148,12 +114,6 @@ tutorials:
   language: python
   source: analyticsvidhya.com
   year: 2019
-  topic: pandas read_csv error_bad_lines tutorial
-- url: https://medium.com/@paghadalsneh/working-with-csv-files-the-foundation-of-data-ingestion-b3014da36609
-  title: 'Working with CSV Files: The Foundation of Data Ingestion | by Sneh Paghdal | Medium'
-  language: python
-  source: medium.com
-  year: 2025
   topic: pandas read_csv error_bad_lines tutorial
 - url: https://towardsdatascience.com/fix-pandas-parser-error-tokenizing-data-889167292d38
   title: 'How To Fix pandas.parser.CParserError: Error tokenizing data'
@@ -167,23 +127,11 @@ tutorials:
   source: analyticsvidhya.com
   year: 2019
   topic: pandas read_csv error_bad_lines tutorial
-- url: https://medium.com/intern-elite/seaborn-explained-simply-heatmaps-histograms-and-more-01538e7bc1ac
-  title: 'Seaborn Explained Simply: Heatmaps, Histograms, and More'
-  language: python
-  source: medium.com
-  year: 2025
-  topic: seaborn distplot tutorial
 - url: https://www.datacamp.com/tutorial/asyncio-introduction
   title: Asyncio Tutorial For Beginners
   language: python
   source: datacamp.com
   year: ''
-  topic: python asyncio get_event_loop tutorial
-- url: https://medium.com/delivus/understanding-pythons-asyncio-a-deep-dive-into-the-event-loop-89a6c5acbc84
-  title: 'Understanding Python’s asyncio: A Deep Dive into the Event Loop | by Hyunil Kim | 딜리버스 | Medium'
-  language: python
-  source: medium.com
-  year: 2024
   topic: python asyncio get_event_loop tutorial
 - url: https://dev.to/imsushant12/asyncio-architecture-in-python-event-loops-tasks-and-futures-explained-4pn3
   title: 'Asyncio Architecture in Python: Event Loops, Tasks, and Futures Explained'
@@ -263,41 +211,17 @@ tutorials:
   source: dev.to
   year: ''
   topic: express hello world tutorial
-- url: https://medium.com/free-code-camp/hello-world-app-with-node-js-and-express-c1eb7cfa8a30
-  title: “Hello World!” app with Node.js and Express | by Adnan Rahić | Medium
-  language: javascript
-  source: medium.com
-  year: ''
-  topic: express hello world tutorial
 - url: https://www.geeksforgeeks.org/node-js/how-to-redirect-404-errors-to-a-page-in-express-js
   title: How to Redirect 404 errors to a page in Express.js ?
   language: javascript
   source: geeksforgeeks.org
   year: 2025
   topic: express 404 page tutorial
-- url: https://medium.com/@jogarcia/express-js-rest-api-error-handler-7776ecf7f73e
-  title: Express.js REST API Error Handler | by Jose Garcia | Medium
-  language: javascript
-  source: medium.com
-  year: 2025
-  topic: express 404 page tutorial
-- url: https://medium.com/@scraper0024/how-to-make-http-requests-in-node-js-with-node-fetch-api-feafc0c37a28
-  title: How to Make HTTP Requests in Node.js with Node-Fetch API? | by Scraper0024 | Medium
-  language: javascript
-  source: medium.com
-  year: 2025
-  topic: node-fetch tutorial
 - url: https://www.geeksforgeeks.org/javascript/javascript-fetch-method
   title: Fetch API in JavaScript
   language: javascript
   source: geeksforgeeks.org
   year: 2025
-  topic: node-fetch tutorial
-- url: https://medium.com/@madelinecorman/making-http-requests-in-node-js-16fe74af0a79
-  title: Making HTTP Requests in Node.js. An introduction to server-side HTTP… | by Madeline Corman | Medium
-  language: javascript
-  source: medium.com
-  year: 2020
   topic: node-fetch tutorial
 - url: https://dev.to/matthewmayer/leveling-up-your-custom-fake-data-with-fakerjs-3f7m
   title: Leveling up your custom fake data with Faker.js
@@ -383,18 +307,6 @@ tutorials:
   source: dev.to
   year: ''
   topic: jest testing node tutorial
-- url: https://medium.com/@azizmarzouki/unit-testing-in-node-js-with-jest-a-comprehensive-guide-4d625e53ab35
-  title: 'Unit Testing in Node.js with Jest: A Comprehensive Guide | by Aziz Marzouki | Medium'
-  language: javascript
-  source: medium.com
-  year: 2024
-  topic: jest testing node tutorial
-- url: https://medium.com/@ben.dev.io/node-js-unit-testing-with-jest-b7042d7c2ad0
-  title: Node.js Unit Testing with Jest. Introducion | by Ben Mishali | Medium
-  language: javascript
-  source: medium.com
-  year: 2023
-  topic: jest testing node tutorial
 - url: https://www.geeksforgeeks.org/javascript/testing-with-jest
   title: Testing with Jest
   language: javascript
@@ -425,12 +337,6 @@ tutorials:
   source: analyticsvidhya.com
   year: 2020
   topic: flask rest api tutorial beginners
-- url: https://medium.com/@obaff/building-a-website-with-python-fastapi-and-streamlit-418f48c41af2
-  title: Building a Website with Python, FastAPI, and Streamlit | by Obafemi | Medium
-  language: python
-  source: medium.com
-  year: 2024
-  topic: fastapi crud tutorial
 - url: https://www.geeksforgeeks.org/numpy/python-numpy
   title: Python NumPy
   language: python
@@ -449,30 +355,12 @@ tutorials:
   source: programiz.com
   year: ''
   topic: pandas merge join tutorial
-- url: https://medium.com/data-science/exploring-classifiers-with-python-scikit-learn-iris-dataset-2bcb490d2e1b
-  title: Exploring Classifiers with Python Scikit-learn — Iris Dataset | by Dehao Zhang | TDS Archive | Medium
-  language: python
-  source: medium.com
-  year: 2020
-  topic: scikit-learn classification iris tutorial
 - url: https://medium.com/@mishraavyan3/iris-dataset-classification-using-python-scikit-learn-b6ecd724211f
   title: Iris Dataset Classification Using Python (Scikit-Learn) | by Aryan Kumar Mishra | Medium
   language: python
   source: medium.com
   year: 2025
   topic: scikit-learn classification iris tutorial
-- url: https://medium.com/@sabitha.manoj0891/from-basics-to-advanced-a-practical-guide-to-scikit-learn-for-machine-learning-3bf65cf08fc5
-  title: 'From Basics to Advanced: A Practical Guide to Scikit-Learn for Machine Learning | by Sabitha Manoj | Medium'
-  language: python
-  source: medium.com
-  year: ''
-  topic: scikit-learn classification iris tutorial
-- url: https://medium.com/@ebimsv/mastering-matplotlib-part-4-subplots-layouts-and-advanced-customizations-2f07c4a99e80
-  title: 'Matplotlib: Part 4. Subplots, Layouts, and Advanced Customizations | by Ebrahim Mousavi | Medium'
-  language: python
-  source: medium.com
-  year: 2024
-  topic: matplotlib subplots tutorial
 - url: https://dev.to/thalesbruno/subplotting-with-matplotlib-and-seaborn-5ei8
   title: 'Seaborn Multiple Plots: Subplotting with matplotlib and seaborn'
   language: python
@@ -515,12 +403,6 @@ tutorials:
   source: programiz.com
   year: ''
   topic: pandas pivot table tutorial
-- url: https://medium.com/@devontem/creating-a-simple-http-server-in-node-js-19cd2b874491
-  title: Creating a simple HTTP server in Node.js | by Devonte M | Medium
-  language: javascript
-  source: medium.com
-  year: ''
-  topic: node.js http server tutorial
 - url: https://www.geeksforgeeks.org/node-js/how-to-create-a-simple-http-server-in-node
   title: Creating a Simple HTTP Server in Node
   language: javascript
@@ -563,24 +445,6 @@ tutorials:
   source: geeksforgeeks.org
   year: 2025
   topic: lodash tutorial node
-- url: https://medium.com/@barathkumark/lodash-npm-nodejs-1bad6579db68
-  title: Lodash NPM Nodejs. lodash is a popular npm package for… | by Barath Kumar | Medium
-  language: javascript
-  source: medium.com
-  year: 2023
-  topic: lodash tutorial node
-- url: https://medium.com/jspoint/making-cli-app-with-ease-using-commander-js-and-inquirer-js-f3bbd52977ac
-  title: Making CLI app with ease using commander.js and Inquirer.js | by Uday Hiwarale | JsPoint | Medium
-  language: javascript
-  source: medium.com
-  year: ''
-  topic: commander.js cli tutorial
-- url: https://medium.com/@itsbetma/nodejs-cli-with-commander-js-4a3dda486e9e
-  title: NodeJS CLI with Commander.js | Medium
-  language: javascript
-  source: medium.com
-  year: 2023
-  topic: commander.js cli tutorial
 - url: https://dev.to/evanloria4/node-cron-automation-in-nodejs-4949
   title: 'node-cron: Automation in node.js'
   language: javascript
@@ -617,12 +481,6 @@ tutorials:
   source: geeksforgeeks.org
   year: ''
   topic: express middleware tutorial
-- url: https://medium.com/unlearninglabs/how-to-code-your-own-event-emitter-in-node-js-a-step-by-step-guide-e13b7e7908e1
-  title: 'How to code your own event emitter in Node.js: a step-by-step guide'
-  language: javascript
-  source: medium.com
-  year: 2019
-  topic: node.js events emitter tutorial
 - url: https://www.javascripttutorial.net/nodejs-tutorial/nodejs-path-module
   title: Node.js Path Module
   language: javascript
@@ -634,12 +492,6 @@ tutorials:
   language: javascript
   source: dev.to
   year: ''
-  topic: yargs cli tutorial
-- url: https://medium.com/@manavshrivastava/lets-build-a-cli-command-line-interface-with-node-js-d3b5faacc5ea
-  title: Let’s Build a CLI | Command Line Interface with Node.js | by Manav Shrivastava | Medium
-  language: javascript
-  source: medium.com
-  year: 2022
   topic: yargs cli tutorial
 - url: https://dev.to/rushankhan1/build-a-cli-with-node-js-4jbi
   title: Build a CLI with Node.js
@@ -653,3 +505,153 @@ tutorials:
   source: geeksforgeeks.org
   year: 2021
   topic: yargs cli tutorial
+- url: https://www.geeksforgeeks.org/pandas/dealing-with-rows-and-columns-in-pandas-dataframe
+  title: Dealing with Rows and Columns in Pandas DataFrame - GeeksforGeeks
+  language: python
+  source: geeksforgeeks.org
+  year: ''
+  topic: pandas DataFrame append rows tutorial
+- url: https://www.geeksforgeeks.org/machine-learning/ml-boston-housing-kaggle-challenge-with-linear-regression
+  title: Linear Regression using Boston Housing Dataset - GeeksforGeeks
+  language: python
+  source: geeksforgeeks.org
+  year: ''
+  topic: scikit-learn linear regression boston housing tutorial
+- url: https://www.geeksforgeeks.org/artificial-intelligence/openai-python-api
+  title: OpenAI Python API - Complete Guide - GeeksforGeeks
+  language: python
+  source: geeksforgeeks.org
+  year: 2025
+  topic: openai python ChatCompletion tutorial
+- url: https://www.geeksforgeeks.org/pandas/python-pandas-dataframe
+  title: Pandas DataFrame - GeeksforGeeks
+  language: python
+  source: geeksforgeeks.org
+  year: 2025
+  topic: pandas iteritems loop tutorial
+- url: https://www.analyticsvidhya.com/blog/2020/04/the-ultimate-numpy-tutorial-for-data-science-beginners
+  title: The Ultimate NumPy Tutorial for Data Science Beginners
+  language: python
+  source: analyticsvidhya.com
+  year: 2019
+  topic: numpy dtype float tutorial
+- url: https://realpython.com/python-seaborn
+  title: Visualizing Data in Python With Seaborn – Real Python
+  language: python
+  source: realpython.com
+  year: ''
+  topic: seaborn distplot tutorial
+- url: https://www.freecodecamp.org/news/nodejs-and-expressjs-handbook-for-beginners
+  title: The Node.js and Express.js Handbook for Beginners – Servers, Routes, Routers, and Views Explained
+  language: javascript
+  source: freecodecamp.org
+  year: ''
+  topic: express 404 page tutorial
+- url: https://www.geeksforgeeks.org/node-js/difference-between-fetch-and-axios-js-for-making-http-requests
+  title: Difference between Fetch and Axios for Making HTTP Requests - GeeksforGeeks
+  language: javascript
+  source: geeksforgeeks.org
+  year: 2025
+  topic: node-fetch tutorial
+- url: https://realpython.com/crud-operations
+  title: What Are CRUD Operations? – Real Python
+  language: python
+  source: realpython.com
+  year: ''
+  topic: fastapi crud tutorial
+- url: https://dev.to/vaib/hands-on-ai-for-beginners-classifying-iris-flowers-in-python-2j4h
+  title: 'Hands-On AI for Beginners: Classifying Iris Flowers in Python - DEV Community'
+  language: python
+  source: dev.to
+  year: ''
+  topic: scikit-learn classification iris tutorial
+- url: https://dev.to/kammarianand/ml-intro-iris-dataset-4e13
+  title: 'ML Intro : IRIS DATASET - DEV Community'
+  language: python
+  source: dev.to
+  year: ''
+  topic: scikit-learn classification iris tutorial
+- url: https://blog.logrocket.com/building-typescript-cli-node-js-commander
+  title: Building a TypeScript CLI with Node.js and Commander - LogRocket Blog
+  language: javascript
+  source: blog.logrocket.com
+  year: 2021
+  topic: commander.js cli tutorial
+- url: https://www.freecodecamp.org/news/how-to-code-your-own-event-emitter-in-node-js-a-step-by-step-guide-e13b7e7908e1
+  title: 'How to code your own event emitter in Node.js: a step-by-step guide'
+  language: javascript
+  source: freecodecamp.org
+  year: ''
+  topic: node.js events emitter tutorial
+- url: https://dev.to/brense/publishing-a-nodejs-cli-tool-to-npm-5f2m
+  title: Publishing a NodeJS CLI tool to NPM - DEV Community
+  language: javascript
+  source: dev.to
+  year: ''
+  topic: yargs cli tutorial
+- url: https://www.analyticsvidhya.com/blog/2016/10/tutorial-optimizing-neural-networks-using-keras-with-image-recognition-case-study
+  title: Keras | Keras Tutorial | Neural Network Tutorial Using Keras
+  language: python
+  source: analyticsvidhya.com
+  year: 2020
+  topic: keras fit_generator tutorial
+- url: https://towardsdatascience.com/a-single-function-to-streamline-image-classification-with-keras-bd04f5cfe6df
+  title: A single function to streamline image classification with Keras | Towards Data Science
+  language: python
+  source: towardsdatascience.com
+  year: ''
+  topic: keras fit_generator tutorial
+- url: https://www.analyticsvidhya.com/blog/2016/10/tutorial-optimizing-neural-networks-using-keras-with-image-recognition-case-study?ref=footer
+  title: Keras | Keras Tutorial | Neural Network Tutorial Using Keras
+  language: python
+  source: analyticsvidhya.com
+  year: 2020
+  topic: keras fit_generator tutorial
+- url: https://www.geeksforgeeks.org/data-visualization/how-to-add-vertical-lines-to-a-distribution-plot
+  title: How to Add Vertical Lines to a Distribution Plot
+  language: python
+  source: geeksforgeeks.org
+  year: 2025
+  topic: seaborn distplot tutorial
+- url: https://towardsdatascience.com/openai-api-intro-11-practical-implementation-examples-of-the-models-behind-chatgpt-18601f68b51b
+  title: OpenAI API - Intro & 11 Practical Implementation Examples of the Models Behind ChatGPT | Towards Data Science
+  language: python
+  source: towardsdatascience.com
+  year: 2023
+  topic: openai python ChatCompletion tutorial
+- url: https://www.freecodecamp.org/news/the-ultimate-guide-to-javascript-date-and-moment-js
+  title: The Ultimate Guide to JavaScript Date and Moment.js
+  language: javascript
+  source: freecodecamp.org
+  year: 2019
+  topic: moment js date format tutorial
+- url: https://blog.logrocket.com/master-javascript-date-time-moment-js-temporal
+  title: 'Master JavaScript date and time: From Moment.js to Temporal - LogRocket Blog'
+  language: javascript
+  source: blog.logrocket.com
+  year: 2021
+  topic: moment js date format tutorial
+- url: https://www.freecodecamp.org/news/schedule-a-job-in-node-with-nodecron
+  title: How to Schedule a Job in Node Using node-cron
+  language: javascript
+  source: freecodecamp.org
+  year: 2021
+  topic: node-cron tutorial
+- url: https://dev.to/sojida/automating-tasks-with-cron-jobs-in-nodejs-52e0
+  title: Automating Tasks with Cron Jobs in Node.js - DEV Community
+  language: javascript
+  source: dev.to
+  year: ''
+  topic: node-cron tutorial
+- url: https://realpython.com/pandas-merge-join-and-concat
+  title: Combining Data in pandas With merge(), .join(), and concat() – Real Python
+  language: python
+  source: realpython.com
+  year: ''
+  topic: pandas merge join tutorial
+- url: https://www.geeksforgeeks.org/pandas/what-is-the-difference-between-join-and-merge-in-pandas
+  title: What is the difference between join and merge in Pandas? - GeeksforGeeks
+  language: python
+  source: geeksforgeeks.org
+  year: 2025
+  topic: pandas merge join tutorial
