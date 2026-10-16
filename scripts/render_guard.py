@@ -6,6 +6,7 @@ plan or scaled out. A suspended service costs nothing and can be resumed in the 
 
 Usage: RENDER_API_KEY=... python scripts/render_guard.py
 """
+
 from __future__ import annotations
 
 import json
@@ -32,7 +33,9 @@ def decide(now: datetime, cfg: Config, *, bandwidth_gb: float, plan: str, instan
     if now >= datetime.fromisoformat(cfg.end_date).replace(tzinfo=timezone.utc):
         reasons.append(f"It is {cfg.end_date} or later: judging is over.")
     if bandwidth_gb >= cfg.bandwidth_cap_gb:
-        reasons.append(f"This month's bandwidth is {bandwidth_gb:.1f} GB, at or over the {cfg.bandwidth_cap_gb:.1f} GB cap.")
+        reasons.append(
+            f"This month's bandwidth is {bandwidth_gb:.1f} GB, at or over the {cfg.bandwidth_cap_gb:.1f} GB cap."
+        )
     if plan != cfg.plan:
         reasons.append(f'The service is on the "{plan}" plan; only "{cfg.plan}" is allowed.')
     if instances > 1:
@@ -57,12 +60,18 @@ def run_guard(api, cfg: Config, now: datetime | None = None) -> dict:
     if svc is None:
         raise RuntimeError(f"Render service {cfg.service!r} not found")
     month_start = datetime(now.year, now.month, 1, tzinfo=timezone.utc).isoformat().replace("+00:00", "Z")
-    q = urllib.parse.urlencode({"resource": svc["id"], "startTime": month_start,
-                                "endTime": now.isoformat().replace("+00:00", "Z")})
+    q = urllib.parse.urlencode(
+        {"resource": svc["id"], "startTime": month_start, "endTime": now.isoformat().replace("+00:00", "Z")}
+    )
     bandwidth = _gb(api.get(f"/metrics/bandwidth?{q}"))
     details = svc.get("serviceDetails") or {}
-    reasons = decide(now, cfg, bandwidth_gb=bandwidth, plan=details.get("plan", "unknown"),
-                     instances=int(details.get("numInstances") or 1))
+    reasons = decide(
+        now,
+        cfg,
+        bandwidth_gb=bandwidth,
+        plan=details.get("plan", "unknown"),
+        instances=int(details.get("numInstances") or 1),
+    )
     suspended = False
     if reasons and svc.get("suspended") != "suspended":
         api.post(f"/services/{svc['id']}/suspend")
@@ -77,8 +86,11 @@ class RenderApi:
         self.key = key
 
     def _call(self, method: str, path: str):
-        req = urllib.request.Request(f"https://api.render.com/v1{path}", method=method,
-                                     headers={"Authorization": f"Bearer {self.key}", "Accept": "application/json"})
+        req = urllib.request.Request(
+            f"https://api.render.com/v1{path}",
+            method=method,
+            headers={"Authorization": f"Bearer {self.key}", "Accept": "application/json"},
+        )
         with urllib.request.urlopen(req, timeout=30) as r:
             body = r.read()
         return json.loads(body) if body else None

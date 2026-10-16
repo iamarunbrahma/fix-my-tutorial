@@ -12,12 +12,15 @@ def test_a_normal_day_keeps_the_demo_running():
     assert decide(OCT, CFG, bandwidth_gb=1.2, plan="starter", instances=1) == []
 
 
-@pytest.mark.parametrize("now,bw,plan,inst,why", [
-    (datetime(2026, 12, 16, tzinfo=timezone.utc), 0.0, "starter", 1, "2026-12-16"),
-    (OCT, 30.0, "starter", 1, "30.0 GB"),
-    (OCT, 0.0, "standard", 1, "standard"),
-    (OCT, 0.0, "starter", 2, "2 instances"),
-])
+@pytest.mark.parametrize(
+    "now,bw,plan,inst,why",
+    [
+        (datetime(2026, 12, 16, tzinfo=timezone.utc), 0.0, "starter", 1, "2026-12-16"),
+        (OCT, 30.0, "starter", 1, "30.0 GB"),
+        (OCT, 0.0, "standard", 1, "standard"),
+        (OCT, 0.0, "starter", 2, "2 instances"),
+    ],
+)
 def test_anything_that_could_cost_more_suspends_it(now, bw, plan, inst, why):
     reasons = decide(now, CFG, bandwidth_gb=bw, plan=plan, instances=inst)
     assert reasons and why in " ".join(reasons)
@@ -25,8 +28,13 @@ def test_anything_that_could_cost_more_suspends_it(now, bw, plan, inst, why):
 
 class FakeRender:
     def __init__(self, suspended="not_suspended", plan="starter", unit="mb", mb=500.0):
-        self.svc = {"id": "srv-1", "name": "fix-my-tutorial", "type": "web_service", "suspended": suspended,
-                    "serviceDetails": {"plan": plan, "numInstances": 1}}
+        self.svc = {
+            "id": "srv-1",
+            "name": "fix-my-tutorial",
+            "type": "web_service",
+            "suspended": suspended,
+            "serviceDetails": {"plan": plan, "numInstances": 1},
+        }
         self.unit, self.mb, self.posts, self.gets = unit, mb, [], []
 
     def get(self, path):
