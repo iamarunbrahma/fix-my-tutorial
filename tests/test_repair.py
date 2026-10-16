@@ -245,3 +245,15 @@ def test_validate_rejects_a_fix_that_writes_made_up_data():
         op="insert_after", step_id="s1", new_kind="write_file", new_path="package.json",
         new_content='{"type": "module"}', reason="ESM", evidence_ids=["r1e1"])])
     assert validate_candidate(config, PLAN, {"r1e1"}, "version_conflict") is None
+
+
+def test_an_indentation_only_fix_is_a_real_change():
+    # the review, 16 Oct: `  def fit` indented 2 spaces inside a 4-space class got zero candidates in 3 rounds,
+    # because a whitespace-blind comparison called the fix "changes nothing"
+    broken = "class LR:\n    def __init__(self):\n        self.w = 0\n  def fit(self, X):\n        return X\n"
+    fixed = "class LR:\n    def __init__(self):\n        self.w = 0\n    def fit(self, X):\n        return X\n"
+    plan = RunPlan(language="python", runtime="3.12", steps=[S("s1", "run_code", broken)])
+    c = Candidate(strategy="workaround", rationale="r", edits=[edit("s1", fixed)])
+    assert validate_candidate(c, plan, set(), "tutorial_typo") is None
+    same = Candidate(strategy="workaround", rationale="r", edits=[edit("s1", broken + "\n\n")])
+    assert validate_candidate(same, plan, set(), "tutorial_typo") == "edit changes nothing"

@@ -13,6 +13,11 @@ def squash(text: str) -> str:
     return " ".join(text.split())
 
 
+def code_lines(text: str) -> list[tuple[int, str]]:
+    """Code compared line by line: blank lines and spacing inside a line don't matter, indentation does."""
+    return [(len(ln) - len(ln.lstrip()), squash(ln)) for ln in text.splitlines() if ln.strip()]
+
+
 def deterministic_check(step: Step, exit_code: int, stdout: str) -> bool | None:
     if exit_code != step.expect.exit_code:
         return False

@@ -20,7 +20,7 @@ from .models import (
     RunPlan,
     Step,
 )
-from .judge import squash
+from .judge import code_lines, squash
 from .llm import LLMOutputError
 from .planner import default_probe, is_data_file, safe_path
 from .prompts import REPAIR_SYSTEM
@@ -91,7 +91,7 @@ def validate_candidate(c: Candidate, plan: RunPlan, evidence_ids: set[str], cate
         if evidence_ids and category not in UNCITED_OK and not any(i in evidence_ids for i in e.evidence_ids):
             return "edit has no citation"
         old = by_id[e.step_id].content if e.op == "replace" else ""
-        if e.op == "replace" and squash(e.new_content) == squash(old) and e.new_kind in (None, by_id[e.step_id].kind):
+        if e.op == "replace" and _same_code(e.new_content, old) and e.new_kind in (None, by_id[e.step_id].kind):
             return "edit changes nothing"
         if _hidden_failures(e.new_content) > _hidden_failures(old):
             return "edit hides failures"
@@ -105,6 +105,10 @@ def validate_candidate(c: Candidate, plan: RunPlan, evidence_ids: set[str], cate
         if len(old_lines) >= 4 and len([ln for ln in e.new_content.splitlines() if ln.strip()]) < len(old_lines) / 2:
             return "edit removes most of the step"
     return None
+
+
+def _same_code(a: str, b: str) -> bool:
+    return code_lines(a) == code_lines(b)  # indentation counts: in Python it is the code
 
 
 def _hidden_failures(text: str) -> int:
