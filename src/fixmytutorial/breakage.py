@@ -387,6 +387,21 @@ async def _find(target, language, llm, registry, probe_for, max_probes, run_id, 
             idx = _series_start(rel, hi)  # the change is older: step back to the series before
         elif lo is None:
             break  # older releases can't be run here
+    if lo is None and notes is not None:  # couldn't run what came before the cited release: test what came after it
+        for i in range(notes[0] + 1, hi):  # a source may date a deprecation, and the break came with the removal
+            if len(tried) >= max_probes:
+                break
+            if i in tried:
+                continue
+            tried[i] = await probe(rel[i].version)
+            log.info("break finder: after the cited release, %s %s", rel[i].version, tried[i])
+            if tried[i] == "pass":
+                lo = i  # a newer release still runs the step, so the cited one didn't break it
+                found["notes"] = None
+                break
+            if tried[i] == "same":
+                hi = i  # agrees with the source
+                break
     while lo is not None and hi - lo > 1 and len(tried) < max_probes:  # narrow it down
         mid = (lo + hi) // 2
         tried[mid] = await probe(rel[mid].version)

@@ -223,6 +223,23 @@ async def test_an_old_release_that_cannot_install_falls_back_to_the_release_note
     assert (bp.first_bad, bp.last_good, bp.how, bp.evidence_id) == ("2.0.0", None, "release_notes", "r1e1")
 
 
+async def test_a_cited_deprecation_is_corrected_by_newer_releases_that_still_run(settings, tmp_path):
+    # the review, 16 Oct: "sparse was renamed to sparse_output in 1.2" was dated 1.2.0, but 1.3.2 still ran the
+    # tutorial; it broke when the old name was removed in 1.4.0. Releases before the cited one couldn't install.
+    outcomes = {"1.5.3": "no_install", "2.0.0": "no_install", "2.0.1": "pass", "2.0.2": "same", "2.0.3": "same",
+                "2.1.0": "same"}
+    bp, calls = await find(settings, tmp_path, outcomes)
+    assert (bp.first_bad, bp.last_good, bp.how) == ("2.0.2", "2.0.1", "ran")
+    assert len(calls) <= 6
+
+
+async def test_a_cited_version_newer_releases_agree_with_keeps_the_release_notes(settings, tmp_path):
+    outcomes = {"1.5.3": "no_install", "2.0.0": "no_install", "2.0.1": "same"}
+    bp, calls = await find(settings, tmp_path, outcomes)
+    assert (bp.first_bad, bp.how, bp.evidence_id) == ("2.0.0", "release_notes", "r1e1")
+    assert "2.0.1" in calls
+
+
 async def test_no_answer_when_the_earlier_release_fails_the_same_way(settings, tmp_path):
     bp, _ = await find(settings, tmp_path, {"1.5.3": "same", "2.0.0": "same"})
     assert bp is None
