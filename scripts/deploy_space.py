@@ -43,7 +43,10 @@ def main() -> None:
     with tempfile.TemporaryDirectory() as d:
         for item in ["Dockerfile", "pyproject.toml", "uv.lock", "LICENSE", "src", "rot_index", ".dockerignore"]:
             src = ROOT / item
-            (shutil.copytree if src.is_dir() else shutil.copy)(src, Path(d) / item)
+            if src.is_dir():  # no caches or local scratch (rot_index/screened.json) in the public Space
+                shutil.copytree(src, Path(d) / item, ignore=shutil.ignore_patterns("__pycache__", "*.pyc", "screened.json"))
+            else:
+                shutil.copy(src, Path(d) / item)
         (Path(d) / "README.md").write_text(FRONT_MATTER + (ROOT / "README.md").read_text())
         api.upload_folder(folder_path=d, repo_id=SPACE, repo_type="space", commit_message="Deploy Fix My Tutorial")
     print("deployed:", URL)
