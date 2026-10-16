@@ -1,0 +1,64 @@
+{% extends "base.html" %}
+{% block title %}{{ rec.title or "Checking a tutorial" }} · Fix My Tutorial{% endblock %}
+{% block main %}
+<div class="flex flex-col gap-3">
+  <div class="flex items-center gap-2">
+    <span class="status" data-status="running" id="stage-dot">Live</span>
+    <span class="eyebrow" id="stage">Starting</span>
+  </div>
+  <h1 class="page-title" id="title">{{ rec.title or "Reading your tutorial" }}</h1>
+  {% if rec.source.startswith("http") %}
+  <a class="text-muted-foreground hover:text-foreground w-fit max-w-full truncate text-sm underline-offset-4 hover:underline" href="{{ rec.source }}" target="_blank" rel="noopener">{{ rec.source }}</a>
+  {% endif %}
+  <p class="text-muted-foreground text-sm" id="note"></p>
+</div>
+
+<div class="mt-6 flex flex-col gap-2" id="replay" hidden>
+  <div class="text-muted-foreground flex justify-between text-xs"><span>Clean replay from scratch</span><span id="replay-count"></span></div>
+  <div class="progress" id="replaybar"><span style="width: 0%"></span></div>
+</div>
+
+<section class="card mt-6 gap-4 p-6" id="verdict" hidden></section>
+
+<div class="mt-6 grid items-start gap-6 lg:grid-cols-[minmax(0,320px)_minmax(0,1fr)]" id="workspace">
+  <section class="card gap-2 p-3 lg:sticky lg:top-20">
+    <h2 class="px-3 pt-2 pb-1 text-sm font-semibold">Steps</h2>
+    <ol class="flex flex-col gap-0.5" id="steps"></ol>
+  </section>
+
+  <section class="card min-w-0 gap-5 p-6">
+    <div class="flex flex-col gap-1">
+      <h2 class="text-base font-semibold" id="steptitle">Select a step</h2>
+      <p class="text-muted-foreground text-xs" id="stepmeta"></p>
+    </div>
+    <pre class="term" id="code"></pre>
+    <pre class="term" id="output"></pre>
+
+    <div class="flex flex-col gap-4 border-t pt-5" id="diagnosis" hidden>
+      <div class="flex flex-col gap-1">
+        <h3 class="text-sm font-semibold">What broke</h3>
+        <p class="text-muted-foreground text-sm" id="diag-cat"></p>
+      </div>
+      <pre class="term border-red-500/30 bg-red-500/5 text-red-800 dark:text-red-200" id="diag-line"></pre>
+      <div class="flex flex-col gap-1" id="when" hidden>
+        <h3 class="text-sm font-semibold">When it broke</h3>
+        <p class="text-sm leading-relaxed" id="when-text"></p>
+      </div>
+      <div class="flex flex-col gap-3">
+        <h3 class="text-sm font-semibold">Sources</h3>
+        <ul class="flex flex-col gap-4" id="sources"></ul>
+      </div>
+    </div>
+
+    <div class="flex flex-col gap-4 border-t pt-5" id="repair" hidden>
+      <div class="flex flex-wrap items-baseline justify-between gap-2">
+        <h3 class="text-sm font-semibold">Fixes racing in parallel sandboxes</h3>
+        <span class="badge" data-variant="secondary" id="round"></span>
+      </div>
+      <div class="grid gap-3 md:grid-cols-2 xl:grid-cols-3" id="race"></div>
+    </div>
+  </section>
+</div>
+<script type="application/json" id="initial">{{ initial|safe }}</script>
+{% endblock %}
+{% block scripts %}<script src="{{ asset('run.js') }}"></script>{% endblock %}

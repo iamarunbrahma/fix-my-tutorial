@@ -1,0 +1,14 @@
+{
+  "name": "fix-my-tutorial-ui",
+  "private": true,
+  "description": "Builds the site's CSS (Tailwind v4 + Basecoat, the shadcn/ui design system for plain HTML) and copies fonts and component scripts into the app's static folder. Output is committed, so the app itself needs no Node.",
+  "scripts": {
+    "build": "tailwindcss -i ./app.css -o ../src/fixmytutorial/web/static/app.css --minify && node copy-assets.mjs"
+  },
+  "devDependencies": {
+    "@tailwindcss/cli": "4.3.3",
+    "basecoat-css": "1.0.2",
+    "geist": "1.7.2",
+    "tailwindcss": "4.3.3"
+  }
+}

@@ -1,0 +1,108 @@
+{% extends "base.html" %}
+{% block main %}
+<section class="mx-auto flex max-w-3xl flex-col items-center gap-5 text-center">
+  <span class="badge" data-variant="outline">NVIDIA Nemotron on Nebius Token Factory</span>
+  <h1 class="text-4xl font-semibold tracking-tight text-balance sm:text-5xl">Is that tutorial still working?</h1>
+  <p class="lead max-w-2xl">Paste a Python or JavaScript tutorial. We run every step in a fresh sandbox, find what broke since it was written, and fix it with sources you can check.</p>
+</section>
+
+<section class="mx-auto mt-10 max-w-2xl">
+  {% if paused %}
+  <div class="alert mb-4" role="status">
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><path d="M12 8v4"/><path d="M12 16h.01"/></svg>
+    <h2>{{ paused }}</h2>
+  </div>
+  {% endif %}
+  {% if recent %}
+  <div class="alert mb-4" role="status">
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>
+    <h2>We already checked this page on {{ (recent.finished_at or recent.created_at).strftime("%d %b %Y") }}.</h2>
+    <section><a class="underline underline-offset-4" href="/r/{{ recent.id }}">See the report</a></section>
+  </div>
+  {% endif %}
+  {% if error %}
+  <div class="alert mb-4" data-variant="destructive" role="alert">
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><path d="M12 8v4"/><path d="M12 16h.01"/></svg>
+    <h2>{{ error }}</h2>
+  </div>
+  {% endif %}
+
+  <form method="post" action="/runs" class="card gap-0 p-0 shadow-sm">
+    <div class="tabs w-full gap-0" id="source">
+        <nav role="tablist" aria-orientation="horizontal" class="mx-4 mt-4">
+          <button type="button" role="tab" id="source-tab-1" aria-controls="source-panel-1" aria-selected="{{ 'false' if markdown else 'true' }}" tabindex="{{ '-1' if markdown else '0' }}">Tutorial link</button>
+          <button type="button" role="tab" id="source-tab-2" aria-controls="source-panel-2" aria-selected="{{ 'true' if markdown else 'false' }}" tabindex="{{ '0' if markdown else '-1' }}">Paste Markdown</button>
+        </nav>
+      <div role="tabpanel" id="source-panel-1" aria-labelledby="source-tab-1" tabindex="-1" aria-selected="{{ 'false' if markdown else 'true' }}" class="p-4" {% if markdown %}hidden{% endif %}>
+        <label for="url" class="sr-only">Tutorial link</label>
+        <input id="url" class="input h-11" type="url" name="url" value="{{ url }}" placeholder="https://… a blog post, docs page, GitHub README or notebook" {% if paused %}disabled{% endif %}>
+      </div>
+      <div role="tabpanel" id="source-panel-2" aria-labelledby="source-tab-2" tabindex="-1" aria-selected="{{ 'true' if markdown else 'false' }}" class="p-4" {% if not markdown %}hidden{% endif %}>
+        <label for="markdown" class="sr-only">Tutorial Markdown</label>
+        <textarea id="markdown" class="textarea min-h-48 font-mono text-[13px]" name="markdown" rows="10" placeholder="# My tutorial&#10;&#10;```python&#10;print('hello')&#10;```" {% if paused %}disabled{% endif %}>{{ markdown }}</textarea>
+      </div>
+    </div>
+    <footer class="bg-muted/40 flex flex-col gap-3 border-t px-4 py-3 sm:flex-row sm:items-center sm:justify-between">
+      <p class="text-muted-foreground text-xs">Python 3.12 and Node.js 22 · a run takes 1 to 6 minutes · up to {{ per_hour }} runs per hour</p>
+      <button type="submit" class="btn w-full sm:w-auto" {% if paused %}disabled{% endif %}>
+        Run it
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" data-icon="inline-end" aria-hidden="true"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg>
+      </button>
+    </footer>
+  </form>
+  <p class="text-muted-foreground mt-4 text-center text-sm">
+    Check a tutorial from its own page: drag
+    <a class="btn mx-1 align-middle" data-variant="outline" data-size="sm" href="{{ bookmarklet }}" title="Drag me to your bookmarks bar">Check this tutorial</a>
+    to your bookmarks bar.
+  </p>
+</section>
+
+{% if examples %}
+<section class="mx-auto mt-16 max-w-4xl">
+  <h2 class="section-title">Tutorials we already checked</h2>
+  <div class="mt-4 grid gap-3 sm:grid-cols-3">
+    {% for e in examples %}
+    <a href="/r/{{ e.run_id }}" class="card hover:bg-muted/40 gap-3 p-4 transition-colors">
+      <span class="status w-fit" data-status="{{ e.verdict }}">{{ e.verdict_label }}</span>
+      <span class="font-medium leading-snug">{{ e.title }}</span>
+      <span class="text-muted-foreground text-xs">{{ e.source }} · {{ e.year }}</span>
+    </a>
+    {% endfor %}
+  </div>
+</section>
+{% endif %}
+
+<section class="mx-auto mt-20 max-w-5xl">
+  <div class="mx-auto max-w-2xl text-center">
+    <h2 class="section-title text-2xl">How it works</h2>
+    <p class="lead mt-2 text-base">Every fix is run, raced against the alternatives and replayed from scratch before we call it fixed.</p>
+  </div>
+  <ol class="mt-8 grid gap-3 sm:grid-cols-2 lg:grid-cols-5">
+    {% for title, who, what in [
+      ("Plan", "Nemotron 3 Super", "Reads the tutorial and turns it into runnable steps, keeping the code exactly as written."),
+      ("Run", sandbox_label(request)[:1]|upper ~ sandbox_label(request)[1:], "Every step runs in isolation, with a checkpoint saved after each one."),
+      ("Diagnose", "Nemotron 3.5 Lightning + Tavily", "Reads the error, then finds the release note or issue that explains it."),
+      ("Repair", "Nemotron 3 Ultra", "Proposes up to three cited fixes that race in parallel from the last good checkpoint."),
+      ("Prove", "Clean replay", "The fixed tutorial is replayed from scratch before it is called fixed."),
+    ] %}
+    <li class="card gap-3 p-5">
+      <span class="text-muted-foreground font-mono text-xs">0{{ loop.index }}</span>
+      <h3 class="font-semibold">{{ title }}</h3>
+      <p class="text-muted-foreground text-xs font-medium">{{ who }}</p>
+      <p class="text-muted-foreground text-sm leading-relaxed">{{ what }}</p>
+    </li>
+    {% endfor %}
+  </ol>
+</section>
+{% endblock %}
+{% block scripts %}
+<script src="{{ asset('vendor/basecoat.min.js') }}" defer></script>
+<script src="{{ asset('vendor/tabs.min.js') }}" defer></script>
+<script>
+  // Send only the field of the selected tab.
+  document.querySelector('form[action="/runs"]').addEventListener("submit", () => {
+    const markdown = document.getElementById("source-tab-2").getAttribute("aria-selected") === "true";
+    document.getElementById(markdown ? "url" : "markdown").value = "";
+  });
+</script>
+{% endblock %}

@@ -1,0 +1,401 @@
+"""Turn a tutorial URL or pasted Markdown into a TutorialDoc (title, text, code blocks, content hash)."""
+from __future__ import annotations
+
+import asyncio
+import hashlib
+import ipaddress
+import json
+import re
+import socket
+import zlib
+from contextlib import asynccontextmanager
+from dataclasses import dataclass
+from datetime import date
+from email.utils import parsedate_to_datetime
+from html import unescape
+from typing import Callable
+from urllib.parse import urljoin, urlparse
+
+import httpcore
+import httpx
+from markdown_it import MarkdownIt
+from selectolax.lexbor import LexborHTMLParser as HTMLParser
+
+from .ledger import BudgetExceeded
+from .models import CodeBlock, TutorialDoc
+
+USER_AGENT = "FixMyTutorial/0.1 (+https://github.com/iamarunbrahma/fix-my-tutorial)"
+MAX_BYTES = 3_000_000
+GH_BLOB = re.compile(r"^https://github\.com/([^/]+)/([^/]+)/blob/([^/]+)/(.+)$")
+GH_REPO = re.compile(r"^https://github\.com/([^/]+)/([^/#?]+)/?$")
+_md = MarkdownIt()
+
+
+class IngestError(Exception):
+    pass
+
+
+@dataclass
+class Source:
+    url: str | None = None
+    markdown: str | None = None
+
+    def label(self) -> str:
+        return self.url or "pasted-markdown"
+
+
+def github_raw_url(url: str) -> str | None:
+    if m := GH_BLOB.match(url):
+        return f"https://raw.githubusercontent.com/{m[1]}/{m[2]}/{m[3]}/{m[4]}"
+    if m := GH_REPO.match(url):
+        return f"https://raw.githubusercontent.com/{m[1]}/{m[2]}/HEAD/README.md"
+    if url.startswith("https://raw.githubusercontent.com/"):
+        return url
+    return None
+
+
+def markdown_code_blocks(text: str) -> list[CodeBlock]:
+    return [CodeBlock(lang=(t.info or "").strip().split(" ")[0], code=t.content)
+            for t in _md.parse(text) if t.type in ("fence", "code_block")]
+
+
+def first_heading(text: str) -> str | None:
+    m = re.search(r"^#{1,3}\s+(.+)$", text, re.M)
+    return m.group(1).strip() if m else None
+
+
+def notebook_to_markdown(nb_json: str) -> str:
+    nb = json.loads(nb_json)
+    lang = nb.get("metadata", {}).get("language_info", {}).get("name", "python")
+    parts = []
+    for cell in nb.get("cells", []):
+        src = cell.get("source", "")
+        src = "".join(src) if isinstance(src, list) else src
+        if cell.get("cell_type") == "markdown":
+            parts.append(src)
+        elif cell.get("cell_type") == "code" and src.strip():
+            parts.append(f"```{lang}\n{src}\n```")
+    return "\n\n".join(parts)
+
+
+DATE_META = [("property", "article:published_time"), ("itemprop", "datePublished"),
+             ("property", "og:published_time"), ("name", "date"), ("name", "publish-date"), ("name", "pubdate"),
+             ("name", "publication_date"), ("name", "dc.date.issued")]
+LD_DATE = re.compile(r'"datePublished"\s*:\s*"([^"]{8,40})"')
+ISO_DAY = re.compile(r"^(\d{4})-(\d{2})-(\d{2})")
+
+
+def _day(value: str | None) -> str | None:
+    m = ISO_DAY.match((value or "").strip())
+    if not m:
+        return None
+    try:
+        d = date(int(m[1]), int(m[2]), int(m[3]))
+    except ValueError:
+        return None
+    return d.isoformat() if d.year >= 1995 and d <= date.today() else None
+
+
+def published_date(html: str) -> str | None:
+    """The page's own publish date (YYYY-MM-DD) from its metadata, or None."""
+    tree = HTMLParser(html)
+    for attr, value in DATE_META:
+        for node in tree.css(f"[{attr}]"):
+            if (node.attributes.get(attr) or "").lower() == value.lower():
+                d = _day(node.attributes.get("content") or node.attributes.get("datetime"))
+                if d:
+                    return d
+    m = LD_DATE.search(html)
+    if m and _day(m.group(1)):
+        return _day(m.group(1))
+    first = tree.css_first("time[datetime]")
+    return _day(first.attributes.get("datetime")) if first else None
+
+
+MEDIUM_POST = re.compile(r"-([0-9a-f]{8,16})$")
+GLUED = re.compile(r"[a-z0-9_)\];'\"](?:import|from|def|class|const|let|var|require|print)\b")
+FLATTENED = ("This page's code came through without its line breaks (this often happens with Medium posts), so it "
+             "can't be run reliably. Paste the tutorial's Markdown instead.")
+
+
+def medium_feed_for(url: str) -> tuple[str, str] | None:
+    """The RSS feed that carries a Medium post's full HTML (the author's or publication's recent posts), and the
+    post's id. Medium refuses direct page requests from servers, and extractors lose its code line breaks."""
+    u = urlparse(url)
+    host = (u.hostname or "").lower()
+    parts = [p for p in u.path.split("/") if p]
+    if not parts or not (m := MEDIUM_POST.search(parts[-1])):
+        return None
+    if host in ("medium.com", "www.medium.com") and len(parts) >= 2:
+        return f"https://medium.com/feed/{parts[0]}", m.group(1)
+    if host.endswith(".medium.com") and host.count(".") == 2:
+        return f"https://{host}/feed", m.group(1)
+    return None
+
+
+def _cdata(text: str) -> str:
+    return unescape(text.replace("<![CDATA[", "").replace("]]>", "").strip())
+
+
+def medium_item(feed_xml: str, post_id: str) -> tuple[str, str, str | None] | None:
+    """(title, HTML, publish date) of the post in an RSS feed, or None when the feed no longer lists it."""
+    for item in re.findall(r"<item>(.*?)</item>", feed_xml, re.S):
+        link = re.search(r"<link>(.*?)</link>", item, re.S)
+        content = re.search(r"<content:encoded>(.*?)</content:encoded>", item, re.S)
+        if not link or not content or post_id not in link.group(1):
+            continue
+        title = re.search(r"<title>(.*?)</title>", item, re.S)
+        when = re.search(r"<pubDate>(.*?)</pubDate>", item, re.S)
+        try:
+            day = parsedate_to_datetime(when.group(1).strip()).date().isoformat() if when else None
+        except (TypeError, ValueError):
+            day = None
+        html = content.group(1).replace("<![CDATA[", "").replace("]]>", "")
+        return (_cdata(title.group(1)) if title else ""), html, day
+    return None
+
+
+def flattened(blocks: list[CodeBlock], medium: bool = False) -> bool:
+    """A code block that lost its line breaks: one long line with statements glued together ("pltimport seaborn",
+    two imports on one line). Medium code that reached us through an extractor is always flattened, so there any
+    one-line block longer than a short command counts."""
+    for b in blocks:
+        code = b.code.strip()
+        if "![" in code or "****" in code:  # an extractor poured images and bold prose into a "code" block
+            return True
+        if "\n" in code:
+            continue
+        glued = len(GLUED.findall(code))
+        if medium and len(code) >= 60 and (glued or code.count(" ") >= 6):
+            return True
+        if len(code) >= 120 and (glued >= 2 or (glued >= 1 and code.count("import ") >= 2)):
+            return True
+    return False
+
+
+def html_to_markdown(html: str) -> tuple[str, str]:
+    tree = HTMLParser(html)
+    heading = tree.css_first("h1") or tree.css_first("title")
+    title = heading.text(strip=True) if heading else "Untitled tutorial"
+    for sel in ("script", "style", "nav", "footer", "header", "aside", "form", "noscript"):
+        for node in tree.css(sel):
+            node.decompose()
+    root = tree.css_first("article") or tree.css_first("main") or tree.body
+    if root is None:
+        return title, ""
+    parts = []
+    for n in root.css("h1, h2, h3, h4, p, li, pre"):
+        if n.tag == "pre":
+            for br in n.css("br"):  # some sites (Medium among them) break code lines with <br>, not newlines
+                br.replace_with("\n")
+            code = n.css_first("code")
+            cls = ((code.attributes.get("class") if code else None) or n.attributes.get("class") or "")
+            m = re.search(r"(?:language|lang)-([\w+-]+)", cls)
+            parts.append(f"```{m.group(1) if m else ''}\n{n.text()}\n```")
+        elif n.tag[0] == "h":
+            parts.append("#" * int(n.tag[1]) + " " + n.text(strip=True))
+        else:
+            text = n.text(strip=True)
+            if text:
+                parts.append(("- " if n.tag == "li" else "") + text)
+    return title, "\n\n".join(parts)
+
+
+def _default_resolver(host: str) -> list[str]:
+    return [info[4][0] for info in socket.getaddrinfo(host, None)]
+
+
+async def _public_ips(host: str, resolver: Callable[[str], list[str]]) -> list[str]:
+    try:
+        ips = await asyncio.to_thread(resolver, host)
+    except OSError:
+        raise IngestError("Couldn't find that website. Check the link.") from None
+    if not ips:
+        raise IngestError("Couldn't find that website. Check the link.")
+    for ip in ips:
+        addr = ipaddress.ip_address(ip)
+        if not addr.is_global or addr.is_multicast:  # also shared (100.64/10) and other non-public ranges
+            raise IngestError("That link points to a private network address.")
+    return ips
+
+
+async def _check_public(url: str, resolver: Callable[[str], list[str]]) -> None:
+    p = urlparse(url)
+    if p.scheme not in ("http", "https") or not p.hostname:
+        raise IngestError("Only http and https links are supported.")
+    await _public_ips(p.hostname, resolver)
+
+
+class SafeNetworkBackend(httpcore.AsyncNetworkBackend):
+    """Resolves the host itself, refuses private addresses, and connects to the exact address it checked, so a
+    DNS answer cannot change between the check and the connection (DNS rebinding). TLS still verifies the
+    certificate against the original hostname."""
+
+    def __init__(self, resolver: Callable[[str], list[str]] | None = None, inner=None):
+        self._resolver = resolver or _default_resolver
+        self._inner = inner or httpcore.AnyIOBackend()
+
+    async def connect_tcp(self, host, port, timeout=None, local_address=None, socket_options=None):
+        ips = await _public_ips(host, self._resolver)
+        return await self._inner.connect_tcp(ips[0], port, timeout=timeout, local_address=local_address,
+                                             socket_options=socket_options)
+
+    async def connect_unix_socket(self, path, timeout=None, socket_options=None):
+        raise IngestError("Unix sockets are not allowed.")
+
+    async def sleep(self, seconds: float) -> None:
+        await self._inner.sleep(seconds)
+
+
+def _safe_client(resolver: Callable[[str], list[str]]) -> httpx.AsyncClient:
+    transport = httpx.AsyncHTTPTransport(retries=0)
+    transport._pool = httpcore.AsyncConnectionPool(ssl_context=httpx.create_ssl_context(), max_connections=10,
+                                                   network_backend=SafeNetworkBackend(resolver))
+    return httpx.AsyncClient(transport=transport, trust_env=False)  # no env proxies: they would skip the pinning
+
+
+def _decode_body(raw: bytes, content_encoding: str, charset: str | None) -> str:
+    """Decode a response body, decompressing with a hard output limit so a small gzip bomb cannot expand."""
+    enc = (content_encoding or "identity").lower().strip()
+    if enc in ("gzip", "x-gzip", "deflate"):
+        try:
+            d = zlib.decompressobj(wbits=47)  # gzip or zlib header
+            data = d.decompress(raw, MAX_BYTES + 1)
+        except zlib.error:
+            raise IngestError("Couldn't read that page (bad compression).") from None
+        if len(data) > MAX_BYTES or d.unconsumed_tail:
+            raise IngestError("That page is too large to read.")
+    elif enc in ("identity", ""):
+        data = raw
+    else:
+        raise IngestError("Couldn't read that page (unsupported compression).")
+    return data.decode(charset or "utf-8", errors="replace")
+
+
+async def _safe_get(url: str, client: httpx.AsyncClient, resolver) -> str:
+    for _ in range(4):
+        await _check_public(url, resolver)
+        try:
+            async with client.stream("GET", url, follow_redirects=False, timeout=20,
+                                     headers={"User-Agent": USER_AGENT, "Accept-Encoding": "identity"}) as r:
+                if r.is_redirect and "location" in r.headers:
+                    url = urljoin(url, r.headers["location"])
+                    continue
+                if r.status_code >= 400:
+                    raise IngestError(f"Couldn't read that page (HTTP {r.status_code}).")
+                declared = r.headers.get("content-length", "")
+                if declared.isdigit() and int(declared) > MAX_BYTES:
+                    raise IngestError("That page is too large to read.")
+                raw = bytearray()
+                async for chunk in r.aiter_raw():  # wire bytes; decompression happens below, bounded
+                    if len(raw) + len(chunk) > MAX_BYTES:
+                        raise IngestError("That page is too large to read.")
+                    raw.extend(chunk)
+                return _decode_body(bytes(raw), r.headers.get("content-encoding", ""), r.encoding)
+        except httpx.HTTPError:
+            raise IngestError("Couldn't read that page (the site did not respond).") from None
+    raise IngestError("Couldn't read that page (too many redirects).")
+
+
+@asynccontextmanager
+async def _client(http: httpx.AsyncClient | None, resolver: Callable[[str], list[str]]):
+    if http is not None:
+        yield http
+    else:
+        async with _safe_client(resolver) as c:
+            yield c
+
+
+def _notebook(body: str) -> str:
+    try:
+        return notebook_to_markdown(body)
+    except (ValueError, AttributeError, TypeError):  # not JSON (e.g. a Git LFS pointer) or not a notebook
+        raise IngestError("Couldn't read that notebook.") from None
+
+
+async def ingest(source: Source, search, *, run_id: str, public: bool, http: httpx.AsyncClient | None = None,
+                 resolver: Callable[[str], list[str]] | None = None, max_chars: int = 60_000,
+                 deadline_s: float = 45) -> TutorialDoc:
+    """Read a tutorial, with one overall deadline so a slow or stalling site gives a clear answer quickly."""
+    try:
+        async with asyncio.timeout(deadline_s):
+            return await _ingest(source, search, run_id=run_id, public=public, http=http, resolver=resolver,
+                                 max_chars=max_chars)
+    except TimeoutError:
+        raise IngestError("That page took too long to load.") from None
+
+
+async def _ingest(source: Source, search, *, run_id: str, public: bool, http: httpx.AsyncClient | None,
+                  resolver: Callable[[str], list[str]] | None, max_chars: int) -> TutorialDoc:
+    resolver = resolver or _default_resolver
+    published: str | None = None
+    if source.markdown and source.markdown.strip():
+        text = source.markdown
+        title = first_heading(text) or "Pasted tutorial"
+        label = "pasted-markdown"
+    elif source.url and source.url.strip():
+        url = source.url.strip()
+        label = url
+        await _check_public(url, resolver)
+        raw = github_raw_url(url)
+        text, title = "", ""
+        async with _client(http, resolver) as client:
+            if raw:
+                body = await _safe_get(raw, client, resolver)
+                text = _notebook(body) if raw.endswith(".ipynb") else body
+                title = first_heading(text) or raw.rsplit("/", 1)[-1]
+            else:
+                page_html, page_error = None, None
+                if (feed := medium_feed_for(url)) is not None:  # Medium refuses servers; its feed has the post
+                    try:
+                        hit = medium_item(await _safe_get(feed[0], client, resolver), feed[1])
+                    except IngestError:
+                        hit = None
+                    if hit:
+                        title, html, published = hit
+                        text = html_to_markdown(f"<article>{html}</article>")[1]
+                if not text and feed is None:  # the page itself first: its markup keeps code exactly as written
+                    try:
+                        page_html = await _safe_get(url, client, resolver)
+                    except IngestError as e:
+                        page_error = e
+                    if page_html is not None and not url.endswith(".ipynb"):
+                        own_title, own = html_to_markdown(page_html)
+                        blocks = markdown_code_blocks(own)
+                        if blocks and not flattened(blocks):
+                            title, text, published = own_title, own, published_date(page_html)
+                if not text and search is not None:  # blocked or script-built pages: let the extractor try
+                    try:
+                        res = await search.extract([url], run_id=run_id, public=public, depth="advanced")
+                    except BudgetExceeded:
+                        raise
+                    except Exception:
+                        res = []
+                    if res and res[0]["raw_content"].strip():
+                        text = res[0]["raw_content"]
+                        title = first_heading(text) or url
+                        published = published_date(page_html) if page_html else None
+                        if flattened(markdown_code_blocks(text), medium=feed is not None):
+                            raise IngestError(FLATTENED)
+                if not text:
+                    if page_html is None:
+                        if page_error is not None:
+                            raise page_error
+                        page_html = await _safe_get(url, client, resolver)
+                    if url.endswith(".ipynb"):
+                        text = _notebook(page_html)
+                        title = first_heading(text) or url
+                    else:
+                        title, text = html_to_markdown(page_html)
+                        published = published_date(page_html)
+                if flattened(markdown_code_blocks(text)):
+                    raise IngestError(FLATTENED)
+    else:
+        raise IngestError("Paste a tutorial link or its Markdown.")
+    if not text.strip():
+        raise IngestError("Couldn't find any text on that page.")
+    truncated = len(text) > max_chars
+    text = text[:max_chars]
+    return TutorialDoc(source=label, title=title[:200], text=text, code_blocks=markdown_code_blocks(text),
+                       content_hash=hashlib.sha256(text.encode()).hexdigest()[:16], truncated=truncated,
+                       published=published)

@@ -1,0 +1,691 @@
+tutorials:
+- url: https://jakevdp.github.io/blog/2013/12/01/kernel-density-estimation/
+  title: Kernel Density Estimation in Python
+  language: python
+  source: jakevdp.github.io
+  year: 2013
+  topic: KDE with scipy, statsmodels and scikit-learn
+- url: https://jakevdp.github.io/blog/2013/08/28/understanding-the-fft/
+  title: Understanding the FFT Algorithm
+  language: python
+  source: jakevdp.github.io
+  year: 2013
+  topic: FFT from scratch in NumPy
+- url: https://jakevdp.github.io/blog/2013/08/07/conways-game-of-life/
+  title: Conway's Game of Life in Python
+  language: python
+  source: jakevdp.github.io
+  year: 2013
+  topic: NumPy Game of Life with matplotlib animation
+- url: https://jakevdp.github.io/blog/2013/07/10/XKCD-plots-in-matplotlib/
+  title: XKCD Plots have Landed in Matplotlib!
+  language: python
+  source: jakevdp.github.io
+  year: 2013
+  topic: matplotlib plt.xkcd() styling
+- url: https://jakevdp.github.io/blog/2014/03/11/frequentism-and-bayesianism-a-practical-intro/
+  title: 'Frequentism and Bayesianism: A Practical Introduction'
+  language: python
+  source: jakevdp.github.io
+  year: 2014
+  topic: frequentist vs Bayesian estimation with emcee
+- url: https://jakevdp.github.io/blog/2014/10/16/how-bad-is-your-colormap/
+  title: How Bad Is Your Colormap?
+  language: python
+  source: jakevdp.github.io
+  year: 2014
+  topic: matplotlib colormaps and grayscale conversion
+- url: https://jakevdp.github.io/blog/2015/07/06/model-complexity-myth/
+  title: The Model Complexity Myth
+  language: python
+  source: jakevdp.github.io
+  year: 2015
+  topic: overparameterized fits, regularization, emcee
+- url: https://jakevdp.github.io/blog/2017/03/22/group-by-from-scratch/
+  title: Group-by From Scratch
+  language: python
+  source: jakevdp.github.io
+  year: 2017
+  topic: group-by implementations in pandas, NumPy, scipy.sparse
+- url: https://jakevdp.github.io/blog/2013/05/12/embedding-matplotlib-animations/
+  title: Embedding Matplotlib Animations in IPython Notebooks
+  language: python
+  source: jakevdp.github.io
+  year: 2013
+  topic: matplotlib animations embedded as HTML5 video
+- url: https://jakevdp.github.io/blog/2013/05/28/a-simple-animation-the-magic-triangle/
+  title: 'A Simple Animation: The Magic Triangle'
+  language: python
+  source: jakevdp.github.io
+  year: 2013
+  topic: matplotlib animation of a geometry puzzle
+- url: https://blog.datadive.net/selecting-good-features-part-ii-linear-models-and-regularization/
+  title: 'Selecting good features - Part II: linear models and regularization'
+  language: python
+  source: blog.datadive.net
+  year: 2014
+  topic: Lasso/Ridge feature selection
+- url: https://blog.datadive.net/selecting-good-features-part-iii-random-forests/
+  title: 'Selecting good features - Part III: random forests'
+  language: python
+  source: blog.datadive.net
+  year: 2014
+  topic: random forest feature importance
+- url: https://blog.datadive.net/selecting-good-features-part-iv-stability-selection-rfe-and-everything-side-by-side/
+  title: 'Selecting good features - Part IV: stability selection, RFE and everything side by side'
+  language: python
+  source: blog.datadive.net
+  year: 2014
+  topic: RandomizedLasso stability selection and RFE
+- url: https://blog.datadive.net/random-forest-interpretation-with-scikit-learn/
+  title: Random forest interpretation with scikit-learn
+  language: python
+  source: blog.datadive.net
+  year: 2015
+  topic: treeinterpreter feature contributions
+- url: http://www.gregreda.com/2013/03/03/web-scraping-101-with-python/
+  title: Web Scraping 101 with Python
+  language: python
+  source: gregreda.com
+  year: 2013
+  topic: BeautifulSoup scraping of Chicago Reader 'Best of'
+- url: https://www.kdnuggets.com/2017/03/k-means-clustering-algorithms-intro-python.html
+  title: 'K-Means & Other Clustering Algorithms: A Quick Intro with Python'
+  language: python
+  source: kdnuggets.com
+  year: 2017
+  topic: clustering Zachary's karate club graph
+- url: https://www.kdnuggets.com/2017/03/simple-xgboost-tutorial-iris-dataset.html
+  title: A Simple XGBoost Tutorial Using the Iris Dataset
+  language: python
+  source: kdnuggets.com
+  year: 2017
+  topic: XGBoost classifier on iris
+- url: https://blog.pythonlibrary.org/2016/07/28/python-201-a-tutorial-on-threads/
+  title: 'Python 201: A Tutorial on Threads'
+  language: python
+  source: blog.pythonlibrary.org
+  year: 2016
+  topic: threading, locks, queues
+- url: https://blog.pythonlibrary.org/2016/08/02/python-201-a-multiprocessing-tutorial/
+  title: 'Python 201: A multiprocessing tutorial'
+  language: python
+  source: blog.pythonlibrary.org
+  year: 2016
+  topic: multiprocessing Process, Pool, Queue
+- url: https://blog.pythonlibrary.org/2014/01/30/how-to-time-small-pieces-of-python-code-with-timeit/
+  title: How to Time Small Pieces of Python Code with timeit
+  language: python
+  source: blog.pythonlibrary.org
+  year: 2014
+  topic: timeit module and CLI
+- url: https://blog.pythonlibrary.org/2014/06/18/python-create-fake-data-with-faker/
+  title: 'Python: Create Fake Data with Faker'
+  language: python
+  source: blog.pythonlibrary.org
+  year: 2014
+  topic: generating fake data with Faker
+- url: https://blog.pythonlibrary.org/2014/08/05/arrow-a-new-date-time-package-for-python/
+  title: arrow - A new date / time package for Python
+  language: python
+  source: blog.pythonlibrary.org
+  year: 2014
+  topic: arrow date/time library
+- url: https://blog.pythonlibrary.org/2014/09/03/python-taking-time-with-delorean/
+  title: Python - Taking Time with Delorean
+  language: python
+  source: blog.pythonlibrary.org
+  year: 2014
+  topic: Delorean timezone-aware datetimes
+- url: https://blog.pythonlibrary.org/2014/08/13/jsonpickle-turning-python-pickles-into-json/
+  title: 'jsonpickle: Turning Python pickles into JSON'
+  language: python
+  source: blog.pythonlibrary.org
+  year: 2014
+  topic: serializing objects with jsonpickle
+- url: https://blog.pythonlibrary.org/2016/08/03/python-3-concurrency-the-concurrent-futures-module/
+  title: Python 3 Concurrency - The concurrent.futures Module
+  language: python
+  source: blog.pythonlibrary.org
+  year: 2016
+  topic: ThreadPoolExecutor downloads
+- url: https://blog.pythonlibrary.org/2016/08/04/a-simple-intro-to-web-scraping-with-python/
+  title: A Simple Intro to Web Scraping with Python
+  language: python
+  source: blog.pythonlibrary.org
+  year: 2016
+  topic: requests + BeautifulSoup, then Scrapy
+- url: https://blog.pythonlibrary.org/2016/11/09/an-intro-to-aiohttp/
+  title: An intro to aiohttp
+  language: python
+  source: blog.pythonlibrary.org
+  year: 2016
+  topic: async downloads with aiohttp and aiofiles
+- url: https://stackabuse.com/python-async-await-tutorial/
+  title: Python async/await Tutorial
+  language: python
+  source: stackabuse.com
+  year: 2015
+  topic: asyncio coroutines and aiohttp
+- url: https://blog.dask.org/2016/07/12/dask-learn-part-1
+  title: Dask and Scikit-Learn -- Model Parallelism
+  language: python
+  source: blog.dask.org
+  year: 2016
+  topic: parallel grid search with dask
+- url: https://cambridgecoding.wordpress.com/2016/03/24/misleading-modelling-overfitting-cross-validation-and-the-bias-variance-trade-off/
+  title: 'Misleading modelling: overfitting, cross-validation, and the bias-variance trade-off'
+  language: python
+  source: cambridgecoding.wordpress.com
+  year: 2016
+  topic: kNN overfitting and cross-validation
+- url: https://cambridgecoding.wordpress.com/2016/04/03/scanning-hyperspace-how-to-tune-machine-learning-models/
+  title: 'Scanning hyperspace: how to tune machine learning models'
+  language: python
+  source: cambridgecoding.wordpress.com
+  year: 2016
+  topic: random forest hyperparameter tuning
+- url: https://bluewatersql.wordpress.com/2016/04/04/data-science-day-3-classification-models/
+  title: 'Data Science Day #3 - Classification Models'
+  language: python
+  source: bluewatersql.wordpress.com
+  year: 2016
+  topic: iris classifiers in scikit-learn
+- url: https://datascienceomar.wordpress.com/2016/07/10/logistic-regression-scikit-learn/
+  title: Logistic Regression + Scikit-learn
+  language: python
+  source: datascienceomar.wordpress.com
+  year: 2016
+  topic: breast cancer logistic regression
+- url: https://blog.datadive.net/selecting-good-features-part-i-univariate-selection/
+  title: 'Selecting good features - Part I: univariate selection'
+  language: python
+  source: blog.datadive.net
+  year: 2014
+  topic: univariate feature selection
+- url: https://blog.fastforwardlabs.com/2016/02/24/hello-world-in-keras-or-scikit-learn-versus-keras.html
+  title: '"Hello world" in Keras (or, Scikit-learn versus Keras)'
+  language: python
+  source: blog.fastforwardlabs.com
+  year: 2016
+  topic: Keras vs scikit-learn on iris
+- url: http://qingkaikong.blogspot.com/2016/12/machine-learning-8-support-vector.html
+  title: Machine learning 8 - Support Vector Machine - Part 2
+  language: python
+  source: qingkaikong.blogspot.com
+  year: 2016
+  topic: SVM kernels on iris and toy data
+- url: https://pbpython.com/pandas-list-dict.html
+  title: Creating Pandas DataFrames from Lists and Dictionaries
+  language: python
+  source: pbpython.com
+  year: 2016
+  topic: building DataFrames, Excel output
+- url: https://pbpython.com/pandas-grouper-agg.html
+  title: Pandas Grouper and Agg Functions Explained
+  language: python
+  source: pbpython.com
+  year: 2017
+  topic: resample, Grouper, agg
+- url: https://pbpython.com/amortization-model.html
+  title: Building a Financial Model with Pandas
+  language: python
+  source: pbpython.com
+  year: 2016
+  topic: loan amortization table
+- url: https://pbpython.com/effective-matplotlib.html
+  title: Effectively Using Matplotlib
+  language: python
+  source: pbpython.com
+  year: 2017
+  topic: matplotlib OO interface with pandas
+- url: https://pbpython.com/weighted-average.html
+  title: Learn More About Pandas By Building and Using a Weighted Average Function
+  language: python
+  source: pbpython.com
+  year: 2016
+  topic: groupby apply and weighted averages
+- url: https://pbpython.com/waterfall-chart.html
+  title: Creating a Waterfall Chart in Python
+  language: python
+  source: pbpython.com
+  year: 2014
+  topic: waterfall chart with pandas/matplotlib
+- url: https://pbpython.com/web-scraping-mn-budget.html
+  title: Web Scraping - It's Your Civic Duty
+  language: python
+  source: pbpython.com
+  year: 2015
+  topic: scraping MN capital budget into pandas
+- url: https://pbpython.com/seaborn09.html
+  title: New Plot Types in Seaborn's Latest Release
+  language: python
+  source: pbpython.com
+  year: 2018
+  topic: seaborn 0.9 relplot/lineplot/catplot
+- url: https://pbpython.com/market-basket-analysis.html
+  title: Introduction to Market Basket Analysis in Python
+  language: python
+  source: pbpython.com
+  year: 2017
+  topic: apriori with mlxtend
+- url: https://sebastianraschka.com/Articles/2014_pca_step_by_step.html
+  title: Implementing a Principal Component Analysis (PCA) in Python step by step
+  language: python
+  source: sebastianraschka.com
+  year: 2014
+  topic: PCA from scratch in NumPy
+- url: https://sebastianraschka.com/Articles/2014_ensemble_classifier.html
+  title: Implementing a Weighted Majority Rule Ensemble Classifier
+  language: python
+  source: sebastianraschka.com
+  year: 2015
+  topic: custom ensemble classifier
+- url: https://sebastianraschka.com/Articles/2014_about_feature_scaling.html
+  title: About Feature Scaling and Normalization
+  language: python
+  source: sebastianraschka.com
+  year: 2014
+  topic: standardization vs min-max scaling
+- url: https://sebastianraschka.com/Articles/2015_pca_in_3_steps.html
+  title: Principal Component Analysis in 3 Simple Steps
+  language: python
+  source: sebastianraschka.com
+  year: 2015
+  topic: PCA on iris
+- url: https://sebastianraschka.com/Articles/2015_singlelayer_neurons.html
+  title: Single-Layer Neural Networks and Gradient Descent
+  language: python
+  source: sebastianraschka.com
+  year: 2015
+  topic: perceptron and Adaline from scratch
+- url: https://iamtrask.github.io/2015/07/12/basic-python-network/
+  title: A Neural Network in 11 lines of Python (Part 1)
+  language: python
+  source: iamtrask.github.io
+  year: 2015
+  topic: tiny NumPy neural network
+- url: https://iamtrask.github.io/2015/07/27/python-network-part2/
+  title: A Neural Network in 13 lines of Python (Part 2 - Gradient Descent)
+  language: python
+  source: iamtrask.github.io
+  year: 2015
+  topic: gradient descent with NumPy
+- url: https://dennybritz.com/posts/wildml/implementing-a-neural-network-from-scratch/
+  title: Implementing a Neural Network from Scratch in Python
+  language: python
+  source: dennybritz.com
+  year: 2015
+  topic: NumPy neural net on make_moons
+- url: https://www.freecodecamp.org/news/how-to-scrape-websites-with-python-and-beautifulsoup-5946935d93fe/
+  title: How to scrape websites with Python and BeautifulSoup
+  language: python
+  source: freecodecamp.org
+  year: 2017
+  topic: scraping Bloomberg index quotes
+- url: https://www.freecodecamp.org/news/how-to-visualize-the-programming-language-influence-graph-7f1b765b44d1/
+  title: Visualize the programming language influence graph
+  language: python
+  source: freecodecamp.org
+  year: 2017
+  topic: Wikipedia scraping into a Gephi edge list
+- url: https://www.freecodecamp.org/news/learning-to-test-with-python-997ace2d8abe/
+  title: A simple introduction to Test Driven Development with Python
+  language: python
+  source: freecodecamp.org
+  year: 2018
+  topic: unittest TDD walkthrough
+- url: https://www.analyticsvidhya.com/blog/2015/10/beginner-guide-web-scraping-beautiful-soup-python/
+  title: Beginner's guide to Web Scraping in Python using BeautifulSoup
+  language: python
+  source: analyticsvidhya.com
+  year: 2015
+  topic: scraping a Wikipedia table
+- url: https://www.analyticsvidhya.com/blog/2017/08/introduction-to-multi-label-classification/
+  title: Solving Multi-Label Classification problems
+  language: python
+  source: analyticsvidhya.com
+  year: 2017
+  topic: scikit-multilearn problem transformations
+- url: https://galeascience.wordpress.com/2016/09/23/2016-world-cup-of-hockey-nhl-team-captains/
+  title: 2016 World Cup of Hockey NHL Team Captains
+  language: python
+  source: galeascience.wordpress.com
+  year: 2016
+  topic: Wikipedia scraping + Bokeh bar chart
+- url: https://stackabuse.com/implementing-pca-in-python-with-scikit-learn/
+  title: Principal Component Analysis (PCA) in Python with Scikit-Learn
+  language: python
+  source: stackabuse.com
+  year: 2018
+  topic: PCA + random forest on iris
+- url: https://stackabuse.com/implementing-lda-in-python-with-scikit-learn/
+  title: Linear Discriminant Analysis (LDA) in Python with Scikit-Learn
+  language: python
+  source: stackabuse.com
+  year: 2018
+  topic: LDA on iris
+- url: https://stackabuse.com/introduction-to-neural-networks-with-scikit-learn/
+  title: Introduction to Neural Networks with Scikit-Learn
+  language: python
+  source: stackabuse.com
+  year: 2018
+  topic: MLPClassifier on iris
+- url: https://github.com/amueller/scipy_2015_sklearn_tutorial/blob/master/notebooks/03.1%20Case%20Study%20-%20Supervised%20Classification%20of%20Handwritten%20Digits.ipynb
+  title: 'SciPy 2015 sklearn tutorial: Classification of Handwritten Digits'
+  language: python
+  source: github.com
+  year: 2015
+  topic: digits with PCA, Isomap, GaussianNB
+- url: https://github.com/amueller/scipy_2015_sklearn_tutorial/blob/master/notebooks/04.1%20Cross%20Validation.ipynb
+  title: 'SciPy 2015 sklearn tutorial: Cross Validation'
+  language: python
+  source: github.com
+  year: 2015
+  topic: KFold/StratifiedKFold/ShuffleSplit
+- url: https://github.com/amueller/scipy_2015_sklearn_tutorial/blob/master/notebooks/04.3%20Analyzing%20Model%20Capacity.ipynb
+  title: 'SciPy 2015 sklearn tutorial: Learning Curves and Validation Curves'
+  language: python
+  source: github.com
+  year: 2015
+  topic: learning curves for SVR
+- url: https://github.com/amueller/scipy_2015_sklearn_tutorial/blob/master/notebooks/02.4%20Unsupervised%20Learning%20-%20Clustering.ipynb
+  title: 'SciPy 2015 sklearn tutorial: Clustering'
+  language: python
+  source: github.com
+  year: 2015
+  topic: KMeans on blobs and digits
+- url: https://github.com/aymericdamien/TensorFlow-Examples/blob/master/notebooks/1_Introduction/helloworld.ipynb
+  title: 'TensorFlow-Examples: Simple hello world using TensorFlow'
+  language: python
+  source: github.com
+  year: 2016
+  topic: TensorFlow 1.x session hello world
+- url: https://github.com/aymericdamien/TensorFlow-Examples/blob/master/notebooks/1_Introduction/basic_operations.ipynb
+  title: 'TensorFlow-Examples: Basic Operations'
+  language: python
+  source: github.com
+  year: 2016
+  topic: TensorFlow 1.x constants, placeholders, matmul
+- url: https://github.com/nlintz/TensorFlow-Tutorials/blob/master/00_multiply.ipynb
+  title: 'TensorFlow-Tutorials: 00_multiply'
+  language: python
+  source: github.com
+  year: 2016
+  topic: TensorFlow 1.x placeholder multiply
+- url: https://www.smashingmagazine.com/2015/04/web-scraping-with-nodejs/
+  title: Web Scraping With Node.js
+  language: javascript
+  source: smashingmagazine.com
+  year: 2015
+  topic: request + cheerio word-frequency scraper
+- url: https://andycarter.dev/blog/a-beginners-guide-to-the-task-runner-gulp
+  title: A Beginners Guide to the Task Runner Gulp
+  language: javascript
+  source: andycarter.dev
+  year: 2014
+  topic: gulp 3 concat/uglify/sass/imagemin
+- url: http://codewinds.com/blog/2013-08-20-nodejs-transform-streams.html
+  title: Transforming data with Node.js transform streams
+  language: javascript
+  source: codewinds.com
+  year: 2013
+  topic: zlib/crypto/transform streams
+- url: https://davidwalsh.name/es2015-babel
+  title: Getting Started with ES6 (ES2015) and Babel
+  language: javascript
+  source: davidwalsh.name
+  year: 2016
+  topic: Babel 6 CLI with es2015 preset
+- url: https://davidwalsh.name/nock
+  title: Intercept HTTP Requests with Node.js nock
+  language: javascript
+  source: davidwalsh.name
+  year: 2015
+  topic: mocking HTTP with nock
+- url: https://davidwalsh.name/promises-callbacks-promisifynode
+  title: Use Promises Instead of Callbacks with promisify-node
+  language: javascript
+  source: davidwalsh.name
+  year: 2015
+  topic: promisify-node wrappers
+- url: https://davidwalsh.name/2fa
+  title: Two-Factor Authentication with Node.js
+  language: javascript
+  source: davidwalsh.name
+  year: 2017
+  topic: TOTP with speakeasy and qrcode
+- url: https://davidwalsh.name/javascript-deep-merge
+  title: JavaScript Deep Merge
+  language: javascript
+  source: davidwalsh.name
+  year: 2017
+  topic: deepmerge library
+- url: https://davidwalsh.name/broken-link-checker
+  title: Broken Link Checker
+  language: javascript
+  source: davidwalsh.name
+  year: 2016
+  topic: broken-link-checker CLI and API
+- url: https://www.freecodecamp.org/news/node-js-streams-everything-you-need-to-know-c9141306be93/
+  title: 'Node.js Streams: Everything you need to know'
+  language: javascript
+  source: freecodecamp.org
+  year: 2017
+  topic: readable/writable/transform streams
+- url: https://www.freecodecamp.org/news/node-js-child-processes-everything-you-need-to-know-e69498fe970a/
+  title: 'Node.js Child Processes: Everything you need to know'
+  language: javascript
+  source: freecodecamp.org
+  year: 2017
+  topic: spawn, exec, fork
+- url: https://www.freecodecamp.org/news/understanding-node-js-event-driven-architecture-223292fcbc2d/
+  title: Understanding Node.js Event-Driven Architecture
+  language: javascript
+  source: freecodecamp.org
+  year: 2017
+  topic: EventEmitter, callbacks, promises
+- url: https://www.freecodecamp.org/news/super-simple-gulp-tutorial-for-beginners-45141974bfe8/
+  title: Super simple Gulp tutorial for beginners
+  language: javascript
+  source: freecodecamp.org
+  year: 2018
+  topic: gulp 3 sass/concat/watch
+- url: https://www.freecodecamp.org/news/recursive-generator-f8bc30e5e412/
+  title: Recursive generators and how to not chew up all your memory using them
+  language: javascript
+  source: freecodecamp.org
+  year: 2017
+  topic: combinations with recursive generators
+- url: https://dev.to/hugodias/building-your-first-interactive-node-js-cli-1g2c
+  title: Building your first interactive Node JS CLI
+  language: javascript
+  source: dev.to
+  year: 2018
+  topic: chalk, figlet, inquirer, shelljs CLI
+- url: https://dev.to/flaviocopes/pass-arguments-from-the-command-line-to-a-node-script-1kmn
+  title: Pass arguments from the command line to a Node script
+  language: javascript
+  source: dev.to
+  year: 2018
+  topic: process.argv and minimist
+- url: https://stackabuse.com/command-line-arguments-in-node-js/
+  title: Command Line Arguments in Node.js
+  language: javascript
+  source: stackabuse.com
+  year: 2017
+  topic: process.argv, minimist, yargs
+- url: https://ponyfoo.com/articles/a-gentle-browserify-walkthrough
+  title: A Gentle Browserify Walkthrough
+  language: javascript
+  source: ponyfoo.com
+  year: 2014
+  topic: browserify, watchify, transforms
+- url: https://ponyfoo.com/articles/es6-proxies-in-depth
+  title: ES6 Proxies in Depth
+  language: javascript
+  source: ponyfoo.com
+  year: 2015
+  topic: Proxy traps
+- url: https://ponyfoo.com/articles/es6-arrow-functions-in-depth
+  title: ES6 Arrow Functions in Depth
+  language: javascript
+  source: ponyfoo.com
+  year: 2015
+  topic: arrow functions
+- url: https://ponyfoo.com/articles/es6-classes-in-depth
+  title: ES6 Classes in Depth
+  language: javascript
+  source: ponyfoo.com
+  year: 2015
+  topic: ES6 classes
+- url: https://ponyfoo.com/articles/es6-iterators-in-depth
+  title: ES6 Iterators in Depth
+  language: javascript
+  source: ponyfoo.com
+  year: 2015
+  topic: iterator protocol
+- url: https://ponyfoo.com/articles/es6-weakmaps-sets-and-weaksets-in-depth
+  title: ES6 WeakMaps, Sets, and WeakSets in Depth
+  language: javascript
+  source: ponyfoo.com
+  year: 2015
+  topic: Set/WeakMap/WeakSet
+- url: https://ponyfoo.com/articles/es6-generators-in-depth
+  title: ES6 Generators in Depth
+  language: javascript
+  source: ponyfoo.com
+  year: 2015
+  topic: generators
+- url: https://ponyfoo.com/articles/understanding-javascript-async-await
+  title: Understanding JavaScript's async await
+  language: javascript
+  source: ponyfoo.com
+  year: 2016
+  topic: async/await vs promises and generators
+- url: https://thecodebarbarian.com/write-your-own-node-js-promise-library-from-scratch.html
+  title: Write Your Own Node.js Promise Library from Scratch
+  language: javascript
+  source: thecodebarbarian.com
+  year: 2018
+  topic: implementing a Promise class
+- url: https://thecodebarbarian.com/write-your-own-co-using-es2015-generators.html
+  title: Write Your Own Co Using ES2015 Generators
+  language: javascript
+  source: thecodebarbarian.com
+  year: 2016
+  topic: co and superagent with generators
+- url: https://thecodebarbarian.com/using-promise-finally-in-node-js.html
+  title: Using Promise.prototype.finally in Node.js
+  language: javascript
+  source: thecodebarbarian.com
+  year: 2018
+  topic: Promise.finally and shim
+- url: https://thecodebarbarian.com/single-link-clustering-with-node-js.html
+  title: Single Link Clustering with Node.js
+  language: javascript
+  source: thecodebarbarian.com
+  year: 2018
+  topic: clustering with Turf.js modules
+- url: https://thecodebarbarian.com/wrangling-geojson-with-turf.html
+  title: Wrangling GeoJSON with Turf.js
+  language: javascript
+  source: thecodebarbarian.com
+  year: 2017
+  topic: GeoJSON point-in-polygon and distances
+- url: https://thecodebarbarian.com/creating-qr-codes-with-node-js.html
+  title: Creating and Reading QR Codes with Node.js
+  language: javascript
+  source: thecodebarbarian.com
+  year: 2018
+  topic: qrcode + jimp + qrcode-reader
+- url: https://thecodebarbarian.com/the-difference-between-async-await-and-generators.html
+  title: The Difference Between Async/Await and Generators
+  language: javascript
+  source: thecodebarbarian.com
+  year: 2018
+  topic: co vs async/await, RxJS
+- url: https://thecodebarbarian.com/an-overview-of-destructuring-assignments-in-node-js.html
+  title: An Overview of Destructuring Assignments in Node.js
+  language: javascript
+  source: thecodebarbarian.com
+  year: 2018
+  topic: array/object destructuring and ASI pitfalls
+- url: https://blog.scottlogic.com/2016/06/10/six-tips-for-cleaner-promises.html
+  title: Six Tips for Cleaner Promises
+  language: javascript
+  source: blog.scottlogic.com
+  year: 2016
+  topic: Q promises over the GitHub API
+- url: https://ponyfoo.com/articles/es6-reflection-in-depth
+  title: ES6 Reflection in Depth
+  language: javascript
+  source: ponyfoo.com
+  year: 2015
+  topic: Reflect API
+- url: https://thecodebarbarian.com/thoughts-on-es6-proxies-performance.html
+  title: Thoughts on ES6 Proxies Performance
+  language: javascript
+  source: thecodebarbarian.com
+  year: 2016
+  topic: benchmark.js Proxy vs defineProperty
+- url: https://www.jackfranklin.co.uk/blog/node-command-line-tool/
+  title: Writing Command Line Tools with Node
+  language: javascript
+  source: jackfranklin.co.uk
+  year: 2015
+  topic: bin script with child_process.exec
+- url: https://www.jackfranklin.co.uk/blog/promises/
+  title: Embracing Promises in JavaScript
+  language: javascript
+  source: jackfranklin.co.uk
+  year: 2015
+  topic: promise chaining patterns
+- url: https://www.jackfranklin.co.uk/blog/es6-destructuring/
+  title: ES6 Destructuring
+  language: javascript
+  source: jackfranklin.co.uk
+  year: 2014
+  topic: destructuring (pre-standard)
+- url: https://www.jackfranklin.co.uk/blog/introduction-to-es6-classes-tutorial/
+  title: An introduction to ES6 classes
+  language: javascript
+  source: jackfranklin.co.uk
+  year: 2014
+  topic: ES6 classes via Traceur
+- url: https://www.jackfranklin.co.uk/blog/es6-arrays/
+  title: Array methods in ECMAScript 6
+  language: javascript
+  source: jackfranklin.co.uk
+  year: 2015
+  topic: Array.from/of/find/fill
+- url: https://blog.scottlogic.com/2016/06/29/es6-iterators.html
+  title: ES6 Iterators and Generators in Practice
+  language: javascript
+  source: blog.scottlogic.com
+  year: 2016
+  topic: iterables with d3fc-random-data
+- url: https://www.oodlestechnologies.com/blogs/encrypt-and-decrypt-data-using-aes-encryption-algorithm-in-nodejs/
+  title: Encrypt and decrypt data Using AES encryption algorithm in Nodejs
+  language: javascript
+  source: oodlestechnologies.com
+  year: 2017
+  topic: AES with crypto.createCipher
+- url: https://www.smashingmagazine.com/2017/02/a-detailed-introduction-to-webpack/
+  title: Webpack - A Detailed Introduction
+  language: javascript
+  source: smashingmagazine.com
+  year: 2017
+  topic: webpack 2 config, loaders, plugins
+- url: https://www.smashingmagazine.com/2016/06/harness-machines-productive-task-runners/
+  title: 'How To Harness The Machines: Being Productive With Task Runners'
+  language: javascript
+  source: smashingmagazine.com
+  year: 2016
+  topic: Grunt vs Gulp vs npm scripts
+- url: https://www.smashingmagazine.com/2014/06/building-with-gulp/
+  title: How To Build And Develop Websites With Gulp
+  language: javascript
+  source: smashingmagazine.com
+  year: 2014
+  topic: gulp 3 tasks, watch, browser-sync

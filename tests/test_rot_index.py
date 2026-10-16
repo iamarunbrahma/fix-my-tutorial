@@ -1,0 +1,129 @@
+from fixmytutorial.models import (
+    Candidate, Edit, FailureSignature, RepairRecord, RunPlan, RunRecord, RunStatus, Step, Verdict, utcnow,
+)
+from fixmytutorial.rot_index import export_entries
+from fixmytutorial.store import Store
+
+
+def run(id_, url, verdict, public=False, category="removed_api"):
+    plan = RunPlan(language="python", runtime="3.12", steps=[Step(id="s1", title="t", kind="run_code", content="a")])
+    final = RunPlan(language="python", runtime="3.12",
+                    steps=[plan.steps[0].model_copy(update={"content": "b"})]) if verdict == Verdict.FIXED else plan
+    repairs = [RepairRecord(step_id="s1", signature=FailureSignature(category=category),
+                            winner=Candidate(strategy="migrate", rationale="", edits=[
+                                Edit(step_id="s1", new_content="b", reason="r")]))] if verdict == Verdict.FIXED else []
+    return RunRecord(id=id_, source=url, public=public, status=RunStatus.DONE, verdict=verdict, plan=plan,
+                     final_plan=final, repairs=repairs, created_at=utcnow())
+
+
+def test_export_entries(tmp_path):
+    st = Store(tmp_path / "s.db")
+    st.save_run(run("a", "https://a", Verdict.FIXED))
+    st.save_run(run("b", "https://b", Verdict.STILL_WORKS))
+    st.save_run(run("c", "https://c", Verdict.ERROR))
+    st.save_run(run("d", "https://d", Verdict.FIXED))
+    st.save_run(run("pub", "https://e", Verdict.FIXED, public=True))
+    entries = [
+        {"url": "https://a", "title": "A", "language": "python", "source": "a.dev", "year": 2021, "featured": True},
+        {"url": "https://b", "title": "B", "language": "python", "source": "b.dev", "year": 2022},
+        {"url": "https://c", "title": "C", "language": "python", "source": "c.dev", "year": 2022},
+        {"url": "https://d", "title": "D", "language": "python", "source": "d.dev", "year": 2020, "review": "downgrade"},
+        {"url": "https://e", "title": "E", "language": "python", "source": "e.dev", "year": 2020},
+    ]
+    out = {e["url"]: e for e in export_entries(entries, st)}
+    assert set(out) == {"https://a", "https://b", "https://d"}  # errors and public-only runs are excluded
+    assert out["https://a"]["verdict"] == "fixed" and out["https://a"]["categories"] == ["removed_api"]
+    assert out["https://a"]["changes"] == 1 and out["https://a"]["featured"] is True and out["https://a"]["run_id"] == "a"
+    assert out["https://d"]["verdict"] == "could_not_fix"  # downgraded after hand review
+
+
+def test_batch_refuses_third_party_code_on_docker_with_private_egress(settings):
+    import pytest
+
+    from fixmytutorial.rot_index import check_batch_backend
+    with pytest.raises(SystemExit):
+        check_batch_backend(settings.model_copy(update={"sandbox_backend": "docker",
+                                                        "docker_allow_private_egress": True}))
+    check_batch_backend(settings.model_copy(update={"sandbox_backend": "contree"}))
+    check_batch_backend(settings.model_copy(update={"sandbox_backend": "docker"}))  # probe still guards it
+
+
+async def test_batch_checks_the_sandbox_before_spending_anything(settings, monkeypatch):
+    import pytest
+
+    import fixmytutorial.rot_index as ri
+    from fixmytutorial.sandbox.docker_backend import SandboxPolicyError
+
+    class Refusing:
+        name = "docker"
+
+        async def base_image(self, language):
+            raise SandboxPolicyError("the sandbox network can reach private addresses")
+
+    started = []
+
+    class Recorder:
+        def __init__(self, **kw):
+            pass
+
+        async def run(self, rec, source):
+            started.append(rec)
+            return rec
+
+    monkeypatch.setattr(ri, "get_settings", lambda: settings.model_copy(update={"sandbox_backend": "docker"}))
+    monkeypatch.setattr(ri, "make_backend", lambda s: Refusing())
+    monkeypatch.setattr(ri, "Pipeline", Recorder)
+    monkeypatch.setattr(ri, "SearchClient", lambda *a, **k: None)
+    with pytest.raises(SandboxPolicyError):
+        await ri.run_batch(force=True, concurrency=1)
+    assert started == []
+
+
+def test_export_carries_the_breaking_release_and_publish_date(tmp_path):
+    from datetime import date
+
+    from fixmytutorial.models import BreakPoint
+    st = Store(tmp_path / "s.db")
+    bp = BreakPoint(package="pandas", step_id="s1", first_bad="2.0.0", first_bad_date=date(2023, 4, 3),
+                    last_good="1.5.3", last_good_date=date(2023, 1, 19), how="ran")
+    st.save_run(run("a", "https://a", Verdict.FIXED).model_copy(update={"broke_in": bp, "published": "2022-03-14"}))
+    st.save_run(run("b", "https://b", Verdict.STILL_WORKS))
+    entries = [{"url": "https://a", "title": "A", "language": "python", "source": "a.dev", "year": ""},
+               {"url": "https://b", "title": "B", "language": "python", "source": "b.dev", "year": 2022}]
+    out = {e["url"]: e for e in export_entries(entries, st)}
+    assert out["https://a"]["broke_in"] == {"package": "pandas", "version": "2.0.0", "date": "2023-04-03", "how": "ran"}
+    assert out["https://a"]["published"] == "2022-03-14" and out["https://a"]["year"] == 2022
+    assert out["https://b"]["broke_in"] is None and out["https://b"]["year"] == 2022
+
+
+def test_break_stats():
+    from fixmytutorial.report import break_stats
+
+    def e(pkg, ver, day, published=None):
+        return {"broke_in": {"package": pkg, "version": ver, "date": day, "how": "ran"}, "published": published}
+
+    entries = [e("pandas", "2.0.0", "2023-04-03", "2022-03-14"), e("pandas", "2.0.0", "2023-04-03", "2021-04-01"),
+               e("pandas", "2.0.0", "2023-04-03", "2024-01-01"), e("numpy", "1.24.0", "2022-12-18", "2022-06-01"),
+               {"broke_in": None, "published": "2020-01-01"}]
+    s = break_stats(entries)
+    assert s["releases"][0] == {"package": "pandas", "version": "2.0.0", "month": "Apr 2023", "count": 3}
+    assert s["releases"][1]["package"] == "numpy" and s["already_out_of_date"] == 1
+    assert s["median_months"] == 13  # 13, 24 and 6 months
+    assert break_stats(entries[:2])["median_months"] is None  # too few to say
+
+
+def test_batch_slices_rotate_through_topics_and_skip_finished_tutorials():
+    from fixmytutorial.rot_index import pick_entries
+    entries = [{"url": f"https://{t}{i}", "topic": t} for t in ("pandas", "jest", "numpy") for i in range(3)]
+    picked = pick_entries(entries, done={"https://pandas0"}, force=False, limit=4)
+    assert [e["url"] for e in picked] == ["https://pandas1", "https://jest0", "https://numpy0", "https://pandas2"]
+    assert len(pick_entries(entries, done=set(), force=False, limit=None)) == 9
+    assert pick_entries(entries, done={"https://pandas0"}, force=True, limit=1)[0]["url"] == "https://pandas0"
+
+
+def test_named_tutorials_rerun_even_when_finished():
+    from fixmytutorial.rot_index import pick_entries
+    entries = [{"url": f"https://t{i}", "topic": "x"} for i in range(4)]
+    picked = pick_entries(entries, done={"https://t1", "https://t2"}, force=False, limit=None,
+                          only={"https://t2", "https://t3"})
+    assert [e["url"] for e in picked] == ["https://t2", "https://t3"]

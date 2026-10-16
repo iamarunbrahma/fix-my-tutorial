@@ -1,0 +1,1156 @@
+candidates:
+- url: https://medium.com/@heyamit10/pandas-add-row-to-end-of-dataframe-8c390e32e207
+  title: pandas add row to end of dataframe | by Hey Amit | Medium
+  query: pandas DataFrame append rows tutorial
+- url: https://www.geeksforgeeks.org/pandas/how-to-create-an-empty-dataframe-and-append-rows-columns-to-it-in-pandas
+  title: Pandas Append Rows & Columns to Empty DataFrame - GeeksforGeeks
+  query: pandas DataFrame append rows tutorial
+- url: https://www.geeksforgeeks.org/pandas/python-pandas-dataframe-append
+  title: Python - Pandas dataframe.append()
+  query: pandas DataFrame append rows tutorial
+- url: https://medium.com/accessibleai/appending-rows-to-a-pandas-dataframe-83cc8dd48ff6
+  title: Appending Rows to a Pandas DataFrame - Accessible AI
+  query: pandas DataFrame append rows tutorial
+- url: https://www.geeksforgeeks.org/pandas/how-to-add-one-row-in-an-existing-pandas-dataframe
+  title: How to add one row in existing Pandas DataFrame? - GeeksforGeeks
+  query: pandas DataFrame append rows tutorial
+- url: https://www.geeksforgeeks.org/pandas/dealing-with-rows-and-columns-in-pandas-dataframe
+  title: Dealing with Rows and Columns in Pandas DataFrame - GeeksforGeeks
+  query: pandas DataFrame append rows tutorial
+- url: https://www.w3schools.com/python/pandas/pandas_dataframes.asp
+  title: Pandas DataFrames
+  query: pandas DataFrame append rows tutorial
+- url: https://medium.com/data-science/efficiently-iterating-over-rows-in-a-pandas-dataframe-7dd5f9992c01
+  title: Medium
+  query: pandas DataFrame append rows tutorial
+- url: https://medium.com/@thevie/predicting-boston-housing-prices-step-by-step-linear-regression-tutorial-from-scratch-in-python-c50a09b70b22
+  title: 'Predicting Boston Housing Prices : Step-by-step Linear ...'
+  query: scikit-learn linear regression boston housing tutorial
+- url: https://www.geeksforgeeks.org/machine-learning/ml-boston-housing-kaggle-challenge-with-linear-regression
+  title: Linear Regression using Boston Housing Dataset - GeeksforGeeks
+  query: scikit-learn linear regression boston housing tutorial
+- url: https://medium.com/@Prathmesh_Kush/implementing-linear-regression-from-scratch-on-california-housing-dataset-b32462e9ee67
+  title: Implementing Linear Regression from scratch on California ...
+  query: scikit-learn linear regression boston housing tutorial
+- url: https://www.geeksforgeeks.org/machine-learning/boston-dataset-in-sklearn
+  title: Boston Dataset in Sklearn - GeeksforGeeks
+  query: scikit-learn linear regression boston housing tutorial
+- url: https://amitg0161.medium.com/sklearn-linear-regression-tutorial-with-boston-house-dataset-cde74afd460a
+  title: Sklearn Linear Regression Tutorial with Boston House Dataset
+  query: scikit-learn linear regression boston housing tutorial
+- url: https://medium.com/data-science/linear-regression-on-boston-housing-dataset-f409b7e4a155
+  title: Linear Regression on Boston Housing Dataset
+  query: scikit-learn linear regression boston housing tutorial
+- url: https://medium.com/data-science/predict-housing-price-using-linear-regression-in-python-bfc0fcfff640
+  title: Predict Housing Price using Linear Regression in Python
+  query: scikit-learn linear regression boston housing tutorial
+- url: https://www.geeksforgeeks.org/machine-learning/how-to-load-boston-housing-data-in-python
+  title: How to load Boston Housing data in python? - GeeksforGeeks
+  query: scikit-learn linear regression boston housing tutorial
+- url: https://medium.com/dev-bits/a-clear-guide-to-openai-function-calling-with-python-dcbc200c5d70
+  title: A clear guide to OpenAI function calling with Python
+  query: openai python ChatCompletion tutorial
+- url: https://medium.com/@pradeepchirumamilla01/integrating-azure-openai-chat-completions-with-python-and-managing-conversation-history-ca0a8ae131bb
+  title: Integrating Azure OpenAI Chat Completions with Python and Managing Conversation
+    History | by Pradeep chirumamilla | Medium
+  query: openai python ChatCompletion tutorial
+- url: https://medium.com/@laoluoyefolu/the-openai-api-chat-completions-22349b3df941
+  title: 'The OpenAI API: Chat Completions. In this blog post, we’ll explore the…
+    | by Ola Oyefolu | Medium'
+  query: openai python ChatCompletion tutorial
+- url: https://www.geeksforgeeks.org/artificial-intelligence/openai-python-api
+  title: OpenAI Python API - Complete Guide - GeeksforGeeks
+  query: openai python ChatCompletion tutorial
+- url: https://medium.com/ai-dev-tips/ai-chat-coding-essentials-with-openai-ai-agent-coding-series-1-6ac06b8080b4
+  title: 'AI Chat Coding Essentials with OpenAI (AI Agent Coding Series #1)'
+  query: openai python ChatCompletion tutorial
+- url: https://medium.com/@Mustafa77/working-with-openai-api-part2-building-conversations-with-the-openai-api-a9974b3a96c8
+  title: 'Working with OpenAI API — Part2: Building Conversations with the OpenAI
+    API'
+  query: openai python ChatCompletion tutorial
+- url: https://medium.com/@laurentkubaski/openai-tool-calling-using-the-python-sdk-full-example-with-best-practices-29af7c651f08
+  title: 'Tool Calling Using the OpenAI Python SDK: Full Example With Best Practices'
+  query: openai python ChatCompletion tutorial
+- url: https://towardsdatascience.com/openai-api-intro-11-practical-implementation-examples-of-the-models-behind-chatgpt-18601f68b51b
+  title: OpenAI API - Intro & 11 Practical Implementation Examples of the Models Behind
+    ChatGPT | Towards Data Science
+  query: openai python ChatCompletion tutorial
+- url: https://medium.com/streamlit/langchain-tutorial-1-build-an-llm-powered-app-in-18-lines-of-code-384a87016d0a
+  title: 'LangChain tutorial #1: Build an LLM-powered app in 18 lines of code'
+  query: langchain getting started OpenAI tutorial
+- url: https://medium.com/@aashishdhawan_2946/getting-started-with-langchain-a-beginners-guide-to-building-llm-powered-apps-00a97257d2b5
+  title: 'Getting Started with LangChain: A Beginner’s Guide to Building LLM-Powered
+    Apps | by Aashish Dhawan | Medium'
+  query: langchain getting started OpenAI tutorial
+- url: https://medium.com/@sujith.adr/simplifying-ai-development-a-beginners-guide-to-langchain-and-llms-dbd09317c1f8
+  title: 'Simplifying AI Development: A Beginner’s Guide to LangChain and LLMs'
+  query: langchain getting started OpenAI tutorial
+- url: https://medium.com/the-modern-scientist/building-generative-ai-applications-using-langchain-and-openai-apis-ee3212400630
+  title: Building generative AI applications using LangChain and OpenAI APIs
+  query: langchain getting started OpenAI tutorial
+- url: https://medium.com/@vinod.work/langchain-and-openrouter-in-python-90cfc16050b5
+  title: LangChain and OpenRouter in Python | by Vinod | Medium
+  query: langchain getting started OpenAI tutorial
+- url: https://medium.com/@sureshraghu0706/no-nonsense-guide-to-langchain-a3521d725abf
+  title: No-Nonsense Guide to LangChain
+  query: langchain getting started OpenAI tutorial
+- url: https://www.freecodecamp.org/news/beginners-guide-to-langchain
+  title: How to Use LangChain to Build With LLMs – A Beginner's Guide
+  query: langchain getting started OpenAI tutorial
+- url: https://www.datacamp.com/code-along/multimodal-ai-applications-langchain-openai-api
+  title: Building Multimodal AI Applications with LangChain & the OpenAI API | DataCamp
+  query: langchain getting started OpenAI tutorial
+- url: https://www.geeksforgeeks.org/python/flask-tutorial
+  title: Flask Tutorial - GeeksforGeeks
+  query: flask before_first_request tutorial
+- url: https://www.geeksforgeeks.org/python/python-introduction-to-web-development-using-flask
+  title: Introduction to Web development using Flask - GeeksforGeeks
+  query: flask before_first_request tutorial
+- url: https://medium.com/@aditib259/visualizing-data-like-a-pro-matplotlib-seaborn-plotly-7a5001ab5514
+  title: 'Visualizing Data Like a Pro: Matplotlib, Seaborn & Plotly'
+  query: matplotlib style seaborn plot tutorial
+- url: https://medium.com/@abhaysingh71711/plotting-with-matplotlib-in-python-bb27e046803a
+  title: Plotting with Matplotlib in Python
+  query: matplotlib style seaborn plot tutorial
+- url: https://medium.com/@amit25173/matplotlib-vs-seaborn-f76ac5593305
+  title: Matplotlib vs Seaborn | Medium
+  query: matplotlib style seaborn plot tutorial
+- url: https://medium.com/python-in-plain-english/comparing-matplotlib-and-seaborn-when-to-use-each-3bae630a510d
+  title: 'Comparing Matplotlib and Seaborn: When to Use Each'
+  query: matplotlib style seaborn plot tutorial
+- url: https://medium.com/@egafebridh/basic-visualization-guide-with-matplotlib-and-seaborn-178ea3787f59
+  title: Basic Visualization Guide with Matplotlib and Seaborn
+  query: matplotlib style seaborn plot tutorial
+- url: https://campus.datacamp.com/courses/intermediate-data-visualization-with-seaborn/customizing-seaborn-plots?ex=1
+  title: Using Seaborn Styles | Python
+  query: matplotlib style seaborn plot tutorial
+- url: https://towardsdatascience.com/5-ways-to-transform-your-seaborn-data-visualisations-1ed2cb484e38
+  title: 5 Ways to Transform Your Seaborn Data Visualisations
+  query: matplotlib style seaborn plot tutorial
+- url: https://codeabhi.medium.com/a-complete-guide-to-data-visualization-in-python-with-seaborn-part-11-58fefd99fed3
+  title: 'Exploring Seaborn: Part 1: Creating Visualizations with Scatter ...'
+  query: matplotlib style seaborn plot tutorial
+- url: https://www.w3schools.com/python/pandas/ref_df_iteritems.asp
+  title: Pandas DataFrame iteritems() Method
+  query: pandas iteritems loop tutorial
+- url: https://www.geeksforgeeks.org/pandas/python-pandas-series-iteritems
+  title: Python | Pandas Series.iteritems() - GeeksforGeeks
+  query: pandas iteritems loop tutorial
+- url: https://medium.com/@amit25173/understanding-iteritems-in-pandas-with-code-examples-18bdcfe0b045
+  title: Understanding iteritems() in Pandas (With Code Examples) | by Amit Yadav
+    | Medium
+  query: pandas iteritems loop tutorial
+- url: https://www.geeksforgeeks.org/pandas/python-pandas-dataframe
+  title: Pandas DataFrame - GeeksforGeeks
+  query: pandas iteritems loop tutorial
+- url: https://www.geeksforgeeks.org/pandas/iterating-over-rows-and-columns-in-pandas-dataframe
+  title: Iterating over rows and columns in Pandas DataFrame - GeeksforGeeks
+  query: pandas iteritems loop tutorial
+- url: https://www.w3schools.com/python/pandas/ref_df_iterrows.asp
+  title: Pandas DataFrame iterrows() Method
+  query: pandas iteritems loop tutorial
+- url: https://www.w3schools.com/python/pandas/pandas_ref_dataframe.asp
+  title: Pandas - DataFrame Reference
+  query: pandas iteritems loop tutorial
+- url: https://www.geeksforgeeks.org/pandas/pandas-dataframe-iterrows
+  title: Pandas DataFrame iterrows() Method - GeeksforGeeks
+  query: pandas iteritems loop tutorial
+- url: https://medium.com/@its.shoryabisht/step-by-step-guide-to-labelencoder-onehotencoder-for-data-beginners-82ae3de8e986
+  title: Step-by-Step Guide to LabelEncoder & OneHotEncoder for ...
+  query: OneHotEncoder sparse tutorial
+- url: https://www.machinelearningmastery.com/one-hot-encoding-for-categorical-data
+  title: Ordinal and One-Hot Encodings for Categorical Data - MachineLearningMastery.com
+  query: OneHotEncoder sparse tutorial
+- url: https://www.machinelearningmastery.com/how-to-one-hot-encode-sequence-data-in-python
+  title: How to One Hot Encode Sequence Data in Python - MachineLearningMastery.com
+  query: OneHotEncoder sparse tutorial
+- url: https://www.datacamp.com/tutorial/one-hot-encoding-python-tutorial
+  title: What Is One Hot Encoding and How to Implement It in Python | DataCamp
+  query: OneHotEncoder sparse tutorial
+- url: https://www.geeksforgeeks.org/machine-learning/ml-one-hot-encoding
+  title: One Hot Encoding in Machine Learning - GeeksforGeeks
+  query: OneHotEncoder sparse tutorial
+- url: https://towardsdatascience.com/3-key-encoding-techniques-for-machine-learning-a-beginner-friendly-guide-aff8a01a7b6a
+  title: '3 Key Encoding Techniques for Machine Learning: A Beginner-Friendly Guide
+    | Towards Data Science'
+  query: OneHotEncoder sparse tutorial
+- url: https://datasensei.medium.com/how-to-transform-nominal-data-for-ml-with-onehotencoder-from-scikit-learn-f6febfefb3c6
+  title: How to Transform Nominal Data for ML with OneHotEncoder ...
+  query: OneHotEncoder sparse tutorial
+- url: https://www.digitalocean.com/community/tutorials/understanding-one-hot-encoding-in-machine-learning
+  title: Understanding One-Hot Encoding in Machine Learning | DigitalOcean
+  query: OneHotEncoder sparse tutorial
+- url: https://www.analyticsvidhya.com/blog/2020/04/the-ultimate-numpy-tutorial-for-data-science-beginners
+  title: The Ultimate NumPy Tutorial for Data Science Beginners
+  query: numpy dtype float tutorial
+- url: https://www.geeksforgeeks.org/python/using-numpy-to-convert-array-elements-to-float-type
+  title: Using NumPy to Convert Array Elements to Float Type - GeeksforGeeks
+  query: numpy dtype float tutorial
+- url: https://www.geeksforgeeks.org/python/numpy-data-type-objects
+  title: NumPy - Data type Objects(dtype) - GeeksforGeeks
+  query: numpy dtype float tutorial
+- url: https://medium.com/@pritioli/essential-numpy-data-types-a-must-know-guide-ad3657f708b7
+  title: 'Essential NumPy Data Types: A Must-Know Guide | by Code & Cognition | Medium'
+  query: numpy dtype float tutorial
+- url: https://www.geeksforgeeks.org/numpy/numpy-data-types
+  title: Numpy data Types - GeeksforGeeks
+  query: numpy dtype float tutorial
+- url: https://medium.com/@amit25173/understanding-numpy-float64-a300ac9e096a
+  title: Understanding numpy.float64
+  query: numpy dtype float tutorial
+- url: https://medium.com/@heyamit10/numpy-data-types-8e565cdb31d1
+  title: NumPy Data Types. If you think you need to spend $2,000… | by Hey Amit |
+    Medium
+  query: numpy dtype float tutorial
+- url: https://www.geeksforgeeks.org/python/data-type-object-dtype-numpy-python
+  title: Data type Object (dtype) in NumPy Python - GeeksforGeeks
+  query: numpy dtype float tutorial
+- url: https://medium.com/@aricajain05/mastering-data-loading-in-pandas-16-essential-read-csv-parameters-every-data-scientist-must-know-cd2c4a45f972
+  title: 'Mastering Data Loading in Pandas: 16 Essential read_csv() Parameters Every
+    Data Scientist Must Know | by aryikajain | Medium'
+  query: pandas read_csv error_bad_lines tutorial
+- url: https://medium.com/@lomashbhuva/mastering-data-ingestion-in-machine-learning-a-comprehensive-guide-to-csv-files-db2f00079f05
+  title: 'Mastering Data Ingestion in Machine Learning: A Comprehensive Guide to CSV
+    Files🌟🚀'
+  query: pandas read_csv error_bad_lines tutorial
+- url: https://medium.com/@heyamit10/handling-bad-lines-in-pandas-f98ddc8e9dcb
+  title: Handling Bad Lines in Pandas. The biggest lie in data science? That… | by
+    Hey Amit | Medium
+  query: pandas read_csv error_bad_lines tutorial
+- url: https://www.analyticsvidhya.com/blog/2021/06/complete-guide-to-working-with-csv-files-in-python-with-pandas
+  title: Python CSV Quick & Simple Guide | Read, Write & Manipulate
+  query: pandas read_csv error_bad_lines tutorial
+- url: https://medium.com/@paghadalsneh/working-with-csv-files-the-foundation-of-data-ingestion-b3014da36609
+  title: 'Working with CSV Files: The Foundation of Data Ingestion | by Sneh Paghdal
+    | Medium'
+  query: pandas read_csv error_bad_lines tutorial
+- url: https://towardsdatascience.com/fix-pandas-parser-error-tokenizing-data-889167292d38
+  title: 'How To Fix pandas.parser.CParserError: Error tokenizing data | Towards Data
+    Science'
+  query: pandas read_csv error_bad_lines tutorial
+- url: https://www.analyticsvidhya.com/blog/2021/04/delimiters-in-pandas-read_csv-function
+  title: 'Pandas Read CSV Delimiter: A Comprehensive Guide (2026)'
+  query: pandas read_csv error_bad_lines tutorial
+- url: https://www.geeksforgeeks.org/python/how-to-read-a-csv-file-to-a-dataframe-with-custom-delimiter-in-pandas
+  title: How to read a CSV file to a Dataframe with custom delimiter in Pandas? -
+    GeeksforGeeks
+  query: pandas read_csv error_bad_lines tutorial
+- url: https://medium.com/analytics-vidhya/getting-started-with-seaborn-basics-tutorial-ed67e45e611a
+  title: 'Getting Started with Seaborn : Basics Tutorial'
+  query: seaborn distplot tutorial
+- url: https://realpython.com/python-seaborn
+  title: Visualizing Data in Python With Seaborn – Real Python
+  query: seaborn distplot tutorial
+- url: https://www.digitalocean.com/community/tags/python-modules
+  title: Python Modules Tutorials
+  query: seaborn distplot tutorial
+- url: https://medium.com/@frankonyango.w/visualizing-distribution-plots-in-python-using-seaborn-7d23a9585a99
+  title: Visualizing Distribution plots in Python Using Seaborn
+  query: seaborn distplot tutorial
+- url: https://www.geeksforgeeks.org/data-visualization/how-to-add-vertical-lines-to-a-distribution-plot
+  title: How to Add Vertical Lines to a Distribution Plot
+  query: seaborn distplot tutorial
+- url: https://www.geeksforgeeks.org/python/how-to-add-outline-or-edge-color-to-histogram-in-seaborn
+  title: How to Add Outline or Edge Color to Histogram in Seaborn?
+  query: seaborn distplot tutorial
+- url: https://medium.com/intern-elite/seaborn-explained-simply-heatmaps-histograms-and-more-01538e7bc1ac
+  title: 'Seaborn Explained Simply: Heatmaps, Histograms, and More'
+  query: seaborn distplot tutorial
+- url: https://medium.com/analytics-vidhya/a-beginners-guide-to-seaborn-the-simplest-way-to-learn-rom-scratch-420938e89a6f
+  title: 'A Beginner''s Guide To Seaborn: The Simplest Way ...'
+  query: seaborn distplot tutorial
+- url: https://www.analyticsvidhya.com/blog/2016/10/tutorial-optimizing-neural-networks-using-keras-with-image-recognition-case-study
+  title: Keras | Keras Tutorial | Neural Network Tutorial Using Keras
+  query: keras fit_generator tutorial
+- url: https://towardsdatascience.com/a-single-function-to-streamline-image-classification-with-keras-bd04f5cfe6df
+  title: A single function to streamline image classification with Keras | Towards
+    Data Science
+  query: keras fit_generator tutorial
+- url: https://ubershmekel.medium.com/6x-faster-data-processing-with-keras-fit-generator-workers-e8d2e7cb62fd
+  title: 6x Faster Data Processing With Keras fit_generator Workers | by Yuval Greenfield
+    | MissingLink Deep Learning Platform | Medium
+  query: keras fit_generator tutorial
+- url: https://www.analyticsvidhya.com/blog/2016/10/tutorial-optimizing-neural-networks-using-keras-with-image-recognition-case-study?ref=footer
+  title: Keras | Keras Tutorial | Neural Network Tutorial Using Keras
+  query: keras fit_generator tutorial
+- url: https://medium.com/analytics-vidhya/deep-learning-tutorial-with-keras-7a34a1a322cd
+  title: Deep Learning tutorial with Keras
+  query: keras fit_generator tutorial
+- url: https://medium.com/missinglink-deep-learning-platform/6x-faster-data-processing-with-keras-fit-generator-workers-e8d2e7cb62fd
+  title: 6x Faster Data Processing With Keras fit_generator Workers | by Yuval Greenfield
+    | MissingLink Deep Learning Platform | Medium
+  query: keras fit_generator tutorial
+- url: https://avinashnavlani.medium.com/keras-tutorial-for-beginners-45e98af8229b
+  title: Keras Tutorial for Beginners
+  query: keras fit_generator tutorial
+- url: https://www.geeksforgeeks.org/deep-learning/keras-tutorial
+  title: Keras Tutorial - GeeksforGeeks
+  query: keras fit_generator tutorial
+- url: https://medium.com/@garg10may/mastering-asynchronous-programming-in-python-6eb210acd3c7
+  title: Mastering Asynchronous Programming in Python
+  query: python asyncio get_event_loop tutorial
+- url: https://www.w3schools.com/Python/ref_module_asyncio.asp
+  title: Python asyncio Module
+  query: python asyncio get_event_loop tutorial
+- url: https://medium.com/dev-bits/a-minimalistic-guide-for-understanding-asyncio-in-python-52c436c244ea
+  title: A minimalistic guide for understanding asyncio in Python | by Naren Yellavula
+    | Dev bits | Medium
+  query: python asyncio get_event_loop tutorial
+- url: https://realpython.com/async-io-python
+  title: 'Python''s asyncio: A Hands-On Walkthrough – Real Python'
+  query: python asyncio get_event_loop tutorial
+- url: https://www.datacamp.com/tutorial/asyncio-introduction
+  title: Asyncio Tutorial For Beginners | DataCamp
+  query: python asyncio get_event_loop tutorial
+- url: https://medium.com/delivus/understanding-pythons-asyncio-a-deep-dive-into-the-event-loop-89a6c5acbc84
+  title: 'Understanding Python’s asyncio: A Deep Dive into the Event Loop | by Hyunil
+    Kim | 딜리버스 | Medium'
+  query: python asyncio get_event_loop tutorial
+- url: https://dev.to/imsushant12/asyncio-architecture-in-python-event-loops-tasks-and-futures-explained-4pn3
+  title: 'Asyncio Architecture in Python: Event Loops, Tasks, and Futures Explained
+    - DEV Community'
+  query: python asyncio get_event_loop tutorial
+- url: https://alex-ber.medium.com/asyncio-run-coroutine-threadsafe-api-d24cc56a5255
+  title: Medium
+  query: python asyncio get_event_loop tutorial
+- url: https://realpython.com/beautiful-soup-web-scraper-python
+  title: 'Beautiful Soup: Build a Web Scraper With Python – Real Python'
+  query: beautifulsoup requests web scraping tutorial
+- url: https://medium.com/@techwithpraisejames/web-scraping-with-beautifulsoup-and-requests-python-libraries-72c164b58316
+  title: 'Tutorial: Web Scraping with Python BeautifulSoup and Requests Libraries'
+  query: beautifulsoup requests web scraping tutorial
+- url: https://www.datacamp.com/tutorial/web-scraping-using-python
+  title: Web Scraping using Python (and Beautiful Soup) | DataCamp
+  query: beautifulsoup requests web scraping tutorial
+- url: https://dev.to/blamsa0mine/web-scraping-simplified-extracting-article-titles-with-beautifulsoup-2dki
+  title: 'Web Scraping Simplified: Extracting Article Titles with BeautifulSoup -
+    DEV Community'
+  query: beautifulsoup requests web scraping tutorial
+- url: https://medium.com/@oluwadamisi.samuel/web-scraping-with-beautifulsoup-an-in-depth-guide-for-beginners-412cb7826968
+  title: 'Web Scraping with BeautifulSoup: An In-depth Guide For Beginners'
+  query: beautifulsoup requests web scraping tutorial
+- url: https://realpython.com/courses/web-scraping-beautiful-soup
+  title: Web Scraping With Beautiful Soup and Python – Real Python
+  query: beautifulsoup requests web scraping tutorial
+- url: https://medium.com/@itylergarrett.tag/learning-web-scraping-with-python-requests-beautifulsoup-936e6445312
+  title: Learning Web Scraping with Python, Requests, & BeautifulSoup
+  query: beautifulsoup requests web scraping tutorial
+- url: https://medium.com/@ritupd/web-scraping-countries-and-population-data-using-beautifulsoup-14f8b740c179
+  title: Web-scraping using BeautifulSoup. Web-scraping as a concept appealed to…
+    | by Rituparna | Medium
+  query: beautifulsoup requests web scraping tutorial
+- url: https://medium.com/@kdparab001/getting-started-with-fastapi-a-beginners-guide-81ab3741973b
+  title: 'Getting Started with FastAPI: A Beginner’s Guide'
+  query: fastapi beginner tutorial
+- url: https://realpython.com/fastapi-python-web-apis
+  title: A Close Look at a FastAPI Example Application – Real Python
+  query: fastapi beginner tutorial
+- url: https://medium.com/@pranjalraj28/mastering-fastapi-and-pydantic-an-in-depth-guide-for-beginners-a237e36cb151
+  title: 'Mastering FastAPI and Pydantic: An In-Depth Guide for Beginners | by Pranjal
+    Raj | Medium'
+  query: fastapi beginner tutorial
+- url: https://realpython.com/get-started-with-fastapi
+  title: Get Started With FastAPI – Real Python
+  query: fastapi beginner tutorial
+- url: https://www.datacamp.com/tutorial/introduction-fastapi-tutorial
+  title: 'FastAPI Tutorial: An Introduction to Using FastAPI'
+  query: fastapi beginner tutorial
+- url: https://dev.to/leapcell/a-super-fast-fastapi-blog-course-10-minutes-from-first-line-of-code-to-live-deployment-66m
+  title: 'A Super Fast FastAPI Blog Course: 10 Minutes from First Line of Code to
+    Live Deployment - DEV Community'
+  query: fastapi beginner tutorial
+- url: https://www.datacamp.com/courses/introduction-to-fastapi
+  title: Introduction to FastAPI | DataCamp
+  query: fastapi beginner tutorial
+- url: https://www.geeksforgeeks.org/python/fastapi-tutorial
+  title: FastAPI Tutorial - GeeksforGeeks
+  query: fastapi beginner tutorial
+- url: https://dev.to/bredmond1019/getting-started-with-flask-7de
+  title: Getting Started with Flask - DEV Community
+  query: flask hello world tutorial
+- url: https://auth0.com/blog/developing-restful-apis-with-python-and-flask
+  title: Developing RESTful APIs with Python and Flask | Auth0
+  query: flask hello world tutorial
+- url: https://www.geeksforgeeks.org/python/flask-creating-first-simple-application
+  title: Flask - Creating First Simple Application - GeeksforGeeks
+  query: flask hello world tutorial
+- url: https://dev.to/jenad88/day-30-flask-python-web-app-micro-framework-part-1-12b3
+  title: 'Day 30: Flask: Python Web App Micro-Framework - Part 1 - DEV Community'
+  query: flask hello world tutorial
+- url: https://www.freecodecamp.org/news/how-to-build-a-web-application-using-flask-and-deploy-it-to-the-cloud-3551c985e492
+  title: How to build a web application using Flask and deploy it to the cloud
+  query: flask hello world tutorial
+- url: https://realpython.com/learning-paths/flask-by-example
+  title: Flask by Example (Learning Path) – Real Python
+  query: flask hello world tutorial
+- url: https://www.geeksforgeeks.org/python/flask-projects
+  title: Python Flask Projects with Source Code (Beginners to Advanced) - GeeksforGeeks
+  query: flask hello world tutorial
+- url: https://www.digitalocean.com/community/tutorials/how-to-make-a-web-application-using-flask-in-python-3
+  title: How To Build a Web Application Using Flask in Python 3 | DigitalOcean
+  query: flask hello world tutorial
+- url: https://realpython.com/python-requests
+  title: Python's Requests Library (Guide) – Real Python
+  query: python requests api tutorial
+- url: https://www.datacamp.com/courses/introduction-to-apis-in-python
+  title: Introduction to APIs in Python | DataCamp
+  query: python requests api tutorial
+- url: https://medium.com/@noorfatimaafzalbutt/fetching-data-through-apis-with-python-a-comprehensive-guide-e3b335de0067
+  title: 'Fetching Data Through APIs with Python: A Comprehensive Guide'
+  query: python requests api tutorial
+- url: https://www.datacamp.com/tutorial/making-http-requests-in-python
+  title: Getting Started with Python HTTP Requests for REST APIs | DataCamp
+  query: python requests api tutorial
+- url: https://realpython.com/api-integration-in-python
+  title: 'Python and REST APIs: Interacting With Web Services – Real Python'
+  query: python requests api tutorial
+- url: https://www.geeksforgeeks.org/python/python-requests-tutorial
+  title: Python Requests - GeeksforGeeks
+  query: python requests api tutorial
+- url: https://www.geeksforgeeks.org/python/how-to-make-api-calls-using-python
+  title: How to Make API Call Using Python - GeeksforGeeks
+  query: python requests api tutorial
+- url: https://medium.com/@vatsallakhmani1/mastering-pythons-requests-library-part-1-http-for-humans-d5375ea944ee
+  title: 'Mastering Python’s requests Library – Part 1: HTTP for Humans'
+  query: python requests api tutorial
+- url: https://medium.com/@emarsja/python-pandas-groupby-tutorial-50049f660336
+  title: Python Pandas Groupby Tutorial. This post was originally published at… |
+    by Erik Marsja | Medium
+  query: pandas groupby tutorial
+- url: https://realpython.com/pandas-groupby
+  title: 'pandas GroupBy: Your Guide to Grouping Data in Python – Real Python'
+  query: pandas groupby tutorial
+- url: https://www.datacamp.com/tutorial/pandas-groupby
+  title: 'Pandas GroupBy Explained: Syntax, Examples, and Tips'
+  query: pandas groupby tutorial
+- url: https://www.geeksforgeeks.org/python/pandas-multi-index-and-groupby
+  title: Pandas - Multi-index and Groupby Tutorial - GeeksforGeeks
+  query: pandas groupby tutorial
+- url: https://www.datacamp.com/tutorial/pandas-multi-index
+  title: Pandas DataFrame Multi Index & Groupby Tutorial | DataCamp
+  query: pandas groupby tutorial
+- url: https://www.geeksforgeeks.org/python/how-to-group-dataframe-rows-into-list-in-pandas-groupby
+  title: How to group dataframe rows into list in Pandas Groupby? - GeeksforGeeks
+  query: pandas groupby tutorial
+- url: https://www.geeksforgeeks.org/python/pandas-groupby-value-counts-on-the-dataframe
+  title: Pandas - Groupby value counts on the DataFrame - GeeksforGeeks
+  query: pandas groupby tutorial
+- url: https://www.geeksforgeeks.org/python/pandas-groupby-and-sum
+  title: Pandas Groupby and Sum - GeeksforGeeks
+  query: pandas groupby tutorial
+- url: https://stackabuse.com/matplotlib-bar-plot-tutorial-and-examples
+  title: Matplotlib Bar Plot - Tutorial and Examples
+  query: matplotlib bar chart tutorial
+- url: https://pythonbasics.org/matplotlib-bar-chart
+  title: Matplotlib Bar Chart - Python Tutorial
+  query: matplotlib bar chart tutorial
+- url: https://www.datacamp.com/tutorial/matplotlib-tutorial-python
+  title: 'Matplotlib Tutorial: Line, Bar & Scatter Plots in Python | DataCamp'
+  query: matplotlib bar chart tutorial
+- url: https://www.geeksforgeeks.org/python/how-to-display-the-value-of-each-bar-in-a-bar-chart-using-matplotlib
+  title: How to display the value of each bar in a bar chart using Matplotlib? - GeeksforGeeks
+  query: matplotlib bar chart tutorial
+- url: https://www.geeksforgeeks.org/python/draw-a-horizontal-bar-chart-with-matplotlib
+  title: Draw a horizontal bar chart with Matplotlib - GeeksforGeeks
+  query: matplotlib bar chart tutorial
+- url: https://www.geeksforgeeks.org/python/plotting-multiple-bar-charts-using-matplotlib-in-python
+  title: Plotting multiple bar charts using Matplotlib in Python - GeeksforGeeks
+  query: matplotlib bar chart tutorial
+- url: https://stackabuse.com/matplotlib-pie-chart-tutorial-and-examples
+  title: Matplotlib Pie Chart - Tutorial and Examples
+  query: matplotlib bar chart tutorial
+- url: https://www.datacamp.com/tutorial/how-to-make-gantt-chart-in-python-matplotlib
+  title: How to Make a Gantt Chart in Python with Matplotlib (With Examples) | DataCamp
+  query: matplotlib bar chart tutorial
+- url: https://realpython.com/train-test-split-python-data
+  title: Split Your Dataset With scikit-learn's train_test_split() – Real Python
+  query: scikit-learn train_test_split tutorial
+- url: https://realpython.com/courses/splitting-datasets-scikit-learn-train-test-split/continue
+  title: Splitting Datasets With scikit-learn and train_test_split() (Overview) (Video)
+    – Real Python
+  query: scikit-learn train_test_split tutorial
+- url: https://realpython.com/courses/splitting-datasets-scikit-learn-train-test-split/discussion
+  title: Splitting Datasets With scikit-learn and train_test_split() (Overview) (Video)
+    – Real Python
+  query: scikit-learn train_test_split tutorial
+- url: https://stackabuse.com/scikit-learns-traintestsplit-training-testing-and-validation-sets
+  title: Scikit-Learn's train_test_split() - Training, Testing and Validation Sets
+  query: scikit-learn train_test_split tutorial
+- url: https://realpython.com/courses/splitting-datasets-scikit-learn-train-test-split
+  title: Splitting Datasets With scikit-learn and train_test_split() – Real Python
+  query: scikit-learn train_test_split tutorial
+- url: https://www.geeksforgeeks.org/machine-learning/k-nearest-neighbors-knn-regression-with-scikit-learn
+  title: K-Nearest Neighbors (KNN) Regression with Scikit-Learn - GeeksforGeeks
+  query: scikit-learn train_test_split tutorial
+- url: https://www.geeksforgeeks.org/python/comparing-various-online-solvers-in-scikit-learn
+  title: Comparing various online solvers in Scikit Learn - GeeksforGeeks
+  query: scikit-learn train_test_split tutorial
+- url: https://www.geeksforgeeks.org/machine-learning/pipelines-python-and-scikit-learn
+  title: Pipelines - Python and scikit-learn - GeeksforGeeks
+  query: scikit-learn train_test_split tutorial
+- url: https://www.javascripttutorial.net/express-tutorial/express-hello-world
+  title: Building the Express Hello World App
+  query: express hello world tutorial
+- url: https://medium.com/@jaeger.rob/introduction-to-nodes-express-js-db5617047150
+  title: Introduction to Node’s Express JS
+  query: express hello world tutorial
+- url: https://dev.to/thecodepixi/hello-world-setting-up-your-first-express-server-2f98
+  title: Hello World! { Setting Up Your First Express Server } - DEV Community
+  query: express hello world tutorial
+- url: https://www.freecodecamp.org/news/the-express-handbook
+  title: The Express + Node.js Handbook – Learn the Express JavaScript Framework for
+    Beginners
+  query: express hello world tutorial
+- url: https://dev.to/aurelkurtula/creating-a-basic-website-with-expressjs-j92
+  title: Creating a basic website with Express.js - DEV Community
+  query: express hello world tutorial
+- url: https://medium.com/free-code-camp/hello-world-app-with-node-js-and-express-c1eb7cfa8a30
+  title: “Hello World!” app with Node.js and Express | by Adnan Rahić | Medium
+  query: express hello world tutorial
+- url: https://medium.com/@uyanhewagetr/express-js-fundamentals-you-must-know-for-node-js-interviews-5f6f6f2a6e51
+  title: Express.js Fundamentals You Must Know for Node.js Interviews | by Thisharika
+    Rangani | Medium
+  query: express hello world tutorial
+- url: https://www.w3schools.com/nodejs/nodejs_express.asp
+  title: Node.js Express.js
+  query: express hello world tutorial
+- url: https://www.geeksforgeeks.org/node-js/how-to-redirect-404-errors-to-a-page-in-express-js
+  title: How to Redirect 404 errors to a page in Express.js ? - GeeksforGeeks
+  query: express 404 page tutorial
+- url: https://www.freecodecamp.org/news/nodejs-and-expressjs-handbook-for-beginners
+  title: The Node.js and Express.js Handbook for Beginners – Servers, Routes, Routers,
+    and Views Explained
+  query: express 404 page tutorial
+- url: https://medium.com/@mark.w.1987/handling-errors-in-express-a-beginners-guide-ff0019133758
+  title: 'Handling Errors in Express: A Beginner’s Guide'
+  query: express 404 page tutorial
+- url: https://medium.com/@mark.w.1987/routing-in-express-a-beginners-guide-005f9d2428fb
+  title: 'Routing in Express: A Beginner’s Guide'
+  query: express 404 page tutorial
+- url: https://medium.com/@jogarcia/express-js-rest-api-error-handler-7776ecf7f73e
+  title: Express.js REST API Error Handler | by Jose Garcia | Medium
+  query: express 404 page tutorial
+- url: https://medium.com/@sumit_m/the-complete-guide-to-node-and-express-a101d19b643a
+  title: The Complete Guide to Node and Express for 2026
+  query: express 404 page tutorial
+- url: https://medium.com/@scraper0024/how-to-make-http-requests-in-node-js-with-node-fetch-api-feafc0c37a28
+  title: How to Make HTTP Requests in Node.js with Node-Fetch API? | by Scraper0024
+    | Medium
+  query: node-fetch tutorial
+- url: https://dev.to/tienbku/javascript-fetch-getpostputdelete-example-3dmp
+  title: 'Javascript Fetch example: Get/Post/Put/Delete - DEV Community'
+  query: node-fetch tutorial
+- url: https://blog.logrocket.com/fetch-api-node-js
+  title: The Fetch API is finally stable in Node.js - LogRocket Blog
+  query: node-fetch tutorial
+- url: https://www.geeksforgeeks.org/node-js/difference-between-fetch-and-axios-js-for-making-http-requests
+  title: Difference between Fetch and Axios for Making HTTP Requests - GeeksforGeeks
+  query: node-fetch tutorial
+- url: https://www.w3schools.com/js/js_api_fetch.asp
+  title: JavaScript Fetch API
+  query: node-fetch tutorial
+- url: https://www.geeksforgeeks.org/javascript/javascript-fetch-method
+  title: Fetch API in JavaScript - GeeksforGeeks
+  query: node-fetch tutorial
+- url: https://www.w3schools.com/jsref/api_fetch.asp
+  title: JavaScript Fetch API
+  query: node-fetch tutorial
+- url: https://medium.com/@madelinecorman/making-http-requests-in-node-js-16fe74af0a79
+  title: Making HTTP Requests in Node.js. An introduction to server-side HTTP… | by
+    Madeline Corman | Medium
+  query: node-fetch tutorial
+- url: https://dev.to/matthewmayer/leveling-up-your-custom-fake-data-with-fakerjs-3f7m
+  title: Leveling up your custom fake data with Faker.js - DEV Community
+  query: faker js fake data tutorial
+- url: https://www.geeksforgeeks.org/node-js/npm-faker
+  title: npm faker - GeeksforGeeks
+  query: faker js fake data tutorial
+- url: https://medium.com/@kbalaji.kks/mocking-user-inputs-with-playwright-faker-js-and-randomatic-libraries-90162bfc9784
+  title: Mocking User Inputs with Playwright, Faker.js and Randomatic libraries
+  query: faker js fake data tutorial
+- url: https://medium.com/@hrupanjan/how-we-cut-development-time-by-60-using-mock-service-worker-faker-js-1e867b2498dc
+  title: Medium
+  query: faker js fake data tutorial
+- url: https://dev.to/dfarlz97/using-faker-to-generate-fake-data-39in
+  title: Using 'Faker' to Generate Fake Data
+  query: faker js fake data tutorial
+- url: https://dev.to/serifcolakel/building-a-typescript-helper-for-mock-data-generation-with-zod-and-faker-4b8f
+  title: Building a TypeScript Helper for Mock Data Generation with Zod and Faker
+    - DEV Community
+  query: faker js fake data tutorial
+- url: https://dev.to/dev_neil_a/python-how-to-create-sample-data-using-faker-co4
+  title: 'Python How-To: Create Sample Data Using Faker - DEV Community'
+  query: faker js fake data tutorial
+- url: https://www.geeksforgeeks.org/python/python-faker-library
+  title: Python Faker Library - GeeksforGeeks
+  query: faker js fake data tutorial
+- url: https://medium.com/design-bootcamp/building-a-matrix-inspired-command-line-tool-in-node-js-a-tutorial-guide-8045ba721389
+  title: 'Building a Matrix-Inspired Command-Line Tool in Node.js : A Tutorial Guide'
+  query: chalk node colors tutorial
+- url: https://www.geeksforgeeks.org/node-js/node-js-chalk-module
+  title: Node.js Chalk Module - GeeksforGeeks
+  query: chalk node colors tutorial
+- url: https://dev.to/kushanksriraj/my-tidbits-of-learning-javascript-chalk-readlinesync-76p
+  title: 'My tidbits of learning JavaScript : CHALK & readlineSync'
+  query: chalk node colors tutorial
+- url: https://dev.to/builderio/bun-vs-nodejs-everything-you-need-to-know-4l66
+  title: 'Bun vs Node.js: Everything you need to know - DEV Community'
+  query: chalk node colors tutorial
+- url: https://dev.to/rahulbanerjee99/how-to-create-a-testable-cli-using-typescript-3im
+  title: How to Create a Testable CLI using TypeScript? - DEV Community
+  query: chalk node colors tutorial
+- url: https://medium.com/@bargord11/write-your-first-node-js-terminal-progress-bar-5bd5edb8a563
+  title: Write your first Node.js terminal progress bar! | by Bartosz Gordon | Medium
+  query: chalk node colors tutorial
+- url: https://dev.to/camskithedev/chalkjs-are-beautiful-logs-real-1mo6
+  title: ChalkJS - Are Beautiful Logs Real? - DEV Community
+  query: chalk node colors tutorial
+- url: https://medium.com/@ealch/supply-chain-attack-how-to-detect-and-fix-compromised-npm-packages-step-by-step-guide-bdd7b66ad905
+  title: 'Supply Chain Attack: How to Detect and Fix Compromised npm Packages (Step-by-Step
+    Guide)'
+  query: chalk node colors tutorial
+- url: https://dev.to/iam_prashanth_ks/what-is-body-parser-117m
+  title: What is Body-parser? - DEV Community
+  query: express body-parser tutorial
+- url: https://dev.to/taylorbeeston/you-probably-don-t-need-body-parser-in-your-express-apps-3nio
+  title: 'Body Parser: You probably don''t need body-parser in your Express apps -
+    DEV Community'
+  query: express body-parser tutorial
+- url: https://www.geeksforgeeks.org/node-js/body-parser-middleware-in-node-js
+  title: Body-parser Middleware in Node.js - GeeksforGeeks
+  query: express body-parser tutorial
+- url: https://medium.com/@akhanriz/building-a-restful-api-using-node-js-express-js-and-mongodb-part-1-4760b2761d4a
+  title: Building a RESTful API using Node.js, Express.js, and MongoDB (Part-1)
+  query: express body-parser tutorial
+- url: https://dev.to/eclecticcoding/express-and-body-parser-khf
+  title: Express and Body-parser - DEV Community
+  query: express body-parser tutorial
+- url: https://www.geeksforgeeks.org/web-tech/express-js-req-body-property
+  title: Express req.body Property - GeeksforGeeks
+  query: express body-parser tutorial
+- url: https://medium.com/@mishra.oct786/express-js-or-node-js-req-body-undefined-b80d48d04245
+  title: Express.js or node.js req.body undefined
+  query: express body-parser tutorial
+- url: https://forum.freecodecamp.org/t/anyone-familiar-with-express-router-can-point-me-whats-wrong-here-solved/57907
+  title: Anyone familiar with Express Router can point me what's wrong here? [SOLVED]
+    - The freeCodeCamp Forum
+  query: express body-parser tutorial
+- url: https://dev.to/oyedeletemitope/web-scraping-in-nodejs-using-axioscheerio-and-json2csv-5afc
+  title: Web Scraping in Node.js Using Axios,Cheerio and Json2csv - DEV Community
+  query: axios node tutorial
+- url: https://medium.com/@reggiecheston/a-beginners-guide-to-using-axios-in-node-js-simplifying-http-requests-441291fef064
+  title: 'A Beginner’s Guide to Using Axios in Node.js: Simplifying HTTP Requests
+    | by Reggie Cheston | Medium'
+  query: axios node tutorial
+- url: https://www.geeksforgeeks.org/html/what-is-axios
+  title: What Is Axios? - GeeksforGeeks
+  query: axios node tutorial
+- url: https://blog.logrocket.com/understanding-axios-create
+  title: Understanding axios.create - LogRocket Blog
+  query: axios node tutorial
+- url: https://medium.com/@nurmhm/axios-explained-a-beginner-friendly-guide-to-http-requests-in-javascript-a281825d0fd7
+  title: 'Axios Explained: A Beginner-Friendly Guide to HTTP Requests in JavaScript
+    .'
+  query: axios node tutorial
+- url: https://www.geeksforgeeks.org/node-js/how-to-use-axios-npm-to-generate-http-requests
+  title: How To Use Axios NPM to Generate HTTP Requests ? - GeeksforGeeks
+  query: axios node tutorial
+- url: https://blog.logrocket.com/axios-javascript
+  title: 'Axios in JavaScript: How to make GET, POST, PUT, and DELETE requests - LogRocket
+    Blog'
+  query: axios node tutorial
+- url: https://medium.com/codex/getting-started-with-axios-3d7836ab555e
+  title: Getting Started With Axios. If you’ve ever needed to make a… | by Ryan Flynn
+    | CodeX | Medium
+  query: axios node tutorial
+- url: https://blog.logrocket.com/reading-writing-json-files-node-js-complete-tutorial
+  title: 'Reading and writing JSON files in Node.js: A complete tutorial - LogRocket
+    Blog'
+  query: node.js read file tutorial
+- url: https://dev.to/tienbku/upload-read-excel-file-in-node-js-4pkp
+  title: Upload & Read Excel File in Node.js - DEV Community
+  query: node.js read file tutorial
+- url: https://www.javascripttutorial.net/nodejs-tutorial
+  title: Node.js Tutorial
+  query: node.js read file tutorial
+- url: https://medium.com/@ipenywis/node-js-file-system-read-and-write-fs-04-2125cf09aad3
+  title: Node.js File System (Read and Write) (FS) 04
+  query: node.js read file tutorial
+- url: https://dev.to/realsteveig/nodejs-and-typescript-tutorial-build-a-rest-api-with-typescript-nodejs-and-a-file-based-storage-system-2l61
+  title: 'Node.js and TypeScript Tutorial: Build a rest API with Typescript, NodeJS,
+    and a file-based storage system. - DEV Community'
+  query: node.js read file tutorial
+- url: https://www.geeksforgeeks.org/node-js/how-to-read-and-write-excel-file-in-node-js
+  title: How to Read and Write Excel file in Node.js ? - GeeksforGeeks
+  query: node.js read file tutorial
+- url: https://www.geeksforgeeks.org/node-js/nodejs
+  title: Node.js Tutorial - GeeksforGeeks
+  query: node.js read file tutorial
+- url: https://www.javascripttutorial.net/nodejs-tutorial/nodejs-process-env
+  title: How to Read Environment Variables in Node.js Using process.env
+  query: node.js read file tutorial
+- url: https://dev.to/gentritbiba/setting-up-jest-testing-in-your-nodejs-application-a-complete-guide-o8i
+  title: 'Setting Up Jest Testing in Your Node.js Application: A Complete Guide -
+    DEV Community'
+  query: jest testing node tutorial
+- url: https://medium.com/@azizmarzouki/unit-testing-in-node-js-with-jest-a-comprehensive-guide-4d625e53ab35
+  title: 'Unit Testing in Node.js with Jest: A Comprehensive Guide | by Aziz Marzouki
+    | Medium'
+  query: jest testing node tutorial
+- url: https://medium.com/@ben.dev.io/node-js-unit-testing-with-jest-b7042d7c2ad0
+  title: Node.js Unit Testing with Jest. Introducion | by Ben Mishali | Medium
+  query: jest testing node tutorial
+- url: https://www.geeksforgeeks.org/javascript/testing-with-jest
+  title: Testing with Jest - GeeksforGeeks
+  query: jest testing node tutorial
+- url: https://dev.to/dsasse07/a-beginner-s-guide-to-unit-testing-with-jest-45cc
+  title: A Beginner's Guide to Unit-testing with Jest - DEV Community
+  query: jest testing node tutorial
+- url: https://medium.com/@etosin70/automated-testing-with-jest-and-supertest-in-node-js-express-typescript-953683d3f5fb
+  title: Automated Testing with Jest and Supertest in Node.js (Express + TypeScript)
+  query: jest testing node tutorial
+- url: https://www.w3schools.com/nodejs/nodejs_testing_frameworks.asp
+  title: Node.js Testing Frameworks
+  query: jest testing node tutorial
+- url: https://medium.com/@altshort/unit-testing-node-cli-apps-with-jest-2cd4adc599fb
+  title: Unit testing node CLI apps with Jest
+  query: jest testing node tutorial
+- url: https://dev.to/saiful7778/managing-environment-variables-in-nodejs-with-dotenv-159e
+  title: Managing Environment Variables in Node.js with dotenv - DEV Community
+  query: dotenv node tutorial
+- url: https://www.geeksforgeeks.org/node-js/npm-dotenv
+  title: NPM dotenv - GeeksforGeeks
+  query: dotenv node tutorial
+- url: https://www.freecodecamp.org/news/how-to-use-node-environment-variables-with-a-dotenv-file-for-node-js-and-npm
+  title: How to Use Node Environment Variables with a DotEnv File for Node.js and
+    npm
+  query: dotenv node tutorial
+- url: https://dev.to/kylewcode/setting-up-custom-environment-variables-using-dotenv-and-node-config-24hg
+  title: Setting Up Custom Environment Variables Using dotenv and Node-config - DEV
+    Community
+  query: dotenv node tutorial
+- url: https://www.w3schools.com/nodejs/nodejs_environment.asp
+  title: Node.js Environment Variables
+  query: dotenv node tutorial
+- url: https://dev.to/yracnet/load-environment-variables-using-dotenv-local-3in6
+  title: Load Environment Variables using dotenv-local - DEV Community
+  query: dotenv node tutorial
+- url: https://www.twilio.com/en-us/blog/developers/tutorials/building-blocks/environment-variables-env-file-node
+  title: How to Use Environment Variables from .env in Node.js | Twilio
+  query: dotenv node tutorial
+- url: https://medium.com/the-node-js-collection/making-your-node-js-work-everywhere-with-environment-variables-2da8cdf6e786
+  title: Medium
+  query: dotenv node tutorial
+- url: https://medium.com/@themathlab/api-requests-json-parsing-in-python-a-guide-in-data-collection-31e985981ea3
+  title: 'API Requests & JSON Parsing in Python: A Guide in Data Collection'
+  query: python requests json api tutorial
+- url: https://medium.com/stackademic/mastering-post-requests-with-python-requests-library-a-comprehensive-guide-9063ed38d5b9
+  title: 'Mastering Post Requests with Python Requests Library: A Comprehensive Guide
+    | by PRATIKSHA GARKAR | Stackademic'
+  query: python requests json api tutorial
+- url: https://realpython.com/python-json
+  title: Working With JSON Data in Python – Real Python
+  query: python requests json api tutorial
+- url: https://www.geeksforgeeks.org/python/response-json-python-requests
+  title: response.json() - Python requests - GeeksforGeeks
+  query: python requests json api tutorial
+- url: https://www.analyticsvidhya.com/blog/2022/01/rest-api-with-python-and-flask
+  title: 'Rest API Guide: Building with Python and Flask- Analytics VIdhya'
+  query: flask rest api tutorial beginners
+- url: https://pythonbasics.org/flask-rest-api
+  title: Flask REST API Tutorial - pythonbasics.org
+  query: flask rest api tutorial beginners
+- url: https://medium.com/@mathur.danduprolu/building-restful-apis-with-flask-a-beginners-guide-to-crud-operations-part-2-7-4ff74083a3ee
+  title: 'Building RESTful APIs with Flask: A Beginner’s Guide to CRUD Operations
+    [Part 2/7]'
+  query: flask rest api tutorial beginners
+- url: https://medium.com/@dennisivy/flask-restful-crud-api-c13c7d82c6e5
+  title: Flask RESTful CRUD API
+  query: flask rest api tutorial beginners
+- url: https://medium.com/@aberrospic1/crud-operations-with-fastapi-c2de026e5862
+  title: Quick guide to implementing CRUD operations with FastAPI | by Abraham Berrospi
+    Casano | Medium
+  query: fastapi crud tutorial
+- url: https://dev.to/gilly7/building-your-first-full-stack-crud-app-with-fastapi-and-reactjs-3i1n
+  title: 'Part 1: Building Your First Full-Stack CRUD App with FastAPI and React.js
+    - DEV Community'
+  query: fastapi crud tutorial
+- url: https://medium.com/@obaff/building-a-website-with-python-fastapi-and-streamlit-418f48c41af2
+  title: Building a Website with Python, FastAPI, and Streamlit | by Obafemi | Medium
+  query: fastapi crud tutorial
+- url: https://realpython.com/crud-operations
+  title: What Are CRUD Operations? – Real Python
+  query: fastapi crud tutorial
+- url: https://www.geeksforgeeks.org/python/fastapi-crud-operations
+  title: FastAPI - Crud Operations - GeeksforGeeks
+  query: fastapi crud tutorial
+- url: https://dev.to/aquibpy/building-a-crud-api-with-fastapi-and-mongodb-32n
+  title: Building a CRUD API with FastAPI and MongoDB - DEV Community
+  query: fastapi crud tutorial
+- url: https://medium.com/@mhmahmoud360/the-basics-of-numpy-arrays-d297c9de8381
+  title: The basics of Numpy Arrays
+  query: numpy array basics tutorial
+- url: https://www.datacamp.com/tutorial/python-numpy-tutorial
+  title: Python Numpy Array Tutorial
+  query: numpy array basics tutorial
+- url: https://www.geeksforgeeks.org/python/basics-of-numpy-arrays
+  title: Basics of NumPy Arrays - GeeksforGeeks
+  query: numpy array basics tutorial
+- url: https://www.w3schools.com/python/numpy/default.asp
+  title: NumPy Tutorial
+  query: numpy array basics tutorial
+- url: https://www.geeksforgeeks.org/numpy/python-numpy
+  title: Python NumPy - GeeksforGeeks
+  query: numpy array basics tutorial
+- url: https://www.datacamp.com/tutorial/joining-dataframes-pandas
+  title: 'Joining DataFrames in pandas: merge(), concat() & join()'
+  query: pandas merge join tutorial
+- url: https://realpython.com/pandas-merge-join-and-concat
+  title: Combining Data in pandas With merge(), .join(), and concat() – Real Python
+  query: pandas merge join tutorial
+- url: https://medium.com/@akaivdo/pandas-data-combination-1-merge-81fbdf506c85
+  title: 'Pandas >> Data Combination(1): merge() | by NextGenTechDawn | Medium'
+  query: pandas merge join tutorial
+- url: https://www.geeksforgeeks.org/pandas/python-pandas-merging-joining-and-concatenating
+  title: Python | Pandas Merging, Joining and Concatenating - GeeksforGeeks
+  query: pandas merge join tutorial
+- url: https://www.programiz.com/python-programming/pandas/merge
+  title: Pandas Merge (With Examples)
+  query: pandas merge join tutorial
+- url: https://www.geeksforgeeks.org/pandas/what-is-the-difference-between-join-and-merge-in-pandas
+  title: What is the difference between join and merge in Pandas? - GeeksforGeeks
+  query: pandas merge join tutorial
+- url: https://dev.to/vaib/hands-on-ai-for-beginners-classifying-iris-flowers-in-python-2j4h
+  title: 'Hands-On AI for Beginners: Classifying Iris Flowers in Python - DEV Community'
+  query: scikit-learn classification iris tutorial
+- url: https://dev.to/kammarianand/ml-intro-iris-dataset-4e13
+  title: 'ML Intro : IRIS DATASET - DEV Community'
+  query: scikit-learn classification iris tutorial
+- url: https://medium.com/data-science/exploring-classifiers-with-python-scikit-learn-iris-dataset-2bcb490d2e1b
+  title: Exploring Classifiers with Python Scikit-learn — Iris Dataset | by Dehao
+    Zhang | TDS Archive | Medium
+  query: scikit-learn classification iris tutorial
+- url: https://medium.com/@mishraavyan3/iris-dataset-classification-using-python-scikit-learn-b6ecd724211f
+  title: Iris Dataset Classification Using Python (Scikit-Learn) | by Aryan Kumar
+    Mishra | Medium
+  query: scikit-learn classification iris tutorial
+- url: https://medium.com/@sabitha.manoj0891/from-basics-to-advanced-a-practical-guide-to-scikit-learn-for-machine-learning-3bf65cf08fc5
+  title: 'From Basics to Advanced: A Practical Guide to Scikit-Learn for Machine Learning
+    | by Sabitha Manoj | Medium'
+  query: scikit-learn classification iris tutorial
+- url: https://www.geeksforgeeks.org/random-forest-classifier-using-scikit-learn
+  title: Random Forest Classifier using Scikit-learn - GeeksforGeeks
+  query: scikit-learn classification iris tutorial
+- url: https://medium.com/@ebimsv/mastering-matplotlib-part-4-subplots-layouts-and-advanced-customizations-2f07c4a99e80
+  title: 'Matplotlib: Part 4. Subplots, Layouts, and Advanced Customizations | by
+    Ebrahim Mousavi | Medium'
+  query: matplotlib subplots tutorial
+- url: https://dev.to/thalesbruno/subplotting-with-matplotlib-and-seaborn-5ei8
+  title: 'Seaborn Multiple Plots: Subplotting with matplotlib and seaborn - DEV Community'
+  query: matplotlib subplots tutorial
+- url: https://towardsdatascience.com/simplifying-subplots-creation-in-matplotlib-3f6efce356b9
+  title: Simplifying subplots creation in Matplotlib | Towards Data Science
+  query: matplotlib subplots tutorial
+- url: https://www.analyticsvidhya.com/blog/2024/02/matplotlib-pyplot-subplots-in-python
+  title: 'Matplotlib.pyplot.subplots() in Python: A Comprehensive Guide - Analytics
+    Vidhya'
+  query: matplotlib subplots tutorial
+- url: https://www.geeksforgeeks.org/python/plot-multiple-plots-in-matplotlib
+  title: Plot multiple plots in Matplotlib - GeeksforGeeks
+  query: matplotlib subplots tutorial
+- url: https://medium.com/@bhagyarana80/10-times-i-used-subplot-wrong-and-how-to-fix-it-c62f432279b5
+  title: 10 Times I Used subplot() Wrong (And How to Fix It)
+  query: matplotlib subplots tutorial
+- url: https://realpython.com/python-data-classes
+  title: Data Classes in Python (Guide) – Real Python
+  query: python dataclasses tutorial
+- url: https://www.datacamp.com/tutorial/python-data-classes
+  title: 'Python Data Classes: A Comprehensive Tutorial | DataCamp'
+  query: python dataclasses tutorial
+- url: https://realpython.com/ref/stdlib/dataclasses
+  title: dataclasses | Python Standard Library – Real Python
+  query: python dataclasses tutorial
+- url: https://www.geeksforgeeks.org/python/understanding-python-dataclasses
+  title: Understanding Python Dataclasses - GeeksforGeeks
+  query: python dataclasses tutorial
+- url: https://www.geeksforgeeks.org/python/the-ultimate-guide-to-data-classes-in-python-3-7
+  title: The Ultimate Guide to Data Classes in Python 3.7 - GeeksforGeeks
+  query: python dataclasses tutorial
+- url: https://www.w3schools.com/python/ref_module_dataclasses.asp
+  title: Python dataclasses Module
+  query: python dataclasses tutorial
+- url: https://medium.com/@tushar_aggarwal/easy-argparse-a-guide-to-handling-command-line-arguments-9cdf62ff46db
+  title: 'Easy argparse: A guide to handling command-line arguments'
+  query: python argparse cli tutorial
+- url: https://realpython.com/command-line-interfaces-python-argparse
+  title: Build Command-Line Interfaces With Python's argparse – Real Python
+  query: python argparse cli tutorial
+- url: https://realpython.com/ref/stdlib/argparse
+  title: argparse | Python Standard Library – Real Python
+  query: python argparse cli tutorial
+- url: https://www.datacamp.com/tutorial/python-argparse
+  title: 'Master Python''s argparse Module: Build Better CLIs | DataCamp'
+  query: python argparse cli tutorial
+- url: https://dev.to/usooldatascience/mastering-pythons-argparse-a-comprehensive-guide-for-beginners-48fn
+  title: 'Mastering Python’s argparse: A Comprehensive Guide for Beginners - DEV Community'
+  query: python argparse cli tutorial
+- url: https://www.w3schools.com/python/ref_module_argparse.asp
+  title: Python argparse Module
+  query: python argparse cli tutorial
+- url: https://www.geeksforgeeks.org/python/python-sqlite
+  title: Python SQLite - GeeksforGeeks
+  query: python sqlite3 tutorial
+- url: https://realpython.com/ref/stdlib/sqlite3
+  title: sqlite3 | Python Standard Library – Real Python
+  query: python sqlite3 tutorial
+- url: https://www.sitepoint.com/sqlite-python
+  title: An Introduction to SQLite with Python — SitePoint
+  query: python sqlite3 tutorial
+- url: https://www.geeksforgeeks.org/python/introduction-to-sqlite-in-python
+  title: Introduction to SQLite in Python - GeeksforGeeks
+  query: python sqlite3 tutorial
+- url: https://www.freecodecamp.org/news/work-with-sqlite-in-python-handbook
+  title: How to Work with SQLite in Python – A Handbook for Beginners
+  query: python sqlite3 tutorial
+- url: https://www.w3schools.com/python/ref_module_sqlite3.asp
+  title: Python sqlite3 Module
+  query: python sqlite3 tutorial
+- url: https://www.freecodecamp.org/news/how-to-use-the-json-module-in-python
+  title: How to Use the JSON Module in Python – A Beginner's Guide
+  query: python json module tutorial
+- url: https://www.datacamp.com/tutorial/json-data-python
+  title: 'Python JSON Data: A Guide With Examples | DataCamp'
+  query: python json module tutorial
+- url: https://realpython.com/ref/stdlib/json
+  title: json | Python Standard Library – Real Python
+  query: python json module tutorial
+- url: https://medium.com/@idelossantosruiz/mastering-json-in-python-oop-a-practical-guide-65b39e868c33
+  title: 'Mastering JSON in Python OOP: A Practical Guide'
+  query: python json module tutorial
+- url: https://www.geeksforgeeks.org/python/python-json
+  title: Python JSON - GeeksforGeeks
+  query: python json module tutorial
+- url: https://realpython.com/how-to-pandas-pivot-table
+  title: How to Create Pivot Tables With pandas – Real Python
+  query: pandas pivot table tutorial
+- url: https://towardsdatascience.com/pivot-tables-with-pandas-7d1078167d62
+  title: Pivot Tables with Pandas | Towards Data Science
+  query: pandas pivot table tutorial
+- url: https://www.analyticsvidhya.com/blog/2020/03/pivot-table-pandas-python
+  title: Create Pivot Table Using Pandas in Python - Analytics Vidhya
+  query: pandas pivot table tutorial
+- url: https://www.programiz.com/python-programming/pandas/pivot-table
+  title: Pandas Pivot Table (With Examples)
+  query: pandas pivot table tutorial
+- url: https://www.geeksforgeeks.org/python/python-pandas-pivot_table
+  title: Pandas.pivot_table() - Python - GeeksforGeeks
+  query: pandas pivot table tutorial
+- url: https://www.geeksforgeeks.org/python/python-pandas-pivot
+  title: Python | Pandas.pivot() - GeeksforGeeks
+  query: pandas pivot table tutorial
+- url: https://medium.com/@devontem/creating-a-simple-http-server-in-node-js-19cd2b874491
+  title: Creating a simple HTTP server in Node.js | by Devonte M | Medium
+  query: node.js http server tutorial
+- url: https://www.geeksforgeeks.org/node-js/how-to-create-a-simple-http-server-in-node
+  title: Creating a Simple HTTP Server in Node - GeeksforGeeks
+  query: node.js http server tutorial
+- url: https://www.w3schools.com/nodejs/DEFAULT.asp
+  title: Node.js Tutorial
+  query: node.js http server tutorial
+- url: https://www.geeksforgeeks.org/node-js/node-js-web-server
+  title: Node.js Web Server - GeeksforGeeks
+  query: node.js http server tutorial
+- url: https://www.javascripttutorial.net/express-tutorial/express-routing
+  title: A Practical Guide to Express Routing
+  query: express routing tutorial
+- url: https://www.javascripttutorial.net/express-tutorial
+  title: The Modern Express Tutorial
+  query: express routing tutorial
+- url: https://www.geeksforgeeks.org/node-js/what-is-routing-in-express
+  title: Routing in Express.js - GeeksforGeeks
+  query: express routing tutorial
+- url: https://www.geeksforgeeks.org/web-tech/express-js-express-router-function
+  title: Express express.Router() Function - GeeksforGeeks
+  query: express routing tutorial
+- url: https://www.geeksforgeeks.org/node-js/routing-in-node-js
+  title: Routing in NodeJS - GeeksforGeeks
+  query: express routing tutorial
+- url: https://medium.com/@finnkumar6/understanding-the-file-system-in-node-js-promises-callbacks-and-synchronous-methods-ea77198b76ce
+  title: 'Understanding the File System in Node.js: Promises, Callbacks, and Synchronous
+    Methods'
+  query: node fs promises tutorial
+- url: https://dev.to/sovannaro/mastering-the-fspromises-module-in-nodejs-4210
+  title: Mastering the `fs.promises` Module in Node.js 🚀 - DEV Community
+  query: node fs promises tutorial
+- url: https://dev.to/hellonehha/2-nodejs-what-is-fs-module-5bjj
+  title: '#2 NodeJS - What is fs module - DEV Community'
+  query: node fs promises tutorial
+- url: https://www.geeksforgeeks.org/node-js/node-js-fs-promises-appendfile-method
+  title: Node.js fs.promises.appendFile() Method - GeeksforGeeks
+  query: node fs promises tutorial
+- url: https://www.w3schools.com/nodejs/nodejs_promises.asp
+  title: Node.js Promises
+  query: node fs promises tutorial
+- url: https://www.geeksforgeeks.org/node-js/node-js-fspromises-readfile-method
+  title: Node.js fsPromises.readFile() Method - GeeksforGeeks
+  query: node fs promises tutorial
+- url: https://habtesoft.medium.com/lodash-in-node-js-simplifying-javascript-development-d5d63353abc5
+  title: 'Lodash in Node.js: Simplifying JavaScript Development'
+  query: lodash tutorial node
+- url: https://www.geeksforgeeks.org/javascript/lodash
+  title: Lodash - GeeksforGeeks
+  query: lodash tutorial node
+- url: https://medium.com/@barathkumark/lodash-npm-nodejs-1bad6579db68
+  title: Lodash NPM Nodejs. lodash is a popular npm package for… | by Barath Kumar
+    | Medium
+  query: lodash tutorial node
+- url: https://medium.com/@hakhoipham/the-beginners-guide-to-lodash-58f98599da54
+  title: The Beginner's Guide to Lodash
+  query: lodash tutorial node
+- url: https://medium.com/deno-the-complete-reference/some-common-use-cases-of-lodash-in-node-js-cc3a7b6981f5
+  title: Some common use cases of lodash in Node.js
+  query: lodash tutorial node
+- url: https://dev.to/webjoe/getting-started-with-lodash-a-beginners-guide-to-javascript-utility-functions-386h
+  title: 'Getting Started with Lodash: A Beginner''s Guide to JavaScript Utility Functions
+    - DEV Community'
+  query: lodash tutorial node
+- url: https://medium.com/jspoint/making-cli-app-with-ease-using-commander-js-and-inquirer-js-f3bbd52977ac
+  title: Making CLI app with ease using commander.js and Inquirer.js | by Uday Hiwarale
+    | JsPoint | Medium
+  query: commander.js cli tutorial
+- url: https://blog.logrocket.com/building-typescript-cli-node-js-commander
+  title: Building a TypeScript CLI with Node.js and Commander - LogRocket Blog
+  query: commander.js cli tutorial
+- url: https://korzio.medium.com/node-cli-with-commander-and-inquirer-3eacc0086e7c
+  title: Medium
+  query: commander.js cli tutorial
+- url: https://medium.com/@itsbetma/nodejs-cli-with-commander-js-4a3dda486e9e
+  title: NodeJS CLI with Commander.js | Medium
+  query: commander.js cli tutorial
+- url: https://www.freecodecamp.org/news/nodejs-tutorial-build-a-task-manager-cli-tool
+  title: How to Build a Task Manager CLI Tool with Node.js
+  query: commander.js cli tutorial
+- url: https://www.sitepoint.com/javascript-command-line-interface-cli-node-js
+  title: Build a JavaScript Command Line Interface (CLI) with Node.js — SitePoint
+  query: commander.js cli tutorial
+- url: https://medium.com/@kunalkhandekar.dev/cron-jobs-explained-automate-tasks-like-a-pro-6faae1989c48
+  title: 'Cron Jobs Explained: Automate Tasks Like a Pro | by Kunalkhandekar | Medium'
+  query: node-cron tutorial
+- url: https://www.freecodecamp.org/news/schedule-a-job-in-node-with-nodecron
+  title: How to Schedule a Job in Node Using node-cron
+  query: node-cron tutorial
+- url: https://medium.com/@vaishnavihole1/cron-jobs-in-node-js-8666babf787b
+  title: Cron Jobs in Node JS. Firstly let’s explore what is Cron Job | by Vaishnavihole
+    | Medium
+  query: node-cron tutorial
+- url: https://blog.logrocket.com/task-scheduling-or-cron-jobs-in-node-using-node-cron
+  title: Scheduling tasks in Node.js using node-cron - LogRocket Blog
+  query: node-cron tutorial
+- url: https://dev.to/evanloria4/node-cron-automation-in-nodejs-4949
+  title: 'node-cron: Automation in node.js - DEV Community'
+  query: node-cron tutorial
+- url: https://dev.to/sojida/automating-tasks-with-cron-jobs-in-nodejs-52e0
+  title: Automating Tasks with Cron Jobs in Node.js - DEV Community
+  query: node-cron tutorial
+- url: https://www.geeksforgeeks.org/node-js/node-js-npm-uuid
+  title: Node.js NPM uuid - GeeksforGeeks
+  query: uuid npm tutorial
+- url: https://dev.to/smpnjn/creating-and-generating-uuids-with-javascript-4p46
+  title: Creating and Generating UUIDs with Javascript - DEV Community
+  query: uuid npm tutorial
+- url: https://dev.to/_d7eb1c1703182e3ce1782/how-to-generate-uuids-in-javascript-and-nodejs-complete-guide-4ono
+  title: 'How to Generate UUIDs in JavaScript and Node.js: Complete Guide - DEV Community'
+  query: uuid npm tutorial
+- url: https://www.geeksforgeeks.org/node-js/node-js-crypto-randomuuid-function
+  title: Node.js crypto.randomUUID( ) Function - GeeksforGeeks
+  query: uuid npm tutorial
+- url: https://www.geeksforgeeks.org/node-js/how-to-generate-unique-id-with-node-js
+  title: How to generate unique ID with node.js?
+  query: uuid npm tutorial
+- url: https://medium.com/@dinesharney/understanding-uuid-v4-uuid-v7-snowflake-id-and-nano-id-in-simple-terms-c50acf185b00
+  title: Understanding UUID v4, UUID v7, Snowflake ID, and Nano ID, GUID, ULID, KSUID
+    — In Simple Terms | by Dinesh Arney | Medium
+  query: uuid npm tutorial
+- url: https://www.freecodecamp.org/news/the-ultimate-guide-to-javascript-date-and-moment-js
+  title: The Ultimate Guide to JavaScript Date and Moment.js
+  query: moment js date format tutorial
+- url: https://www.geeksforgeeks.org/javascript/moment-js-introduction
+  title: Moment.js Introduction - GeeksforGeeks
+  query: moment js date format tutorial
+- url: https://www.sitepoint.com/managing-dates-times-using-moment-js
+  title: Managing Dates and Times Using Moment.js — SitePoint
+  query: moment js date format tutorial
+- url: https://medium.com/@expertappdevs/moment-js-a-javascript-library-for-working-with-dates-and-times-e1bca683ad5c
+  title: 'Moment.js: A JavaScript Library for Working with Dates and Times | by Expert
+    App Devs | Medium'
+  query: moment js date format tutorial
+- url: https://blog.logrocket.com/master-javascript-date-time-moment-js-temporal
+  title: 'Master JavaScript date and time: From Moment.js to Temporal - LogRocket
+    Blog'
+  query: moment js date format tutorial
+- url: https://habtesoft.medium.com/8-ways-of-date-formatting-in-javascript-1380625a1f50
+  title: Medium
+  query: moment js date format tutorial
+- url: https://www.javascripttutorial.net/express-tutorial/express-middleware
+  title: Understanding Express Middleware
+  query: express middleware tutorial
+- url: https://medium.com/@hk.iit.949.hk/understanding-express-middleware-and-route-handlers-in-node-js-40536917b61b
+  title: Understanding Express Middleware and Route Handlers in Node.js | by Himanshu
+    | Medium
+  query: express middleware tutorial
+- url: https://mahmoud-kassem.medium.com/the-2024-guide-to-using-middleware-for-data-validation-in-node-js-express-api-c86590d0ddec
+  title: The 2024 Guide to Using Middleware for Data Validation in Node.js Express
+    API | by Mahmoud Kassem | Medium
+  query: express middleware tutorial
+- url: https://auth0.com/blog/express-validator-tutorial
+  title: Express Validator Tutorial
+  query: express middleware tutorial
+- url: https://www.geeksforgeeks.org/node-js/what-is-express-session-middleware-in-express
+  title: Express-session Middleware - GeeksforGeeks
+  query: express middleware tutorial
+- url: https://medium.com/unlearninglabs/how-to-code-your-own-event-emitter-in-node-js-a-step-by-step-guide-e13b7e7908e1
+  title: 'How to code your own event emitter in Node.js: a step-by-step guide'
+  query: node.js events emitter tutorial
+- url: https://www.freecodecamp.org/news/how-to-code-your-own-event-emitter-in-node-js-a-step-by-step-guide-e13b7e7908e1
+  title: 'How to code your own event emitter in Node.js: a step-by-step guide'
+  query: node.js events emitter tutorial
+- url: https://dev.to/ditikrushna/events-and-event-emitter-in-node-js-2ek5
+  title: Events and Event Emitter in Node.js  - DEV Community
+  query: node.js events emitter tutorial
+- url: https://medium.com/@ipenywis/node-js-working-with-events-and-event-emitter-03-2efedde1268d
+  title: Node.js Working With Events and Event Emitter 03
+  query: node.js events emitter tutorial
+- url: https://www.w3schools.com/nodejs/nodejs_events.asp
+  title: Node.js Events
+  query: node.js events emitter tutorial
+- url: https://www.javascripttutorial.net/nodejs-tutorial/nodejs-path-module
+  title: Node.js Path Module
+  query: node.js path module tutorial
+- url: https://www.geeksforgeeks.org/node-js/nodejs-path-module
+  title: Node.js Path Module - GeeksforGeeks
+  query: node.js path module tutorial
+- url: https://www.geeksforgeeks.org/node-js/node-js-path-module-complete-reference
+  title: Node.js Path Module Complete Reference - GeeksforGeeks
+  query: node.js path module tutorial
+- url: https://www.w3schools.com/nodejs/default.asp
+  title: Node.js Tutorial
+  query: node.js path module tutorial
+- url: https://dev.to/christopherkade/building-a-cli-with-yargs-ip8
+  title: Building a CLI with Yargs - DEV Community
+  query: yargs cli tutorial
+- url: https://medium.com/@zaiste/modern-node-js-command-line-applications-or-cli-with-yargs-264f27d39276
+  title: 'Modern Node.js: Command Line Applications (or CLI) with yargs'
+  query: yargs cli tutorial
+- url: https://dev.to/brense/publishing-a-nodejs-cli-tool-to-npm-5f2m
+  title: Publishing a NodeJS CLI tool to NPM - DEV Community
+  query: yargs cli tutorial
+- url: https://medium.com/@manavshrivastava/lets-build-a-cli-command-line-interface-with-node-js-d3b5faacc5ea
+  title: Let’s Build a CLI | Command Line Interface with Node.js | by Manav Shrivastava
+    | Medium
+  query: yargs cli tutorial
+- url: https://dev.to/rushankhan1/build-a-cli-with-node-js-4jbi
+  title: Build a CLI with Node.js - DEV Community
+  query: yargs cli tutorial
+- url: https://www.geeksforgeeks.org/node-js/node-js-yargs-module
+  title: Node.js Yargs Module - GeeksforGeeks
+  query: yargs cli tutorial

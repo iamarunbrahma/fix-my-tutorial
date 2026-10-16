@@ -1,0 +1,173 @@
+/* Site styles: Tailwind v4 + Basecoat (the shadcn/ui design system for plain HTML), Geist fonts.
+   Build with `npm run build` in this folder; the output is committed to src/fixmytutorial/web/static/app.css. */
+@import "tailwindcss";
+@import "basecoat-css";
+
+@source "../src/fixmytutorial/web/templates";
+@source "../src/fixmytutorial/web/static/run.js";
+
+@font-face {
+  font-family: "Geist Sans";
+  src: url("/static/fonts/Geist-Variable.woff2") format("woff2");
+  font-weight: 100 900;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "Geist Mono";
+  src: url("/static/fonts/GeistMono-Variable.woff2") format("woff2");
+  font-weight: 100 900;
+  font-style: normal;
+  font-display: swap;
+}
+
+@layer base {
+  [hidden] {
+    display: none !important;
+  }
+
+  html {
+    @apply motion-safe:scroll-smooth;
+  }
+
+  body {
+    @apply bg-background text-foreground font-sans antialiased;
+    font-feature-settings: "ss01", "cv11";
+  }
+
+  ::selection {
+    @apply bg-foreground text-background;
+  }
+}
+
+@layer components {
+  .container-page {
+    @apply mx-auto w-full max-w-6xl px-4 sm:px-6;
+  }
+
+  .eyebrow {
+    @apply text-muted-foreground text-sm font-medium;
+  }
+
+  .page-title {
+    @apply text-3xl font-semibold tracking-tight text-balance sm:text-4xl;
+  }
+
+  .lead {
+    @apply text-muted-foreground text-base text-pretty sm:text-lg;
+  }
+
+  .section-title {
+    @apply text-xl font-semibold tracking-tight;
+  }
+
+  /* A step's status, a run's verdict: one small pill with a colour per state. */
+  .status {
+    @apply inline-flex shrink-0 items-center gap-1.5 rounded-full px-2 py-0.5 text-xs font-medium ring-1 ring-inset;
+    @apply bg-muted text-muted-foreground ring-border;
+  }
+
+  .status::before {
+    content: "";
+    @apply size-1.5 rounded-full bg-current;
+  }
+
+  .status[data-status="running"],
+  .status[data-status="replaying"] {
+    @apply bg-sky-500/10 text-sky-700 ring-sky-500/25 dark:text-sky-300;
+  }
+
+  .status[data-status="running"]::before,
+  .status[data-status="repairing"]::before {
+    @apply animate-pulse;
+  }
+
+  .status[data-status="passed"],
+  .status[data-status="still_works"] {
+    @apply bg-emerald-500/10 text-emerald-700 ring-emerald-500/25 dark:text-emerald-300;
+  }
+
+  .status[data-status="repaired"],
+  .status[data-status="fixed"] {
+    @apply bg-violet-500/10 text-violet-700 ring-violet-500/25 dark:text-violet-300;
+  }
+
+  .status[data-status="repairing"] {
+    @apply bg-amber-500/10 text-amber-700 ring-amber-500/25 dark:text-amber-300;
+  }
+
+  .status[data-status="failed"],
+  .status[data-status="could_not_fix"],
+  .status[data-status="error"] {
+    @apply bg-red-500/10 text-red-700 ring-red-500/25 dark:text-red-300;
+  }
+
+  /* Code and command output. */
+  .term {
+    @apply bg-muted/50 text-foreground max-h-96 overflow-auto rounded-lg border p-4 font-mono text-[13px] leading-relaxed break-words whitespace-pre-wrap;
+  }
+
+  .term:empty {
+    @apply hidden;
+  }
+
+  .diff {
+    @apply bg-muted/40 overflow-x-auto rounded-lg border py-2 font-mono text-[13px] leading-relaxed;
+  }
+
+  .diff > div {
+    @apply px-4 whitespace-pre-wrap break-words;
+  }
+
+  .diff > .add {
+    @apply bg-emerald-500/10 text-emerald-800 dark:text-emerald-200;
+  }
+
+  .diff > .del {
+    @apply bg-red-500/10 text-red-800 line-through decoration-red-500/40 dark:text-red-200;
+  }
+
+  .diff > .hunk {
+    @apply text-muted-foreground;
+  }
+
+  /* Cited evidence: a link and the quoted passage. */
+  .source {
+    @apply min-w-0 border-l-2 py-1 pl-4 [overflow-wrap:anywhere];
+  }
+
+  .source > a {
+    @apply text-sm font-medium underline-offset-4 hover:underline;
+  }
+
+  .source > q {
+    @apply text-muted-foreground mt-1 block text-sm leading-relaxed;
+  }
+
+  /* One step in the live run list. */
+  .step {
+    @apply hover:bg-muted/60 flex w-full min-w-0 items-center gap-3 rounded-md px-3 py-2.5 text-left text-sm transition-colors;
+  }
+
+  .step[aria-current="true"] {
+    @apply bg-muted;
+  }
+
+  /* A candidate fix in the repair race. */
+  .candidate {
+    @apply bg-card flex flex-col gap-2 rounded-lg border p-4 text-sm transition-shadow;
+  }
+
+  .candidate[data-result="failed"] {
+    @apply opacity-60;
+  }
+
+  .candidate[data-result="passed"] {
+    @apply border-emerald-500/40;
+  }
+
+  .candidate[data-result="winner"] {
+    @apply border-emerald-500 ring-2 ring-emerald-500/30;
+  }
+}
