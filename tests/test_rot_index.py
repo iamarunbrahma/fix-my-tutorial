@@ -110,3 +110,12 @@ def test_break_stats():
     assert s["releases"][1]["package"] == "numpy" and s["already_out_of_date"] == 1
     assert s["median_months"] == 13  # 13, 24 and 6 months
     assert break_stats(entries[:2])["median_months"] is None  # too few to say
+
+
+def test_batch_slices_rotate_through_topics_and_skip_finished_tutorials():
+    from fixmytutorial.rot_index import pick_entries
+    entries = [{"url": f"https://{t}{i}", "topic": t} for t in ("pandas", "jest", "numpy") for i in range(3)]
+    picked = pick_entries(entries, done={"https://pandas0"}, force=False, limit=4)
+    assert [e["url"] for e in picked] == ["https://pandas1", "https://jest0", "https://numpy0", "https://pandas2"]
+    assert len(pick_entries(entries, done=set(), force=False, limit=None)) == 9
+    assert pick_entries(entries, done={"https://pandas0"}, force=True, limit=1)[0]["url"] == "https://pandas0"
