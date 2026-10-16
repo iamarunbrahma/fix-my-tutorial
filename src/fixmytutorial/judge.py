@@ -39,28 +39,55 @@ class Judge:
             # the code ran but the output isn't the page's text exactly: a renamed heading or a different dict order
             # is not a break, so the lenient judge compares it with what the tutorial shows
             shown = "\n".join(step.expect.stdout_contains)[:1500]
-            user = (f"Expected outcome: output like this, as the tutorial shows it:\n{shown}\n\n"
-                    f"Code:\n{step.content[:2000]}\n\nActual output (last 3000 characters):\n{stdout[-3000:]}")
+            user = (
+                f"Expected outcome: output like this, as the tutorial shows it:\n{shown}\n\n"
+                f"Code:\n{step.content[:2000]}\n\nActual output (last 3000 characters):\n{stdout[-3000:]}"
+            )
             try:
-                return await self.llm.call("judge", JUDGE_SYSTEM, user, Judgement, run_id=run_id, public=public,
-                                           max_tokens=300, temperature=0)
+                return await self.llm.call(
+                    "judge",
+                    JUDGE_SYSTEM,
+                    user,
+                    Judgement,
+                    run_id=run_id,
+                    public=public,
+                    max_tokens=300,
+                    temperature=0,
+                )
             except BudgetExceeded:
                 raise
             except Exception:
                 return Judgement(passed=False, reason="expected output not found")
         if d is not None:
-            reason = "" if d else (f"exit code {exit_code}" if exit_code != step.expect.exit_code
-                                   else "expected output not found")
+            reason = (
+                ""
+                if d
+                else (
+                    f"exit code {exit_code}"
+                    if exit_code != step.expect.exit_code
+                    else "expected output not found"
+                )
+            )
             return Judgement(passed=d, reason=reason)
         if STUB_MARKER in stdout:  # model text is a placeholder, so only "the API call worked" can be checked
             return Judgement(passed=True, reason="reached the stand-in API")
         if self.llm is None:
             return Judgement(passed=True, reason="exit code 0")
-        user = (f"Expected outcome: {step.expect.description}\n\nCode:\n{step.content[:2000]}\n\n"
-                f"Actual output (last 3000 characters):\n{stdout[-3000:]}")
+        user = (
+            f"Expected outcome: {step.expect.description}\n\nCode:\n{step.content[:2000]}\n\n"
+            f"Actual output (last 3000 characters):\n{stdout[-3000:]}"
+        )
         try:
-            return await self.llm.call("judge", JUDGE_SYSTEM, user, Judgement, run_id=run_id, public=public,
-                                       max_tokens=300, temperature=0)
+            return await self.llm.call(
+                "judge",
+                JUDGE_SYSTEM,
+                user,
+                Judgement,
+                run_id=run_id,
+                public=public,
+                max_tokens=300,
+                temperature=0,
+            )
         except BudgetExceeded:
             raise
         except Exception:
