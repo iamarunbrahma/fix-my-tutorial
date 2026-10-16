@@ -3,6 +3,7 @@
 Run any coding tutorial, find what broke, and fix it with sources you can check.
 
 [![Live demo](https://img.shields.io/badge/live%20demo-fix--my--tutorial.onrender.com-8b5cf6)](https://fix-my-tutorial.onrender.com)
+[![Demo video](https://img.shields.io/badge/demo%20video-YouTube%202%3A38-ff0000?logo=youtube&logoColor=white)](https://youtu.be/SwJhk6Onl38)
 [![CI](https://github.com/iamarunbrahma/fix-my-tutorial/actions/workflows/ci.yml/badge.svg)](https://github.com/iamarunbrahma/fix-my-tutorial/actions/workflows/ci.yml)
 [![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 [![Python 3.12](https://img.shields.io/badge/python-3.12-3776ab?logo=python&logoColor=white)](pyproject.toml)
@@ -11,7 +12,7 @@ Run any coding tutorial, find what broke, and fix it with sources you can check.
 [![Tavily](https://img.shields.io/badge/sources-Tavily-0f766e)](#tavily)
 [![Devpost](https://img.shields.io/badge/Devpost-Nebius%20x%20NVIDIA%20Global%20AI%20Hackathon-003e54?logo=devpost&logoColor=white)](https://nebiusglobalaihackathon.devpost.com/)
 
-**Try it: [fix-my-tutorial.onrender.com](https://fix-my-tutorial.onrender.com)**. Every step runs in a Nebius Token Factory Sandbox, and the models are NVIDIA Nemotron on Nebius Token Factory.
+**Try it: [fix-my-tutorial.onrender.com](https://fix-my-tutorial.onrender.com)** · **Watch the 2:38 demo: [youtu.be/SwJhk6Onl38](https://youtu.be/SwJhk6Onl38)**. Every step runs in a Nebius Token Factory Sandbox, and the models are NVIDIA Nemotron on Nebius Token Factory.
 
 ![Two fixes racing in parallel sandboxes on a 2016 TensorFlow tutorial; the migration to TensorFlow 2 wins](docs/images/03-fixes-race.jpg)
 
