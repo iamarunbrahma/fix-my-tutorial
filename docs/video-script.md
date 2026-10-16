@@ -45,9 +45,14 @@ Every number spoken below must be real and reproducible:
 | 12 | Eval table, 13 of 13 highlighted |
 | 13 | Home page again, URL, end card |
 
+> **16 Oct 2026, as recorded:** the demo run is the TensorFlow-Examples "Hello World" notebook (2016), per Arun's
+> ask for old blogs. Beat 9 drops the break date (no source states the exact TensorFlow release, and the finder
+> never guesses) and the Rot Index number (the 2013-2018 index is built tomorrow). Beat 10 says "a few cents".
+> Voice-only spelling: "Raht" so the voice says "Rot". Narration checked word by word with local Whisper.
+
 <!-- narration-start -->
 
-Here's a popular machine learning tutorial. Follow it today, and it breaks on the very first import. Not because the author got it wrong, but because the library moved on.
+Here's one of the most popular TensorFlow tutorials on GitHub, written in 2016. Follow it today, and it breaks before it can even say hello. Not because the author got it wrong, but because the library moved on.
 
 ---
 
@@ -55,19 +60,19 @@ This happens so often that NVIDIA's own OpenShell repo has an open issue called 
 
 ---
 
-So I built Fix My Tutorial. Paste any Python or JavaScript tutorial, and it checks whether it still works today, and if not, fixes it.
+So I made Fix My Tutorial. Paste any Python or JavaScript tutorial. It checks whether the tutorial still works today, and if it doesn't, it fixes it.
 
 ---
 
-Nemotron 3 Super reads the page and turns it into steps, keeping the code exactly as written. Each step runs in an isolated sandbox, with a checkpoint saved after every step.
+Nemotron 3 Super reads the page and turns it into steps, keeping the code exactly as written. Each step runs in a Nebius Token Factory Sandbox, with a checkpoint saved after every step.
 
 ---
 
-Here, the import fails. Nemotron 3.5 Lightning reads the error and works out what kind of break it is: a function that was removed.
+Here, creating the session fails. Nemotron 3.5 Lightning reads the error and works out what kind of break it is: an API that was removed.
 
 ---
 
-Then Tavily searches the docs and release notes, and pulls out the exact passage that explains it, so every fix has a source you can check.
+Then Tavilee searches the docs and release notes, and pulls out the exact passage that explains it, so every fix has a source you can check.
 
 ---
 
@@ -79,15 +84,15 @@ Then the whole tutorial is replayed from scratch. Only if that passes do we call
 
 ---
 
-You get a report with the exact change, the reason and the source behind it, and when it broke: WHEN_STAT. One click sends the fix to the tutorial's author as a GitHub issue. Across our Rot Index of real tutorials, ROT_INDEX_STAT.
+You get a report with the exact change, the reason and the source behind it. One click opens a GitHub issue for the tutorial's author, already filled in.
 
 ---
 
-Under the hood, four Nemotron models share the work through one Nebius Token Factory API. The big model only runs when something is actually broken, so a typical fix costs about a cent and takes about a minute.
+Under the hood, four Nemotron models share the work through one Nebius Token Factory API. The big model only runs when something is actually broken, so a typical fix costs just a few cents.
 
 ---
 
-Checkpoints and parallel branches let several fixes race at once, and a spend guard keeps every run inside its budget.
+Sandbox checkpoints and branches let several fixes race at once, and a spending guard keeps every run inside its budget.
 
 ---
 
@@ -96,8 +101,6 @@ On our live test set of thirteen tutorials broken by real library changes, it fi
 ---
 
 For learners, it means the tutorial finally works. For the people who write docs, it means knowing the day a tutorial breaks. Try it on the one that broke for you.
-
----
 
 ## Changes for the 2026-10-15 features (beat 9 approved by Arun on 2026-10-16 and applied above)
 
