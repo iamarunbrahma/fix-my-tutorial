@@ -298,3 +298,13 @@ def test_steps_are_expected_to_succeed_never_to_fail():
     assert [s.expect.exit_code for s in plan.steps] == [0, 0]
     assert plan.steps[0].expect.description is None  # a predicted failure is not what the tutorial intends
     assert plan.steps[1].expect.description == "prints the class counts"
+
+
+def test_expectations_about_pictures_are_dropped():
+    out = PlannerOutput.model_validate(json.loads(planner_json([
+        {"id": "a", "title": "t", "kind": "run_code", "content": "plt.plot(x)",
+         "expect": {"description": "Displays a line plot of the data"}},
+        {"id": "b", "title": "t", "kind": "run_code", "content": "df.head()",
+         "expect": {"description": "shows the first five rows"}}])))
+    plan = normalize_plan(out, 40)
+    assert plan.steps[0].expect.description is None and plan.steps[1].expect.description == "shows the first five rows"

@@ -21,6 +21,7 @@ from .models import (
     Step,
 )
 from .judge import squash
+from .llm import LLMOutputError
 from .planner import default_probe, safe_path
 from .prompts import REPAIR_SYSTEM
 from .triage import failure_output, key_line
@@ -170,16 +171,21 @@ class Repairer:
         self, *, plan, failing_step_id, output, signature, evidence, versions, attempts, run_id, public
     ) -> list[Candidate]:
         user = _render_context(plan, failing_step_id, output, signature, evidence, versions, attempts)
-        prop = await self.llm.call(
-            "repair",
-            REPAIR_SYSTEM,
-            user,
-            RepairProposal,
-            run_id=run_id,
-            public=public,
-            max_tokens=6000,
-            temperature=0.3,
-        )
+        try:
+            prop = await self.llm.call(
+                "repair",
+                REPAIR_SYSTEM,
+                user,
+                RepairProposal,
+                run_id=run_id,
+                public=public,
+                max_tokens=9000,
+                temperature=0.3,
+            )
+        except LLMOutputError:  # a cut-off or malformed answer costs this round, not the whole run
+            attempts.append({"strategy": "(none)", "edits": [],
+                             "error": "your previous answer was cut off or was not valid JSON: send fewer, shorter edits"})
+            return []
         ids = {e.id for e in evidence}
         valid = []
         for c in prop.candidates[: self.s.candidates_per_round]:
