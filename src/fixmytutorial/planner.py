@@ -4,6 +4,7 @@ import re
 
 from .executor import INSTALL_RE
 from .judge import squash
+from .llm import LLMOutputError
 from .models import PlannerOutput, Probe, RunPlan, Step, TutorialDoc
 from .prompts import PLANNER_SYSTEM
 
@@ -96,8 +97,12 @@ async def plan_tutorial(doc: TutorialDoc, llm, settings, *, run_id: str, public:
         return RunPlan(language="python", runtime=RUNTIMES["python"], runnable=False,
                        not_runnable_reason="No code found on that page.", steps=[])
     user = render_planner_input(doc, settings.max_tutorial_chars)
-    out = await llm.call("planner", PLANNER_SYSTEM, user, PlannerOutput, run_id=run_id, public=public,
-                         max_tokens=12000, temperature=0.1)
+    try:
+        out = await llm.call("planner", PLANNER_SYSTEM, user, PlannerOutput, run_id=run_id, public=public,
+                             max_tokens=12000, temperature=0.1)
+    except LLMOutputError:  # now and then the answer runs on until it is cut off: one fresh, compact try
+        out = await llm.call("planner", PLANNER_SYSTEM, f"{user}\n\n{COMPACT}", PlannerOutput, run_id=run_id,
+                             public=public, max_tokens=12000, temperature=0.0)
     if not out.runnable and _skipped_for_plots(doc, out.not_runnable_reason):  # charts run headless: ask again
         retry = (f"{user}\n\n=== CHECK ===\nYou set runnable=false because of plots ({out.not_runnable_reason}). "
                  "The sandbox is headless with a non-interactive backend: plt.show() simply returns and figures "
@@ -133,6 +138,8 @@ async def plan_tutorial(doc: TutorialDoc, llm, settings, *, run_id: str, public:
     return plan
 
 
+COMPACT = ("Reply with compact JSON only: no reasoning text, keep each source_excerpt under 200 characters, and do "
+           "not repeat yourself.")
 PREDICTED_FAILURE = re.compile(r"\b(fail|fails|failing|error|exception|crash|raises?|traceback)\b", re.I)
 VISUAL = re.compile(r"\b(plot|plots|plotted|chart|graph|figure|histogram|scatter|heatmap|image|visuali[sz]ation|"
                     r"legend|axes|line plot|bar plot|pie)\b", re.I)

@@ -2,7 +2,8 @@
 
 > Look and voice approved by Arun on 2026-10-15: keynote style (black background, smooth motion, zoom-punches
 > into the live UI, royalty-free music ducked under the voice, no narration repeated as on-screen text, nothing
-> personal on screen). Voice: Sarvam `bulbul:v3`, speaker `ashutosh`, pace about 1.1.
+> personal on screen). Voice (changed by Arun on 2026-10-16): Sarvam `bulbul:v4-flash`, speaker
+> `shubh_en_narration`, pace about 1.1.
 >
 > Hard ceiling **3:00**. This draft targets about **2:40** at the 190 words per minute measured on the last cut.
 >
@@ -78,7 +79,7 @@ Then the whole tutorial is replayed from scratch. Only if that passes do we call
 
 ---
 
-You get a report with the exact change, the reason, and the source behind it, plus a badge authors can put on their page. Across our Rot Index of real tutorials, ROT_INDEX_STAT.
+You get a report with the exact change, the reason and the source behind it, and when it broke: WHEN_STAT. One click sends the fix to the tutorial's author as a GitHub issue. Across our Rot Index of real tutorials, ROT_INDEX_STAT.
 
 ---
 
@@ -98,7 +99,7 @@ For learners, it means the tutorial finally works. For the people who write docs
 
 ---
 
-## Proposed changes for the 2026-10-15 features (NOT approved yet: show Arun before recording)
+## Changes for the 2026-10-15 features (beat 9 approved by Arun on 2026-10-16 and applied above)
 
 Beat 9, replacing the current line (about 6 seconds longer, still under 3:00):
 

@@ -308,3 +308,12 @@ def test_expectations_about_pictures_are_dropped():
          "expect": {"description": "shows the first five rows"}}])))
     plan = normalize_plan(out, 40)
     assert plan.steps[0].expect.description is None and plan.steps[1].expect.description == "shows the first five rows"
+
+
+async def test_a_runaway_planner_answer_gets_one_fresh_compact_try(settings, tmp_path):
+    runaway = '{"language": "python", "runnable": true, "steps": [{"id": "a", "title": "' + "x" * 50
+    client = FakeChatClient([runaway, runaway, FULL])
+    llm = LLM(settings, Ledger(tmp_path / "l.db", settings), client=client)
+    plan = await plan_tutorial(PANDAS_DOC, llm, settings, run_id="r", public=True)
+    assert plan.runnable and len(client.calls) == 3
+    assert "compact" in client.calls[2]["messages"][1]["content"]
