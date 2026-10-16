@@ -29,10 +29,9 @@ def safe_path(path: str | None) -> str | None:
 def default_probe(content: str, language: str) -> Probe:
     """The port a server command listens on: an explicit port, else the framework's default."""
     m = PORT_RE.search(content)
-    if m:
-        return Probe(port=int(m.group(1)))
-    port = next((p for rx, p in FRAMEWORK_PORTS if rx.search(content)), 8000 if language == "python" else 3000)
-    return Probe(port=port)
+    port = int(m.group(1)) if m else next((p for rx, p in FRAMEWORK_PORTS if rx.search(content)),
+                                          8000 if language == "python" else 3000)
+    return Probe(port=port, expect_status=0)  # no URL from the tutorial: any answer means it is up
 
 
 def render_planner_input(doc: TutorialDoc, max_chars: int) -> str:

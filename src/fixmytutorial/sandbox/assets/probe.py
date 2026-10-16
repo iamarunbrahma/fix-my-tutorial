@@ -1,4 +1,4 @@
-"""Wait for a local server and check one URL. Exit 0 when the status matches."""
+"""Wait for a local server and check one URL. Exit 0 when the status matches (--status 0: any answer below 500)."""
 import argparse
 import sys
 import time
@@ -20,7 +20,7 @@ while time.time() < deadline:
     except Exception:
         time.sleep(0.5)
         continue
-    print(f"probe: GET {a.path} -> {code} (expected {a.status})")
-    sys.exit(0 if code == a.status else 1)
+    print(f"probe: GET {a.path} -> {code} (expected {a.status or 'any answer'})")
+    sys.exit(0 if (code < 500 if a.status == 0 else code == a.status) else 1)
 print(f"probe: no server answered on port {a.port} within {a.wait:.0f}s")
 sys.exit(1)

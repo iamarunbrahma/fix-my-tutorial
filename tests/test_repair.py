@@ -201,6 +201,7 @@ def test_server_ports_default_to_the_framework_default():
     assert default_probe("uvicorn main:app --reload", "python").port == 8000
     assert default_probe("npm run dev", "javascript").port == 3000
     assert default_probe("python app.py --port 7000", "python").port == 7000
+    assert default_probe("node index.js", "javascript").expect_status == 0  # no URL from the tutorial: any answer
 
 
 async def test_a_fix_passes_when_its_cell_passes_even_if_a_later_cell_breaks(settings, tmp_path):
