@@ -286,3 +286,15 @@ async def test_a_real_gui_tutorial_is_not_asked_again(settings, tmp_path):
     llm = LLM(settings, Ledger(tmp_path / "l.db", settings), client=client)
     plan = await plan_tutorial(gui, llm, settings, run_id="r", public=True)
     assert len(client.calls) == 1 and not plan.runnable
+
+
+def test_steps_are_expected_to_succeed_never_to_fail():
+    out = PlannerOutput.model_validate(json.loads(planner_json([
+        {"id": "a", "title": "t", "kind": "run_code", "content": "print(1)",
+         "expect": {"exit_code": 1, "description": "The code will fail due to a missing import of numpy (np)."}},
+        {"id": "b", "title": "t", "kind": "run_code", "content": "print(2)",
+         "expect": {"exit_code": 0, "description": "prints the class counts"}}])))
+    plan = normalize_plan(out, 40)
+    assert [s.expect.exit_code for s in plan.steps] == [0, 0]
+    assert plan.steps[0].expect.description is None  # a predicted failure is not what the tutorial intends
+    assert plan.steps[1].expect.description == "prints the class counts"

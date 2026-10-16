@@ -70,6 +70,11 @@ def normalize_plan(out: PlannerOutput, max_steps: int = 40, source_text: str | N
             s.content = _unflatten(s.content, shown)
         if shown is not None:  # only literals the tutorial actually shows may gate a step
             s.expect.stdout_contains = [x for x in s.expect.stdout_contains if squash(x) and squash(x) in shown]
+        # A step is expected to do what the tutorial intends. A planner that predicts the breakage ("exit 1, it will
+        # fail because...") would make every working fix look wrong.
+        s.expect.exit_code = 0
+        if s.expect.description and PREDICTED_FAILURE.search(s.expect.description):
+            s.expect.description = None
         s.source_excerpt = s.source_excerpt[:1200]
         steps.append(s)
     note, truncated = "", len(steps) > max_steps
@@ -127,6 +132,7 @@ async def plan_tutorial(doc: TutorialDoc, llm, settings, *, run_id: str, public:
     return plan
 
 
+PREDICTED_FAILURE = re.compile(r"\b(fail|fails|failing|error|exception|crash|raises?|traceback)\b", re.I)
 PLOT_LIBS = re.compile(r"\b(matplotlib|seaborn|plotly|pyplot|plt\.)")
 PLOT_REASON = re.compile(r"show\(|plot|chart|figure|display|gui|headless|window|graphic", re.I)
 

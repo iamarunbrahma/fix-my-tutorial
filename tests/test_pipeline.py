@@ -313,3 +313,25 @@ async def test_the_break_finder_can_be_switched_off(settings, tmp_path):
     ref["b"] = backend
     rec = await p.run(new_record(), Source(markdown=MD))
     assert rec.verdict == Verdict.FIXED and rec.broke_in is None
+
+
+async def test_two_breaks_in_one_cell_group_are_both_repaired(settings, tmp_path):
+    plan = json.dumps({"language": "python", "runnable": True, "steps": [
+        {"id": "a", "title": "Install pandas", "kind": "shell", "content": "pip install pandas"},
+        {"id": "b", "title": "Make frame", "kind": "run_code", "content": "import pandas as pd\ndf = pd.DataFrame()"},
+        {"id": "c", "title": "Append a row", "kind": "run_code", "content": "df = df.append({'a': 1}, ignore_index=True)"},
+        {"id": "d", "title": "Loop", "kind": "run_code", "content": "for k, v in df.iteritems():\n    print(k)"}]})
+    md = MD + "\n```python\nfor k, v in df.iteritems():\n    print(k)\n```\n"
+    sig2 = json.dumps({"category": "removed_api", "error_type": "AttributeError", "package": "pandas",
+                       "symbol": "DataFrame.iteritems", "key_line": "AttributeError: 'DataFrame' object has no attribute 'iteritems'",
+                       "search_queries": ["pandas iteritems removed"]})
+    fix2 = json.dumps({"candidates": [{"strategy": "migrate", "rationale": "use items", "edits": [
+        {"op": "replace", "step_id": "s4", "new_content": "for k, v in df.items():\n    print(k)",
+         "reason": "pandas 2.0 removed iteritems", "evidence_ids": ["r2e1"]}]}]})
+    p, store, _, _ = build(settings, tmp_path, {
+        settings.model_planner: [plan, SUMMARY], settings.model_triage: [SIG, sig2], settings.model_repair: [FIX, fix2]},
+        handler=cells_handler(fail_cell=lambda c: "df.append(" in c["code"] or "iteritems" in c["code"]))
+    rec = await p.run(new_record(), Source(markdown=md))
+    assert rec.verdict == Verdict.FIXED and [r.step_id for r in rec.repairs] == ["s3", "s4"]
+    final = {s.id: s.content for s in rec.final_plan.steps}
+    assert "pd.concat" in final["s3"] and "df.items()" in final["s4"]

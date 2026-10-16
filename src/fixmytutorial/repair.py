@@ -213,7 +213,9 @@ class Repairer:
                 public=public,
                 quiet=True,
             )
-            if t.failed_unit is None:
+            # The fix is judged on its own step: a later cell of the same group breaking for another reason is the
+            # next repair, not a reason to reject this one (the final clean replay still has to pass).
+            if t.failed_unit is None or (failing_step_id in t.results and t.failing_step_id != failing_step_id):
                 return RaceResult(c, cplan, t, True, "")
             r = t.results.get(t.failing_step_id)
             return RaceResult(c, cplan, t, False, key_line(failure_output(r)) if r else t.reason)
