@@ -49,6 +49,8 @@ Shared: llm (Token Factory client + routing), ledger (spend guard),
 5. **Prove it.** The repaired tutorial is replayed from scratch before it is called fixed. The report shows the diff, the cited reasons, and a badge.
 6. **Date it.** When a package change broke the step, the failing step runs again from its checkpoint with older releases of that package: the one before a cited version, or the end of each earlier release series, then a short binary search. When older releases can't install on today's Python (pandas 1.x and NumPy before 1.26 can't on 3.12), one more Tavily search looks for the release note itself, and Nemotron 3.5 Lightning reads it. Only a version that exists on PyPI or npm and that the quote (or the release note's own address) states is accepted, and the report says which way it was found. In our runs: "Broke in chalk 5.0.0, released 26 Nov 2021. chalk 4.1.2 still runs this step, and 5.0.0 fails the same way." and "Broke in pandas 2.0.0, released 3 Apr 2023, according to the cited release notes." When the page states its publish date, the report also says how long the tutorial worked.
 
+![The clean replay from scratch passed, so the run is marked Fixed](docs/images/04-fixed-after-replay.jpg)
+
 | Role | Model | Price per 1M tokens (in / out) | Why this size |
 |---|---|---|---|
 | planner | `nvidia/nemotron-3-super-120b-a12b` | $0.30 / $0.90 | Long-context reading of a whole tutorial into a strict JSON plan |
