@@ -22,7 +22,7 @@ from .models import (
 )
 from .judge import squash
 from .llm import LLMOutputError
-from .planner import default_probe, safe_path
+from .planner import default_probe, is_data_file, safe_path
 from .prompts import REPAIR_SYSTEM
 from .triage import failure_output, key_line
 
@@ -95,6 +95,12 @@ def validate_candidate(c: Candidate, plan: RunPlan, evidence_ids: set[str], cate
             return "edit changes nothing"
         if _hidden_failures(e.new_content) > _hidden_failures(old):
             return "edit hides failures"
+        target = by_id[e.step_id]
+        kind = e.new_kind or (target.kind if e.op == "replace" else None)
+        path = e.new_path or (target.path if e.op == "replace" else None)
+        own_file = e.op == "replace" and target.kind == "write_file" and target.path == path
+        if kind == "write_file" and is_data_file(path) and not own_file:
+            return "edit invents a data file"  # a fix must never stand in for data the tutorial can't get
         old_lines = [ln for ln in old.splitlines() if ln.strip()]
         if len(old_lines) >= 4 and len([ln for ln in e.new_content.splitlines() if ln.strip()]) < len(old_lines) / 2:
             return "edit removes most of the step"

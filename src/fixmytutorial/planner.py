@@ -26,6 +26,26 @@ def safe_path(path: str | None) -> str | None:
     return "/".join(parts) or None
 
 
+DATA_EXT = (".csv", ".tsv", ".xlsx", ".xls", ".parquet", ".dat", ".data", ".json", ".txt", ".xml")
+CONFIG_FILES = {"package.json", "package-lock.json", "tsconfig.json", "jsconfig.json", "requirements.txt", ".babelrc",
+                ".eslintrc.json", "composer.json"}
+URL_RE = re.compile(r"https?://[^\s'\"<>)]+")
+
+
+def is_data_file(path: str | None) -> bool:
+    name = (path or "").rsplit("/", 1)[-1].lower()
+    return name.endswith(DATA_EXT) and name not in CONFIG_FILES
+
+
+def invents_data(step: Step, shown: str) -> bool:
+    """A step the planner added that makes up data the page never shows, or downloads from a link it never gives."""
+    if step.kind == "write_file" and is_data_file(step.path) and squash(step.content) not in shown:
+        return True
+    if INSTALL_RE.search(step.content):
+        return False  # an install may name a package index (pip --index-url ...)
+    return any(u.rstrip(".,;") not in shown for u in URL_RE.findall(step.content))
+
+
 def default_probe(content: str, language: str) -> Probe:
     """The port a server command listens on: an explicit port, else the framework's default."""
     m = PORT_RE.search(content)
@@ -68,6 +88,8 @@ def normalize_plan(out: PlannerOutput, max_steps: int = 40, source_text: str | N
             s.probe = default_probe(s.content, out.language)
         if shown is not None:
             s.content = _unflatten(s.content, shown)
+        if shown is not None and s.implicit and invents_data(s, shown):
+            continue  # a stand-in file or a guessed URL would make a fake break, and then a fake fix
         if shown is not None:  # only literals the tutorial actually shows may gate a step
             s.expect.stdout_contains = [x for x in s.expect.stdout_contains if squash(x) and squash(x) in shown]
         # A step is expected to do what the tutorial intends. A planner that predicts the breakage ("exit 1, it will

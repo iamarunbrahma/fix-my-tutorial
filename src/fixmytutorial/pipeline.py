@@ -135,8 +135,8 @@ class Pipeline:
 
     @staticmethod
     def _only_restores_the_page(record: RunRecord, plan: RunPlan, doc) -> bool:
-        original = {s.id: s.content for s in record.plan.steps} if record.plan else {}
-        changed = [s for s in plan.steps if original.get(s.id) != s.content]
+        original = {s.id: (s.content, s.kind, s.path) for s in record.plan.steps} if record.plan else {}
+        changed = [s for s in plan.steps if original.get(s.id) != (s.content, s.kind, s.path)]
         page = squash("\n".join([doc.text, *(b.code for b in doc.code_blocks)]))
         return bool(changed) and all(squash(s.content) in page for s in changed)
 

@@ -338,3 +338,40 @@ async def test_a_runaway_planner_answer_gets_one_fresh_compact_try(settings, tmp
     plan = await plan_tutorial(PANDAS_DOC, llm, settings, run_id="r", public=True)
     assert plan.runnable and len(client.calls) == 3
     assert "compact" in client.calls[2]["messages"][1]["content"]
+
+
+def test_steps_the_planner_adds_never_invent_data_or_download_links():
+    # the review, 16 Oct: a guessed Zenodo URL, a made-up pokemon.csv; the page itself only reads the file
+    page = "Load the data:\n\nimport pandas as pd\ndf = pd.read_csv('pokemon.csv')\nprint(df.head())\n"
+    out = PlannerOutput.model_validate(json.loads(planner_json([
+        {"id": "a", "title": "install", "kind": "shell", "content": "pip install pandas", "implicit": True},
+        {"id": "b", "title": "get data", "kind": "shell", "implicit": True,
+         "content": "curl -L -o pokemon.csv https://zenodo.org/record/4351155/files/pokemon.csv"},
+        {"id": "c", "title": "sample", "kind": "write_file", "path": "pokemon.csv", "implicit": True,
+         "content": "Name,Attack\nBulbasaur,49\n"},
+        {"id": "d", "title": "load", "kind": "run_code",
+         "content": "import pandas as pd\ndf = pd.read_csv('pokemon.csv')\nprint(df.head())"}])))
+    plan = normalize_plan(out, 40, source_text=page)
+    assert [s.content.split()[0] for s in plan.steps] == ["pip", "import"]
+
+
+def test_a_download_the_tutorial_itself_gives_is_kept():
+    page = "Download it from https://example.org/data/iris.csv and then:\n\nimport pandas as pd\n"
+    out = PlannerOutput.model_validate(json.loads(planner_json([
+        {"id": "a", "title": "get data", "kind": "shell", "implicit": True,
+         "content": "curl -L -o iris.csv https://example.org/data/iris.csv"},
+        {"id": "b", "title": "load", "kind": "run_code", "content": "import pandas as pd"}])))
+    assert len(normalize_plan(out, 40, source_text=page).steps) == 2
+
+
+def test_an_added_install_may_name_a_package_index():
+    out = PlannerOutput.model_validate(json.loads(planner_json([
+        {"id": "a", "title": "install", "kind": "shell", "implicit": True,
+         "content": "pip install torch --index-url https://download.pytorch.org/whl/cpu"},
+        {"id": "b", "title": "use", "kind": "run_code", "content": "import torch"}])))
+    assert len(normalize_plan(out, 40, source_text="import torch\n").steps) == 2
+
+
+def test_the_planner_is_told_never_to_invent_data_or_background_processes():
+    from fixmytutorial.prompts import PLANNER_SYSTEM
+    assert "Never invent data" in PLANNER_SYSTEM and "background" in PLANNER_SYSTEM

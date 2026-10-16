@@ -233,3 +233,15 @@ async def test_an_unusable_repair_answer_costs_one_round_not_the_run(settings, t
         plan=PLAN, trace=trace, signature=SIG, evidence=EVID, versions="", run_id="r", public=True, emit=emit)
     assert win is not None and len(record.rounds) == 2 and record.rounds[0].candidates == []
     assert "cut off" in client.calls[2]["messages"][1]["content"]  # the next round is told why
+
+
+def test_validate_rejects_a_fix_that_writes_made_up_data():
+    # the review, 16 Oct: a 404 dataset "fixed" by writing 20 invented rows
+    fake = Candidate(strategy="workaround", rationale="r", edits=[Edit(
+        op="insert_after", step_id="s1", new_kind="write_file", new_path="data/well.csv",
+        new_content="NPHI,RHOB,LITH\n0.2,2.4,shale\n", reason="the dataset is gone", evidence_ids=["r1e1"])])
+    assert validate_candidate(fake, PLAN, {"r1e1"}, "dead_resource") == "edit invents a data file"
+    config = Candidate(strategy="migrate", rationale="r", edits=[Edit(
+        op="insert_after", step_id="s1", new_kind="write_file", new_path="package.json",
+        new_content='{"type": "module"}', reason="ESM", evidence_ids=["r1e1"])])
+    assert validate_candidate(config, PLAN, {"r1e1"}, "version_conflict") is None
