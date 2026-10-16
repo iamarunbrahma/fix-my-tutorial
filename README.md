@@ -39,7 +39,7 @@ Browser ──HTTP/SSE──> FastAPI (web)
                        ├── ContreeBackend  (Token Factory Sandboxes, production)
                        └── DockerBackend   (local dev and fallback)
 
-Shared: llm (Token Factory client + routing), ledger (spend guard),
+Shared: llm (Token Factory client + routing), ledger (cost controls),
         store (SQLite), events (per-run event bus feeding SSE)
 ```
 
@@ -138,9 +138,9 @@ uv run pytest                       # offline tests with fakes, no API calls
 uv run python -m fixmytutorial.eval # live evaluation over the fixture tutorials (uses real credits)
 ```
 
-## Spend guard
+## Cost controls
 
-A bank card sits behind the Token Factory account, so the app is built to never spend past its credits:
+These protect whoever runs the app, not the learner: they keep the API bill inside the credits you have. The hosted demo runs on Token Factory credits with a bank card on file, so it must never spend past them:
 
 - Every model and Tavily call goes through a ledger that reserves an upper-bound cost first, and refuses the call if it would cross a cap.
 - The public demo and our own evaluation runs have separate budgets ($15 and $11 lifetime) that, with a margin for runs cut off by a restart, stay under the account's $30.50 of credits. So neither has to trust the other's records.
