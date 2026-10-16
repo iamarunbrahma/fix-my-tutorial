@@ -226,8 +226,14 @@ async def test_an_old_release_that_cannot_install_falls_back_to_the_release_note
 async def test_a_cited_deprecation_is_corrected_by_newer_releases_that_still_run(settings, tmp_path):
     # the review, 16 Oct: "sparse was renamed to sparse_output in 1.2" was dated 1.2.0, but 1.3.2 still ran the
     # tutorial; it broke when the old name was removed in 1.4.0. Releases before the cited one couldn't install.
-    outcomes = {"1.5.3": "no_install", "2.0.0": "no_install", "2.0.1": "pass", "2.0.2": "same", "2.0.3": "same",
-                "2.1.0": "same"}
+    outcomes = {
+        "1.5.3": "no_install",
+        "2.0.0": "no_install",
+        "2.0.1": "pass",
+        "2.0.2": "same",
+        "2.0.3": "same",
+        "2.1.0": "same",
+    }
     bp, calls = await find(settings, tmp_path, outcomes)
     assert (bp.first_bad, bp.last_good, bp.how) == ("2.0.2", "2.0.1", "ran")
     assert len(calls) <= 6
@@ -724,8 +730,18 @@ async def test_the_runs_own_sources_are_read_a_second_time_when_the_first_read_p
     async def probe(version):
         return "no_install"
 
-    bp = await find_break(target(), language="python", llm=llm, registry=FakeRegistry(), probe_for=lambda p: probe,
-                          max_probes=6, time_s=30, run_id="r", public=True, search=None)
+    bp = await find_break(
+        target(),
+        language="python",
+        llm=llm,
+        registry=FakeRegistry(),
+        probe_for=lambda p: probe,
+        max_probes=6,
+        time_s=30,
+        run_id="r",
+        public=True,
+        search=None,
+    )
     assert (bp.first_bad, bp.how, bp.evidence_id) == ("2.0.0", "release_notes", "r1e1")
 
 
@@ -759,3 +775,18 @@ async def test_the_release_notes_are_read_a_second_time_when_the_first_read_pass
         search=search,
     )
     assert (bp.first_bad, bp.how, bp.evidence_id) == ("2.0.0", "release_notes", "b1")
+
+
+async def test_a_source_naming_the_minor_release_dates_its_first_release(settings, tmp_path):
+    # the live demo, 16 Oct: sources said "obsolete in tensorflow 2.0"; PyPI calls the release 2.0.0
+    ev = [Evidence(id="r1e3", url="https://discuss.example/t/1", title="tf.Session in TF 2",
+                   quote="these lines are now obsolete in tf 2. How do I replace sessions in tensorflow 2.0?")]
+    reply = json.dumps({"package": "pandas", "version": "2.0.0", "evidence_id": "r1e3"})
+    bp, _ = await find(settings, tmp_path, {"1.5.3": "no_install", "2.0.0": "no_install", "2.0.1": "same"},
+                       reply=reply, evidence=ev)
+    assert (bp.first_bad, bp.how, bp.evidence_id) == ("2.0.0", "release_notes", "r1e3")
+    # but "2.0" never stands for a later patch release
+    reply = json.dumps({"package": "pandas", "version": "2.0.1", "evidence_id": "r1e3"})
+    bp, _ = await find(settings, tmp_path, {"1.5.3": "no_install", "2.0.0": "no_install", "2.0.1": "no_install",
+                                            "2.0.2": "same"}, reply=reply, evidence=ev)
+    assert bp is None or bp.first_bad != "2.0.1"
