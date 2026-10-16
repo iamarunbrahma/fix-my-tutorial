@@ -28,8 +28,10 @@ class Store:
         self._lock = threading.Lock()
         self._clock = clock
 
-    def save_run(self, rec: RunRecord) -> None:
-        now = self._clock()
+    def save_run(self, rec: RunRecord, at: float | None = None) -> None:
+        """Save or update a run. `at` keeps a restored run's own time, so a restart doesn't make old reports look
+        new (or decide by load order which report is the most recent)."""
+        now = self._clock() if at is None else at
         with self._lock:
             self._db.execute(
                 """INSERT INTO runs (id, created_at, updated_at, source, content_hash, public, status, verdict, record)

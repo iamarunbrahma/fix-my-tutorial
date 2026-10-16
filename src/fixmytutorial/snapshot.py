@@ -86,7 +86,7 @@ class Snapshotter:
             try:  # one unreadable file (old schema, corrupt upload) must not take the whole site down
                 rec = RunRecord.model_validate_json(f.read_text())
                 if self.store.get_run(rec.id) is None:
-                    self.store.save_run(rec)
+                    self.store.save_run(rec, at=(rec.finished_at or rec.created_at).timestamp())
                     restored += 1
                 ev_file = local / "events" / f"{rec.id}.json"
                 if ev_file.exists() and not self.store.events_after(rec.id, 0):
