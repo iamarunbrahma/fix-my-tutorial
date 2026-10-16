@@ -10,3 +10,6 @@ dist/
 .DS_Store
 .superpowers/
 ui/node_modules/
+
+# planning notes, scripts and drafts stay local
+docs/

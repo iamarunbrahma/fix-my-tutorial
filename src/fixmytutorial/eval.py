@@ -90,6 +90,13 @@ async def run_all(names: list[str], concurrency: int) -> list[EvalRow]:
     return list(await asyncio.gather(*(one(n) for n in names)))
 
 
+def write_report(report: str, root: Path = ROOT) -> Path:
+    path = root / "docs" / "eval-results.md"
+    path.parent.mkdir(parents=True, exist_ok=True)  # docs/ is local-only, so a fresh clone doesn't have it
+    path.write_text(report)
+    return path
+
+
 def main() -> None:
     ap = argparse.ArgumentParser()
     ap.add_argument("--only", nargs="*")
@@ -99,7 +106,7 @@ def main() -> None:
     rows = asyncio.run(run_all(names, args.concurrency))
     ok, msg = score(rows)
     report = f"# Evaluation results\n\n{table(rows)}\n\n**{msg}**\n"
-    (ROOT / "docs" / "eval-results.md").write_text(report)
+    write_report(report)
     print(report)
     sys.exit(0 if ok else 1)
 

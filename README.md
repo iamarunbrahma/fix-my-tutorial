@@ -14,7 +14,7 @@ Run any coding tutorial, find what broke, and fix it with sources you can check.
 
 **Try it: [fix-my-tutorial.onrender.com](https://fix-my-tutorial.onrender.com)** · **Watch the 2:38 demo: [youtu.be/SwJhk6Onl38](https://youtu.be/SwJhk6Onl38)**. Every step runs in a Nebius Token Factory Sandbox, and the models are NVIDIA Nemotron on Nebius Token Factory.
 
-![Two fixes racing in parallel sandboxes on a 2016 TensorFlow tutorial; the migration to TensorFlow 2 wins](docs/images/03-fixes-race.jpg)
+![Two fixes racing in parallel sandboxes on a 2016 TensorFlow tutorial; the migration to TensorFlow 2 wins](assets/03-fixes-race.jpg)
 
 ## Why
 
@@ -50,7 +50,7 @@ Shared: llm (Token Factory client + routing), ledger (spend guard),
 5. **Prove it.** The repaired tutorial is replayed from scratch before it is called fixed. The report shows the diff, the cited reasons, and a badge.
 6. **Date it.** When a package change broke the step, the failing step runs again from its checkpoint with older releases of that package: the one before a cited version, or the end of each earlier release series, then a short binary search. When older releases can't install on today's Python (pandas 1.x and NumPy before 1.26 can't on 3.12), one more Tavily search looks for the release note itself, and Nemotron 3.5 Lightning reads it. Only a version that exists on PyPI or npm and that the quote (or the release note's own address) states is accepted, and the report says which way it was found. When the releases before a cited one can't install, the releases after it are run instead, so a note that dates a deprecation is not mistaken for the release that removed it. In our runs: "Broke in chalk 5.0.0, released 26 Nov 2021. chalk 4.1.2 still runs this step, and 5.0.0 fails the same way." and "Broke in pandas 2.0.0, released 3 Apr 2023, according to the cited release notes." When the page states its publish date, the report also says how long the tutorial worked.
 
-![The clean replay from scratch passed, so the run is marked Fixed](docs/images/04-fixed-after-replay.jpg)
+![The clean replay from scratch passed, so the run is marked Fixed](assets/04-fixed-after-replay.jpg)
 
 | Role | Model | Price per 1M tokens (in / out) | Why this size |
 |---|---|---|---|
@@ -67,9 +67,8 @@ After a check, the report offers:
 - **A badge** the author can add to the page.
 - **Check from any page.** Drag the "Check this tutorial" bookmark from the home page to your bookmarks bar, or share a link like `/?url=<tutorial>`. The link only fills in the form; a run always starts with a click.
 
-![The report for the TensorFlow tutorial: the change, the reason, the sources, and a GitHub issue for the author](docs/images/05-report-tell-the-author.jpg)
+![The report for the TensorFlow tutorial: the change, the reason, the sources, and a GitHub issue for the author](assets/05-report-tell-the-author.jpg)
 
-More detail: [docs/architecture.md](docs/architecture.md).
 
 ## Rot Index
 
@@ -91,9 +90,9 @@ Four Nemotron sizes split the work so the expensive model only runs when somethi
 
 Every call uses JSON-schema structured output, validated with pydantic.
 
-**Live evaluation** ([docs/eval-results.md](docs/eval-results.md)): 15 fixture tutorials, 13 broken by real library changes (pandas `append` and `iteritems`, NumPy `np.float`, scikit-learn `load_boston` and `OneHotEncoder(sparse=)`, openai 0.x, LangChain `langchain.llms`, Flask `before_first_request`, seaborn styles, chalk and node-fetch ESM, Express 5 wildcards, faker) and 2 that still work. On the final run, all 13 broken tutorials were fixed (12 in the first repair round) and both working tutorials were left untouched. A fixed tutorial cost about $0.012 in model calls on average and took a little over a minute.
+**Live evaluation:** 15 fixture tutorials, 13 broken by real library changes (pandas `append` and `iteritems`, NumPy `np.float`, scikit-learn `load_boston` and `OneHotEncoder(sparse=)`, openai 0.x, LangChain `langchain.llms`, Flask `before_first_request`, seaborn styles, chalk and node-fetch ESM, Express 5 wildcards, faker) and 2 that still work. On the final run, all 13 broken tutorials were fixed (12 in the first repair round) and both working tutorials were left untouched. A fixed tutorial cost about $0.012 in model calls on average and took a little over a minute.
 
-Earlier runs during the build scored 12, 11, 13, 11, 13, 13 and 12 out of 13, and one of them called a working tutorial "fixed". Each miss traced back to a gap we then closed in code: the planner inventing output checks, marking outdated code as "not runnable", dropping the tutorial's code block, mangling code into escaped newlines, or never running a file the tutorial only says to run in prose, and our judge rejecting the stand-in API server's placeholder reply. The model findings are in [docs/feedback.md](docs/feedback.md).
+Earlier runs during the build scored 12, 11, 13, 11, 13, 13 and 12 out of 13, and one of them called a working tutorial "fixed". Each miss traced back to a gap we then closed in code: the planner inventing output checks, marking outdated code as "not runnable", dropping the tutorial's code block, mangling code into escaped newlines, or never running a file the tutorial only says to run in prose, and our judge rejecting the stand-in API server's placeholder reply.
 
 ## Where Nebius Token Factory accelerated the work
 
@@ -121,7 +120,18 @@ To run tutorial code in Nebius Token Factory Sandboxes instead of Docker, as the
 uv run python -m fixmytutorial.sandbox.prepare   # prints CONTREE_PYTHON_IMAGE=... and CONTREE_NODE_IMAGE=...
 ```
 
-The Docker sandbox refuses to run until a probe from inside a container shows that private addresses (your LAN, the host, cloud metadata) are unreachable. On a Linux host, set up the firewalled network in [docs/deploy.md](docs/deploy.md). On a laptop, and only for tutorials you trust, set `DOCKER_ALLOW_PRIVATE_EGRESS=true` to skip the probe.
+The Docker sandbox refuses to run until a probe from inside a container shows that private addresses (your LAN, the host, cloud metadata) are unreachable. On a Linux host, run it on a network that can't reach them:
+
+```bash
+docker network create --driver bridge --opt com.docker.network.bridge.name=fmt0 \
+  --opt com.docker.network.bridge.enable_icc=false fmt-sandbox
+for net in 10.0.0.0/8 172.16.0.0/12 192.168.0.0/16 100.64.0.0/10 169.254.0.0/16; do
+  sudo iptables -I DOCKER-USER -i fmt0 -d "$net" -j DROP   # LAN, carrier-grade NAT, cloud metadata
+done
+sudo iptables -I INPUT -i fmt0 -j DROP                      # the host itself
+```
+
+Then set `SANDBOX_BACKEND=docker` and `DOCKER_NETWORK=fmt-sandbox`. On a laptop, and only for tutorials you trust, set `DOCKER_ALLOW_PRIVATE_EGRESS=true` to skip the probe.
 
 ```bash
 uv run pytest                       # offline tests with fakes, no API calls
@@ -148,16 +158,6 @@ A bank card sits behind the Token Factory account, so the app is built to never 
 - Fixes are checked by running the tutorial, not by reading it. A step with no visible output passes if it exits cleanly.
 - "When it broke" needs an older release that still installs on Python 3.12 or Node.js 22 to be checked by running. Otherwise it rests on the cited release notes, and the report says so. When no source names the exact release, the report leaves it out rather than guess.
 - Each step runs as its own sandbox operation, so a server started in one step is not running for the next. Tutorials built around a long-running server get a start-up check only.
-
-## Roadmap
-
-- HTML and CSS, SQL, Java and C++ tutorials.
-- A GitHub Action for docs teams that re-runs their tutorials on every dependency release.
-- Scheduled re-checks of published tutorials, with alerts when one breaks.
-
-## Built during the hackathon
-
-All code was written between 2026-10-15 and 2026-10-27 for the Nebius x NVIDIA Global AI Hackathon.
 
 ## License
 
