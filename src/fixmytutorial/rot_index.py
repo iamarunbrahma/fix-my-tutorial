@@ -105,8 +105,12 @@ def check_batch_backend(settings) -> None:
                          "SANDBOX_BACKEND=contree or a firewalled Docker network for the Rot Index.")
 
 
-def pick_entries(entries: list[dict], done: set[str], force: bool, limit: int | None) -> list[dict]:
-    """Tutorials still to run, taken round-robin across topics, so a short slice covers many kinds of breakage."""
+def pick_entries(entries: list[dict], done: set[str], force: bool, limit: int | None,
+                 only: set[str] | None = None) -> list[dict]:
+    """Tutorials still to run, taken round-robin across topics, so a short slice covers many kinds of breakage.
+    Tutorials named in `only` run again even if finished (after a fix to how pages are read, say)."""
+    if only:
+        return [e for e in entries if e["url"] in only]
     by_topic: dict[str, list[dict]] = {}
     for e in entries:
         if force or e["url"] not in done:
@@ -119,7 +123,7 @@ def pick_entries(entries: list[dict], done: set[str], force: bool, limit: int | 
     return out if limit is None else out[:limit]
 
 
-async def run_batch(force: bool, concurrency: int, limit: int | None = None) -> None:
+async def run_batch(force: bool, concurrency: int, limit: int | None = None, only: set[str] | None = None) -> None:
     s = get_settings()
     check_batch_backend(s)
     store, ledger = _core(s)
@@ -134,7 +138,7 @@ async def run_batch(force: bool, concurrency: int, limit: int | None = None) -> 
     done = {r.source for r in store.list_runs(limit=5000)
             if not r.public and r.status == RunStatus.DONE}
     sem = asyncio.Semaphore(concurrency)
-    todo = pick_entries(entries, done, force, limit)
+    todo = pick_entries(entries, done, force, limit, only)
     print(f"running {len(todo)} of {len(entries)} tutorials")
 
     async def one(e: dict) -> None:
@@ -175,11 +179,12 @@ def main() -> None:
     ap.add_argument("--bootstrap", action="store_true")
     ap.add_argument("--concurrency", type=int, default=4)
     ap.add_argument("--limit", type=int, default=None, help="run at most N tutorials (round-robin across topics)")
+    ap.add_argument("--only", nargs="+", default=None, help="run exactly these tutorial URLs, even if finished")
     a = ap.parse_args()
     if a.command == "discover":
         asyncio.run(discover())
     elif a.command == "run":
-        asyncio.run(run_batch(a.force, a.concurrency, a.limit))
+        asyncio.run(run_batch(a.force, a.concurrency, a.limit, set(a.only) if a.only else None))
     elif a.command == "export":
         export()
     else:

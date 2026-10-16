@@ -119,3 +119,11 @@ def test_batch_slices_rotate_through_topics_and_skip_finished_tutorials():
     assert [e["url"] for e in picked] == ["https://pandas1", "https://jest0", "https://numpy0", "https://pandas2"]
     assert len(pick_entries(entries, done=set(), force=False, limit=None)) == 9
     assert pick_entries(entries, done={"https://pandas0"}, force=True, limit=1)[0]["url"] == "https://pandas0"
+
+
+def test_named_tutorials_rerun_even_when_finished():
+    from fixmytutorial.rot_index import pick_entries
+    entries = [{"url": f"https://t{i}", "topic": "x"} for i in range(4)]
+    picked = pick_entries(entries, done={"https://t1", "https://t2"}, force=False, limit=None,
+                          only={"https://t2", "https://t3"})
+    assert [e["url"] for e in picked] == ["https://t2", "https://t3"]
