@@ -6,8 +6,15 @@ import os
 import shlex
 import time
 
+from contree_sdk.sdk.exceptions.operation import OperationTimedOutError
+
 from ..models import ImageRef, StepResult
 from . import OUTPUT_CAP, cap_output
+
+# The SDK uses one timeout both for the operation and for how long it waits, so start-up and polling would count
+# against the step. The step's limit is enforced inside the sandbox instead (exit 124, like Docker), and the SDK gets
+# this much headroom on top.
+SDK_HEADROOM_S = 60
 
 
 def _text(value) -> str:
@@ -44,8 +51,13 @@ class ContreeBackend:
         t0 = time.monotonic()
         async with self._sem:
             img = await self.client.images.use(image.ref, strict=True)
-            res = await img.run(shell=f"bash -c {shlex.quote(script)}", files=files or None, env=env or None,
-                                timeout=timeout_s, disposable=not save, truncate_output_at=OUTPUT_CAP)
+            try:
+                res = await img.run(shell=f"timeout --kill-after=5 {int(timeout_s)} bash -c {shlex.quote(script)}",
+                                    files=files or None, env=env or None, timeout=timeout_s + SDK_HEADROOM_S,
+                                    disposable=not save, truncate_output_at=OUTPUT_CAP)
+            except OperationTimedOutError:  # the SDK gave up waiting (and cancelled the operation)
+                return StepResult(exit_code=124, stderr="", timed_out=True,
+                                  duration_s=round(time.monotonic() - t0, 2))
         duration = round(time.monotonic() - t0, 2)
         exit_code = int(res.exit_code) if res.exit_code is not None else 1
         result_obj = getattr(res, "result", None)
