@@ -11,6 +11,8 @@ import zlib
 from contextlib import asynccontextmanager
 from dataclasses import dataclass
 from datetime import date
+from email.utils import parsedate_to_datetime
+from html import unescape
 from typing import Callable
 from urllib.parse import urljoin, urlparse
 
@@ -110,6 +112,65 @@ def published_date(html: str) -> str | None:
     return _day(first.attributes.get("datetime")) if first else None
 
 
+MEDIUM_POST = re.compile(r"-([0-9a-f]{8,16})$")
+GLUED = re.compile(r"[a-z0-9_)\];'\"](?:import|from|def|class|const|let|var|require|print)\b")
+FLATTENED = ("This page's code came through without its line breaks (this often happens with Medium posts), so it "
+             "can't be run reliably. Paste the tutorial's Markdown instead.")
+
+
+def medium_feed_for(url: str) -> tuple[str, str] | None:
+    """The RSS feed that carries a Medium post's full HTML (the author's or publication's recent posts), and the
+    post's id. Medium refuses direct page requests from servers, and extractors lose its code line breaks."""
+    u = urlparse(url)
+    host = (u.hostname or "").lower()
+    parts = [p for p in u.path.split("/") if p]
+    if not parts or not (m := MEDIUM_POST.search(parts[-1])):
+        return None
+    if host in ("medium.com", "www.medium.com") and len(parts) >= 2:
+        return f"https://medium.com/feed/{parts[0]}", m.group(1)
+    if host.endswith(".medium.com") and host.count(".") == 2:
+        return f"https://{host}/feed", m.group(1)
+    return None
+
+
+def _cdata(text: str) -> str:
+    return unescape(text.replace("<![CDATA[", "").replace("]]>", "").strip())
+
+
+def medium_item(feed_xml: str, post_id: str) -> tuple[str, str, str | None] | None:
+    """(title, HTML, publish date) of the post in an RSS feed, or None when the feed no longer lists it."""
+    for item in re.findall(r"<item>(.*?)</item>", feed_xml, re.S):
+        link = re.search(r"<link>(.*?)</link>", item, re.S)
+        content = re.search(r"<content:encoded>(.*?)</content:encoded>", item, re.S)
+        if not link or not content or post_id not in link.group(1):
+            continue
+        title = re.search(r"<title>(.*?)</title>", item, re.S)
+        when = re.search(r"<pubDate>(.*?)</pubDate>", item, re.S)
+        try:
+            day = parsedate_to_datetime(when.group(1).strip()).date().isoformat() if when else None
+        except (TypeError, ValueError):
+            day = None
+        html = content.group(1).replace("<![CDATA[", "").replace("]]>", "")
+        return (_cdata(title.group(1)) if title else ""), html, day
+    return None
+
+
+def flattened(blocks: list[CodeBlock], medium: bool = False) -> bool:
+    """A code block that lost its line breaks: one long line with statements glued together ("pltimport seaborn",
+    two imports on one line). Medium code that reached us through an extractor is always flattened, so there any
+    one-line block longer than a short command counts."""
+    for b in blocks:
+        code = b.code.strip()
+        if "\n" in code:
+            continue
+        glued = len(GLUED.findall(code))
+        if medium and len(code) >= 60 and (glued or code.count(" ") >= 6):
+            return True
+        if len(code) >= 120 and (glued >= 2 or (glued >= 1 and code.count("import ") >= 2)):
+            return True
+    return False
+
+
 def html_to_markdown(html: str) -> tuple[str, str]:
     tree = HTMLParser(html)
     heading = tree.css_first("h1") or tree.css_first("title")
@@ -123,6 +184,8 @@ def html_to_markdown(html: str) -> tuple[str, str]:
     parts = []
     for n in root.css("h1, h2, h3, h4, p, li, pre"):
         if n.tag == "pre":
+            for br in n.css("br"):  # some sites (Medium among them) break code lines with <br>, not newlines
+                br.replace_with("\n")
             code = n.css_first("code")
             cls = ((code.attributes.get("class") if code else None) or n.attributes.get("class") or "")
             m = re.search(r"(?:language|lang)-([\w+-]+)", cls)
@@ -280,7 +343,16 @@ async def _ingest(source: Source, search, *, run_id: str, public: bool, http: ht
                 text = _notebook(body) if raw.endswith(".ipynb") else body
                 title = first_heading(text) or raw.rsplit("/", 1)[-1]
             else:
-                if search is not None:
+                page_html = None
+                if (feed := medium_feed_for(url)) is not None:
+                    try:
+                        hit = medium_item(await _safe_get(feed[0], client, resolver), feed[1])
+                    except IngestError:
+                        hit = None
+                    if hit:
+                        title, html, published = hit
+                        text = html_to_markdown(f"<article>{html}</article>")[1]
+                if not text and search is not None:
                     try:
                         res = await search.extract([url], run_id=run_id, public=public, depth="advanced")
                     except BudgetExceeded:
@@ -291,9 +363,15 @@ async def _ingest(source: Source, search, *, run_id: str, public: bool, http: ht
                         text = res[0]["raw_content"]
                         title = first_heading(text) or url
                         try:  # the extracted text has no metadata; the date is a nice-to-have, never a blocker
-                            published = published_date(await asyncio.wait_for(_safe_get(url, client, resolver), 5))
+                            page_html = await asyncio.wait_for(_safe_get(url, client, resolver), 5)
+                            published = published_date(page_html)
                         except Exception:
                             published = None
+                        if flattened(markdown_code_blocks(text), medium=feed is not None):  # lost line breaks
+                            own = html_to_markdown(page_html)[1] if page_html else ""
+                            if not own or flattened(markdown_code_blocks(own)) or not markdown_code_blocks(own):
+                                raise IngestError(FLATTENED)
+                            text = own
                 if not text:
                     body = await _safe_get(url, client, resolver)
                     if url.endswith(".ipynb"):
@@ -302,6 +380,8 @@ async def _ingest(source: Source, search, *, run_id: str, public: bool, http: ht
                     else:
                         title, text = html_to_markdown(body)
                         published = published_date(body)
+                if flattened(markdown_code_blocks(text)):
+                    raise IngestError(FLATTENED)
     else:
         raise IngestError("Paste a tutorial link or its Markdown.")
     if not text.strip():

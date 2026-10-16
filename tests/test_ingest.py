@@ -266,3 +266,78 @@ async def test_publish_date_from_the_fetched_page(settings, tmp_path):
     doc = await ingest(Source(url="https://ex.com/t"), search_client(settings, tmp_path, FakeTavily()),
                        run_id="r", public=True, resolver=public_resolver)
     assert doc.published == "2021-05-04"
+
+
+def test_line_breaks_inside_code_blocks_are_kept():
+    _, md = html_to_markdown("<article><h1>T</h1><pre><code>a = 1<br>b = 2<br/>print(a + b)</code></pre></article>")
+    assert "a = 1\nb = 2\nprint(a + b)" in md
+
+
+@pytest.mark.parametrize("url,feed,post", [
+    ("https://medium.com/@egafebridh/basic-visualization-guide-178ea3787f59",
+     "https://medium.com/feed/@egafebridh", "178ea3787f59"),
+    ("https://medium.com/data-science/predict-housing-price-bfc0fcfff640?source=x",
+     "https://medium.com/feed/data-science", "bfc0fcfff640"),
+    ("https://someone.medium.com/a-post-title-0123456789ab", "https://someone.medium.com/feed", "0123456789ab"),
+    ("https://medium.com/@egafebridh", None, None),
+    ("https://example.com/post-178ea3787f59", None, None),
+])
+def test_medium_feed_for(url, feed, post):
+    from fixmytutorial.ingest import medium_feed_for
+    assert medium_feed_for(url) == ((feed, post) if feed else None)
+
+
+FEED = """<?xml version="1.0"?><rss><channel>
+<item><title><![CDATA[Another post]]></title><link>https://medium.com/@a/other-111111111111?source=rss</link>
+<content:encoded><![CDATA[<p>nothing</p>]]></content:encoded></item>
+<item><title><![CDATA[Plot &amp; learn]]></title><link>https://medium.com/@a/plot-178ea3787f59?source=rss</link>
+<pubDate>Tue, 14 Mar 2023 10:00:00 GMT</pubDate>
+<content:encoded><![CDATA[<h3>Setup</h3><p>Install it.</p><pre>import seaborn as sns<br>print(sns.__version__)</pre>]]></content:encoded></item>
+</channel></rss>"""
+
+
+@respx.mock
+async def test_medium_posts_are_read_from_the_author_feed(settings, tmp_path):
+    respx.get("https://medium.com/feed/@a").mock(return_value=httpx.Response(200, text=FEED))
+    fake = FakeTavily(extract_results={})
+    doc = await ingest(Source(url="https://medium.com/@a/plot-178ea3787f59"), search_client(settings, tmp_path, fake),
+                       run_id="r", public=True, resolver=public_resolver)
+    assert doc.title == "Plot & learn" and doc.published == "2023-03-14"
+    assert doc.code_blocks[0].code.strip() == "import seaborn as sns\nprint(sns.__version__)"
+    assert fake.extract_calls == []  # no credits spent
+
+
+FLAT = ("# T\n\n```\nimport matplotlib.pyplot as pltimport seaborn as snsimport pandas as pd# Sample Datasetfrom "
+        "sklearn.datasets import load_irisiris = load_iris() import as import as import as\n```\n")
+
+
+@respx.mock
+async def test_code_without_line_breaks_is_never_run(settings, tmp_path):
+    respx.get("https://medium.com/feed/@a").mock(return_value=httpx.Response(200, text=FEED))  # post not in feed
+    respx.get("https://medium.com/@a/old-post-0123456789ab").mock(return_value=httpx.Response(403))
+    fake = FakeTavily(extract_results={"https://medium.com/@a/old-post-0123456789ab": FLAT})
+    with pytest.raises(IngestError, match="without its line breaks"):
+        await ingest(Source(url="https://medium.com/@a/old-post-0123456789ab"), search_client(settings, tmp_path, fake),
+                     run_id="r", public=True, resolver=public_resolver)
+
+
+@respx.mock
+async def test_flattened_extract_falls_back_to_the_page_itself(settings, tmp_path):
+    page = "<html><head><title>T</title></head><body><article><h1>T</h1><pre>import os<br>print(os.sep)</pre></article></body></html>"
+    respx.get("https://ex.com/t").mock(return_value=httpx.Response(200, text=page))
+    fake = FakeTavily(extract_results={"https://ex.com/t": FLAT})
+    doc = await ingest(Source(url="https://ex.com/t"), search_client(settings, tmp_path, fake),
+                       run_id="r", public=True, resolver=public_resolver)
+    assert doc.code_blocks[0].code.strip() == "import os\nprint(os.sep)"
+
+
+def test_flattened_code_detection_catches_the_real_medium_pandas_block():
+    from fixmytutorial.ingest import flattened
+    from fixmytutorial.models import CodeBlock
+    real = ("import pandas as pddata = {    'Name': ['Alice', 'Bob'],    'Age': [25, 30],}df = pd.DataFrame(data)"
+            "print(df) import as data 'Name' 'Alice' 'Bob' 'Age' 25 30 data")
+    assert flattened([CodeBlock(code=real)])
+    assert not flattened([CodeBlock(code="pip install pandas numpy matplotlib seaborn scikit-learn jupyter notebook ipykernel")])
+    assert not flattened([CodeBlock(code="import os\nimport sys\nprint(os.sep, sys.version)")])
+    short_medium = "df = pd.read_csv('data.csv', error_bad_lines=False)print(df.head()) df pd 'data.csv'"
+    assert flattened([CodeBlock(code=short_medium)], medium=True) and not flattened([CodeBlock(code="x = 1")], medium=True)
