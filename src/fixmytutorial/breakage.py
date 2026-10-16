@@ -349,6 +349,8 @@ async def _find(target, language, llm, registry, probe_for, max_probes, run_id, 
         return n is not None and (lo is None or lo < n[0]) and n[0] <= hi
 
     notes = cited(guess, target.evidence)
+    if notes is None and target.evidence:  # Lightning sometimes passes on a quote it reads correctly next time
+        notes = cited(await _guess(llm, target, target.evidence, installed, run_id, public), target.evidence)
     lo, hi = None, len(rel) - 1  # lo: newest release that passes; hi: oldest release known to fail the same way
     found["notes"] = from_notes(notes, lo) if notes else None
     log.info("break finder: %s installed %s, cited version %s", pkg, current, rel[notes[0]].version if notes else None)

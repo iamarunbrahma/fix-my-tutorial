@@ -505,7 +505,8 @@ async def test_release_notes_are_searched_when_running_cannot_answer(settings, t
     empty = json.dumps({"package": "numpy", "version": "", "evidence_id": ""})
     named = json.dumps({"package": "numpy", "version": "1.24.0", "evidence_id": "b1"})
     outcomes = {"1.26.4": "same", "2.0.0": "same", "1.23.5": "no_install", "1.24.0": "same"}
-    bp = await numpy_find(settings, tmp_path, [empty, named], outcomes, search)
+    # the run's own sources state no version: read twice, then the release note is searched and read
+    bp = await numpy_find(settings, tmp_path, [empty, empty, named], outcomes, search)
     assert (bp.first_bad, bp.how, bp.evidence_id) == ("1.24.0", "release_notes", "b1")
     assert bp.source.url == NOTES_URL and "np.float" in bp.source.quote
     assert [c[0] for c in search.calls] == ["search", "extract"]
@@ -695,6 +696,20 @@ def test_version_matching_is_strict():
 
     assert _mentions(_address("https://pandas.pydata.org/docs/whatsnew/v2.0.0.html"), "2.0.0")
     assert _mentions(_address("https://numpy.org/doc/stable/release/1.24.0-notes.html"), "1.24.0")
+
+
+async def test_the_runs_own_sources_are_read_a_second_time_when_the_first_read_passes(settings, tmp_path):
+    # the live demo, 16 Oct: pandas' v2.0.0 what's-new page was a source, Lightning passed on it once (it names 2.0.0
+    # two times in three), old pandas can't install on Python 3.12, and the report lost "When it broke"
+    empty = json.dumps({"package": "", "version": "", "evidence_id": ""})
+    llm = LLM(settings, Ledger(tmp_path / "l.db", settings), client=FakeChatClient([empty, GUESS]))
+
+    async def probe(version):
+        return "no_install"
+
+    bp = await find_break(target(), language="python", llm=llm, registry=FakeRegistry(), probe_for=lambda p: probe,
+                          max_probes=6, time_s=30, run_id="r", public=True, search=None)
+    assert (bp.first_bad, bp.how, bp.evidence_id) == ("2.0.0", "release_notes", "r1e1")
 
 
 async def test_the_release_notes_are_read_a_second_time_when_the_first_read_passes(settings, tmp_path):
