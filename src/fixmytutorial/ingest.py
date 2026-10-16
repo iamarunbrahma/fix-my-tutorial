@@ -161,6 +161,8 @@ def flattened(blocks: list[CodeBlock], medium: bool = False) -> bool:
     one-line block longer than a short command counts."""
     for b in blocks:
         code = b.code.strip()
+        if "![" in code or "****" in code:  # an extractor poured images and bold prose into a "code" block
+            return True
         if "\n" in code:
             continue
         glued = len(GLUED.findall(code))
@@ -343,8 +345,8 @@ async def _ingest(source: Source, search, *, run_id: str, public: bool, http: ht
                 text = _notebook(body) if raw.endswith(".ipynb") else body
                 title = first_heading(text) or raw.rsplit("/", 1)[-1]
             else:
-                page_html = None
-                if (feed := medium_feed_for(url)) is not None:
+                page_html, page_error = None, None
+                if (feed := medium_feed_for(url)) is not None:  # Medium refuses servers; its feed has the post
                     try:
                         hit = medium_item(await _safe_get(feed[0], client, resolver), feed[1])
                     except IngestError:
@@ -352,7 +354,17 @@ async def _ingest(source: Source, search, *, run_id: str, public: bool, http: ht
                     if hit:
                         title, html, published = hit
                         text = html_to_markdown(f"<article>{html}</article>")[1]
-                if not text and search is not None:
+                if not text and feed is None:  # the page itself first: its markup keeps code exactly as written
+                    try:
+                        page_html = await _safe_get(url, client, resolver)
+                    except IngestError as e:
+                        page_error = e
+                    if page_html is not None and not url.endswith(".ipynb"):
+                        own_title, own = html_to_markdown(page_html)
+                        blocks = markdown_code_blocks(own)
+                        if blocks and not flattened(blocks):
+                            title, text, published = own_title, own, published_date(page_html)
+                if not text and search is not None:  # blocked or script-built pages: let the extractor try
                     try:
                         res = await search.extract([url], run_id=run_id, public=public, depth="advanced")
                     except BudgetExceeded:
@@ -362,24 +374,20 @@ async def _ingest(source: Source, search, *, run_id: str, public: bool, http: ht
                     if res and res[0]["raw_content"].strip():
                         text = res[0]["raw_content"]
                         title = first_heading(text) or url
-                        try:  # the extracted text has no metadata; the date is a nice-to-have, never a blocker
-                            page_html = await asyncio.wait_for(_safe_get(url, client, resolver), 5)
-                            published = published_date(page_html)
-                        except Exception:
-                            published = None
-                        if flattened(markdown_code_blocks(text), medium=feed is not None):  # lost line breaks
-                            own = html_to_markdown(page_html)[1] if page_html else ""
-                            if not own or flattened(markdown_code_blocks(own)) or not markdown_code_blocks(own):
-                                raise IngestError(FLATTENED)
-                            text = own
+                        published = published_date(page_html) if page_html else None
+                        if flattened(markdown_code_blocks(text), medium=feed is not None):
+                            raise IngestError(FLATTENED)
                 if not text:
-                    body = await _safe_get(url, client, resolver)
+                    if page_html is None:
+                        if page_error is not None:
+                            raise page_error
+                        page_html = await _safe_get(url, client, resolver)
                     if url.endswith(".ipynb"):
-                        text = _notebook(body)
+                        text = _notebook(page_html)
                         title = first_heading(text) or url
                     else:
-                        title, text = html_to_markdown(body)
-                        published = published_date(body)
+                        title, text = html_to_markdown(page_html)
+                        published = published_date(page_html)
                 if flattened(markdown_code_blocks(text)):
                     raise IngestError(FLATTENED)
     else:

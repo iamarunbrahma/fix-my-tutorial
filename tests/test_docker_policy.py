@@ -143,3 +143,12 @@ async def test_a_cancelled_docker_command_is_killed():
     out = (await asyncio.create_subprocess_exec("pgrep", "-f", f"^sleep {secs}$", stdout=asyncio.subprocess.PIPE))
     stdout, _ = await out.communicate()
     assert stdout.strip() == b""
+
+
+def test_sandbox_images_have_the_download_tools_tutorials_use():
+    from fixmytutorial.sandbox import TOOLS_SETUP
+    from fixmytutorial.sandbox.docker_backend import dockerfile
+    for tool in ("curl", "wget", "git"):
+        assert tool in TOOLS_SETUP
+    df = dockerfile("docker.io/library/python:3.12-slim")
+    assert df.startswith("FROM docker.io/library/python:3.12-slim\n") and TOOLS_SETUP in df and "COPY assets/ /opt/fmt/" in df

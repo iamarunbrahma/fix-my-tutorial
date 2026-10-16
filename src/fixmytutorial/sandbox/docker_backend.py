@@ -11,7 +11,7 @@ from asyncio.subprocess import DEVNULL, PIPE
 from pathlib import Path
 
 from ..models import ImageRef, StepResult
-from . import ASSETS_DIR, OUTPUT_CAP
+from . import ASSETS_DIR, OUTPUT_CAP, TOOLS_SETUP
 
 
 async def run_capped(args: list[str], timeout: float | None = None, cap: int = OUTPUT_CAP) -> tuple[int, str, str]:
@@ -97,6 +97,10 @@ PRUNE_AFTER = "2h"
 PRUNE_EVERY_S = 600
 
 
+
+def dockerfile(base: str) -> str:
+    return f"FROM {base}\nRUN {TOOLS_SETUP}\nCOPY assets/ /opt/fmt/\nRUN mkdir -p /work\nWORKDIR /work\n"
+
 class DockerBackend:
     name = "docker"
 
@@ -113,7 +117,7 @@ class DockerBackend:
 
     @staticmethod
     def _assets_hash() -> str:
-        h = hashlib.sha256()
+        h = hashlib.sha256(TOOLS_SETUP.encode())  # a change to the image recipe rebuilds cached images
         for p in sorted(ASSETS_DIR.iterdir()):
             h.update(p.name.encode())
             h.update(p.read_bytes())
@@ -128,8 +132,7 @@ class DockerBackend:
                 if rc != 0:
                     with tempfile.TemporaryDirectory() as d:
                         shutil.copytree(ASSETS_DIR, Path(d) / "assets")
-                        (Path(d) / "Dockerfile").write_text(
-                            f"FROM {base}\nCOPY assets/ /opt/fmt/\nRUN mkdir -p /work\nWORKDIR /work\n")
+                        (Path(d) / "Dockerfile").write_text(dockerfile(base))
                         rc, _, err = await self._docker("build", "-t", tag, d, timeout=1200)
                         if rc != 0:
                             raise RuntimeError(f"docker build failed: {err[-2000:]}")

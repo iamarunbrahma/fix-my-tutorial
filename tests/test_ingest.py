@@ -43,8 +43,9 @@ async def test_markdown_source(settings, tmp_path):
     assert len(doc.content_hash) == 16
 
 
-@respx.mock  # the best-effort date fetch must not reach the real network
-async def test_tavily_extract_is_used_first(settings, tmp_path):
+@respx.mock
+async def test_tavily_extract_is_used_when_the_page_refuses_us(settings, tmp_path):
+    respx.get("https://ex.com/t").mock(return_value=httpx.Response(403))
     fake = FakeTavily(extract_results={"https://ex.com/t": "# T\n\n```python\nprint(1)\n```"})
     doc = await ingest(Source(url="https://ex.com/t"), search_client(settings, tmp_path, fake),
                        run_id="r", public=True, resolver=public_resolver)
@@ -341,3 +342,29 @@ def test_flattened_code_detection_catches_the_real_medium_pandas_block():
     assert not flattened([CodeBlock(code="import os\nimport sys\nprint(os.sep, sys.version)")])
     short_medium = "df = pd.read_csv('data.csv', error_bad_lines=False)print(df.head()) df pd 'data.csv'"
     assert flattened([CodeBlock(code=short_medium)], medium=True) and not flattened([CodeBlock(code="x = 1")], medium=True)
+
+
+@respx.mock
+async def test_the_page_itself_is_read_first_when_its_code_is_clean(settings, tmp_path):
+    page = ('<html><head><meta property="article:published_time" content="2019-01-03"><title>T</title></head><body>'
+            "<article><h1>Iterate rows</h1><pre>import pandas as pd<br>print(pd.__version__)</pre></article></body></html>")
+    respx.get("https://ex.com/t").mock(return_value=httpx.Response(200, text=page))
+    fake = FakeTavily(extract_results={"https://ex.com/t": FLAT})
+    doc = await ingest(Source(url="https://ex.com/t"), search_client(settings, tmp_path, fake),
+                       run_id="r", public=True, resolver=public_resolver)
+    assert doc.title == "Iterate rows" and doc.published == "2019-01-03"
+    assert doc.code_blocks[0].code.strip() == "import pandas as pd\nprint(pd.__version__)"
+    assert fake.extract_calls == []  # no extractor credits spent
+
+
+GARBLED = ("# T\n\n```\n\n****Output****\n\n![ex1](https://media.example.com/ex1.png)\n\nOutput\n\n****Example 2:**** text\n"
+           "\n Python  ````\n import pandas as pd data = pd. read_csv(\"nba.csv\")\n```\n")
+
+
+@respx.mock
+async def test_extracted_code_full_of_prose_and_images_is_refused(settings, tmp_path):
+    respx.get("https://ex.com/t").mock(return_value=httpx.Response(403))
+    fake = FakeTavily(extract_results={"https://ex.com/t": GARBLED})
+    with pytest.raises(IngestError, match="line breaks"):
+        await ingest(Source(url="https://ex.com/t"), search_client(settings, tmp_path, fake),
+                     run_id="r", public=True, resolver=public_resolver)
