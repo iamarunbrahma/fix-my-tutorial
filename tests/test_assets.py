@@ -89,3 +89,27 @@ async def test_capped_subprocess_read_keeps_memory_bounded():
         [sys.executable, "-c", "import sys; sys.stdout.write('x' * 5_000_000 + 'END'); sys.stderr.write('e')"],
         timeout=30)
     assert rc == 0 and out.endswith("END") and len(out) <= OUTPUT_CAP + 64 and err == "e"
+
+
+def test_last_expression_is_shown_like_a_notebook(tmp_path):
+    p = run_cells(tmp_path, [{"id": "s1", "code": "counts = {'setosa': 50}\ncounts"},
+                             {"id": "s2", "code": "x = 1\nx + 41"},
+                             {"id": "s3", "code": "y = 3"},
+                             {"id": "s4", "code": "print('hi')"},
+                             {"id": "s5", "code": "len('abc');"}])
+    assert p.returncode == 0
+    out = p.stdout
+    assert "{'setosa': 50}" in out and "42" in out
+    assert out.count("hi") == 1  # print() returns None: nothing extra is shown
+    assert "\n3\n" not in out    # a trailing semicolon hides the value, as in Jupyter
+
+
+def test_display_works_outside_a_notebook(tmp_path):
+    p = run_cells(tmp_path, [{"id": "s1", "code": "display({'a': 1}, 'two')"}])
+    assert p.returncode == 0 and "{'a': 1}" in p.stdout and "two" in p.stdout
+
+
+def test_silent_cells_do_not_show_values(tmp_path):
+    p = run_cells(tmp_path, [{"id": "s1", "code": "'secret-early'"}, {"id": "s2", "code": "print('late')"}],
+                  report_from="s2")
+    assert "secret-early" not in p.stdout and "late" in p.stdout
