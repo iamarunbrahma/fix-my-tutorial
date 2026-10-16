@@ -5,7 +5,7 @@ Fields marked ARUN need Arun's own answer or confirmation.
 - Submitter type: Individual. Organization: N/A. Country: India. Canada province: N/A.
 - Track: Coding and agentic engineering. New or existing: New.
 - Repository: https://github.com/iamarunbrahma/fix-my-tutorial (private until approved to go public).
-- Demo URL: (after deploy).
+- Demo URL: https://fix-my-tutorial.onrender.com (saved in the draft 16 Oct 2026, also as the Try it out link).
 - Tavily: Yes. IRL city: none.
 
 ## Which model(s) did you use, and why that size/variant?
