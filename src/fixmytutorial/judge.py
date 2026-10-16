@@ -30,6 +30,19 @@ class Judge:
 
     async def check(self, step: Step, exit_code: int, stdout: str, *, run_id: str, public: bool) -> Judgement:
         d = deterministic_check(step, exit_code, stdout)
+        if d is False and exit_code == step.expect.exit_code and self.llm is not None:
+            # the code ran but the output isn't the page's text exactly: a renamed heading or a different dict order
+            # is not a break, so the lenient judge compares it with what the tutorial shows
+            shown = "\n".join(step.expect.stdout_contains)[:1500]
+            user = (f"Expected outcome: output like this, as the tutorial shows it:\n{shown}\n\n"
+                    f"Code:\n{step.content[:2000]}\n\nActual output (last 3000 characters):\n{stdout[-3000:]}")
+            try:
+                return await self.llm.call("judge", JUDGE_SYSTEM, user, Judgement, run_id=run_id, public=public,
+                                           max_tokens=300, temperature=0)
+            except BudgetExceeded:
+                raise
+            except Exception:
+                return Judgement(passed=False, reason="expected output not found")
         if d is not None:
             reason = "" if d else (f"exit code {exit_code}" if exit_code != step.expect.exit_code
                                    else "expected output not found")
