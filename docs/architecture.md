@@ -45,7 +45,7 @@ All modules live in `src/fixmytutorial/`.
 | `report` | Diff, verdict, badge SVG and OG image for a finished run; "when it broke" text and Rot Index release stats |
 | `author` | A note for the tutorial's author and a pre-filled GitHub new-issue link (filed by the visitor, never by us) |
 | `store` | SQLite persistence for runs, events and the cache |
-| `snapshot` | Copies runs and the spend ledger to a private Hugging Face dataset so a restarted Space keeps its history and true lifetime spend |
+| `snapshot` | Copies runs and the spend ledger to a private Hugging Face dataset so a restarted demo keeps its history and true lifetime spend (restored runs keep their own finish time) |
 | `events` | Per-run event bus backed by the store; feeds Server-Sent Events |
 | `web` | Pages, SSE stream, rate limits, admin ledger view |
 | `rot_index` | Batch runner and data for the public Rot Index board |
