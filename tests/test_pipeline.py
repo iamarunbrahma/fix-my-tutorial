@@ -251,7 +251,7 @@ def versioned_pandas():
     def other(script, files):
         if "pip list --format=freeze" in script:
             return (0, "numpy==2.1.0\npandas==2.2.3\n", "")
-        if "pip install -q pandas==" in script:
+        if "pip install -q" in script and "pandas==" in script:
             by_image[f"img-{backend_ref['b']._n + 1}"] = script.split("pandas==")[1].split()[0]
         return (0, "ok", "")
 

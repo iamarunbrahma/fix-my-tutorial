@@ -1,0 +1,19 @@
+name: render-guard
+# Keeps the public demo inside the Render credit: suspends it after judging, on high bandwidth, or on a plan change.
+on:
+  schedule:
+    - cron: "45 */3 * * *"
+  workflow_dispatch:
+jobs:
+  guard:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Check the Render service and suspend it if it could cost more than planned
+        run: python scripts/render_guard.py
+        env:
+          RENDER_API_KEY: ${{ secrets.RENDER_API_KEY }}

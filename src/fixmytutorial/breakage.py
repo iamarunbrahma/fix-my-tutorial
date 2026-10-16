@@ -260,7 +260,7 @@ def make_probe(
     async def probe(version: str) -> str:
         spec = f"{package}=={version}" if language == "python" else f"{package}@{version}"
         cmd = (
-            f"pip install -q {shlex.quote(spec)}"
+            f"pip install -q --only-binary=:all: {shlex.quote(spec)}"
             if language == "python"
             else f"npm install --no-save --no-audit --no-fund {shlex.quote(spec)}"
         )

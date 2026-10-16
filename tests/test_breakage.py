@@ -360,7 +360,8 @@ async def test_probe_runs_the_failing_step_with_one_release_from_the_checkpoint(
     first = len(backend.calls)
     assert await probe("1.5.3") == "pass"
     assert backend.calls[first]["image"] == trace.states[1].image.ref  # starts from the saved checkpoint
-    assert "pip install -q pandas==1.5.3" in backend.calls[first]["script"]
+    # wheels only: an old release with no wheel for this Python fails fast instead of compiling for minutes
+    assert "pip install -q --only-binary=:all: pandas==1.5.3" in backend.calls[first]["script"]
     assert await probe("2.0.0") == "same"
     assert await probe("1.0.0") == "no_install"
     assert await probe("3.0.0") == "other"  # fails, but not with the error we are dating
