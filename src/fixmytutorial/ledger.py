@@ -80,7 +80,7 @@ class Ledger:
 
     def price_usd(self, role: str, prompt_tokens: int, completion_tokens: int) -> float:
         pin, pout = self._s.price_for(role)
-        return prompt_tokens / 1e6 * pin + completion_tokens / 1e6 * pout
+        return (prompt_tokens / 1e6 * pin + completion_tokens / 1e6 * pout) * (1 + self._s.tax_rate)
 
     def _sum(self, sql: str, args: tuple = ()) -> float:
         row = self._db.execute(sql, args).fetchone()

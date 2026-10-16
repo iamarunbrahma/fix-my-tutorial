@@ -6,16 +6,22 @@ from fixmytutorial.ledger import BudgetExceeded, Ledger
 
 
 def make(settings, tmp_path, now=1_792_000_000.0, **caps):
-    s = settings.model_copy(update=caps)
+    s = settings.model_copy(update={"tax_rate": 0.0, **caps})  # cap arithmetic below is pre-tax unless a test sets it
     clock = {"t": now}
     led = Ledger(tmp_path / "l.db", s, clock=lambda: clock["t"])
     return led, clock
 
 
 def test_price_math(settings, tmp_path):
-    led, _ = make(settings, tmp_path)
+    led, _ = make(settings, tmp_path, tax_rate=0.0)
     # Ultra: 1M in = $1, 1M out = $3
     assert led.price_usd("repair", 1_000_000, 1_000_000) == pytest.approx(4.0)
+
+
+def test_prices_include_the_tax_token_factory_adds(settings, tmp_path):
+    assert settings.tax_rate == pytest.approx(0.18)  # Token Factory bills about 18% VAT on top, from the same credits
+    led, _ = make(settings, tmp_path, tax_rate=settings.tax_rate)
+    assert led.price_usd("repair", 1_000_000, 1_000_000) == pytest.approx(4.0 * 1.18)
 
 
 def test_commit_records_actual_usage(settings, tmp_path):
