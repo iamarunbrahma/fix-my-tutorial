@@ -2,14 +2,22 @@
 
 Run any coding tutorial, find what broke, and fix it with sources you can check.
 
-**Live demo: [fix-my-tutorial.onrender.com](https://fix-my-tutorial.onrender.com)** (tutorial code runs in Nebius Token Factory Sandboxes)
-
+[![Live demo](https://img.shields.io/badge/live%20demo-fix--my--tutorial.onrender.com-8b5cf6)](https://fix-my-tutorial.onrender.com)
 [![CI](https://github.com/iamarunbrahma/fix-my-tutorial/actions/workflows/ci.yml/badge.svg)](https://github.com/iamarunbrahma/fix-my-tutorial/actions/workflows/ci.yml)
 [![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
+[![Python 3.12](https://img.shields.io/badge/python-3.12-3776ab?logo=python&logoColor=white)](pyproject.toml)
+[![NVIDIA Nemotron](https://img.shields.io/badge/NVIDIA-Nemotron-76b900?logo=nvidia&logoColor=white)](#how-we-use-nvidia-nemotron)
+[![Nebius Token Factory](https://img.shields.io/badge/Nebius-Token%20Factory%20%2B%20Sandboxes-052b4f)](#where-nebius-token-factory-accelerated-the-work)
+[![Tavily](https://img.shields.io/badge/sources-Tavily-0f766e)](#tavily)
+[![Devpost](https://img.shields.io/badge/Devpost-Nebius%20x%20NVIDIA%20Global%20AI%20Hackathon-003e54?logo=devpost&logoColor=white)](https://nebiusglobalaihackathon.devpost.com/)
+
+**Try it: [fix-my-tutorial.onrender.com](https://fix-my-tutorial.onrender.com)**. Every step runs in a Nebius Token Factory Sandbox, and the models are NVIDIA Nemotron on Nebius Token Factory.
+
+![Two fixes racing in parallel sandboxes on a 2016 TensorFlow tutorial; the migration to TensorFlow 2 wins](docs/images/03-fixes-race.jpg)
 
 ## Why
 
-Coding tutorials rot. A guide written in 2023 breaks in 2026 because a library removed a function, renamed a package or changed a default, and learners hit an error the author never saw. AI assistants trained on those same pages repeat the broken code. NVIDIA's own OpenShell repo has an open issue titled ["Tutorial Rot"](https://github.com/NVIDIA/OpenShell/issues/2998).
+Coding tutorials rot. A guide written in 2016 breaks today because a library removed a function, renamed a package or changed a default, and learners hit an error the author never saw. AI assistants trained on those same pages repeat the broken code. NVIDIA's own OpenShell repo has an open issue titled ["Tutorial Rot"](https://github.com/NVIDIA/OpenShell/issues/2998).
 
 Fix My Tutorial runs the tutorial exactly as written in a fresh sandbox, and when a step breaks it finds the changelog or issue that explains why, races several fixes in parallel, and proves the winner with a clean re-run from scratch.
 
@@ -39,7 +47,9 @@ Shared: llm (Token Factory client + routing), ledger (spend guard),
 3. **Diagnose.** When a step fails, Nemotron 3.5 Lightning classifies the error (removed API, renamed package, version conflict and so on), and Tavily finds the release note, migration guide or issue that explains it.
 4. **Repair.** Nemotron 3 Ultra proposes up to three fixes (migrate to the new API, pin an older version, or work around it). When evidence was found, each fix must cite it. The fixes race in parallel sandboxes from the last good checkpoint.
 5. **Prove it.** The repaired tutorial is replayed from scratch before it is called fixed. The report shows the diff, the cited reasons, and a badge.
-6. **Date it.** When a package change broke the step, the failing step runs again from its checkpoint with older releases of that package: the one before a cited version, or the end of each earlier release series, then a short binary search. When older releases can't install on today's Python (pandas 1.x and NumPy before 1.26 can't on 3.12), one more Tavily search looks for the release note itself, and Nemotron 3.5 Lightning reads it. Only a version that exists on PyPI or npm and that the quote (or the release note's own address) states is accepted, and the report says which way it was found. In our runs: "Broke in chalk 5.0.0, released 26 Nov 2021. chalk 4.1.2 still runs this step, and 5.0.0 fails the same way." and "Broke in pandas 2.0.0, released 3 Apr 2023, according to the cited release notes." When the page states its publish date, the report also says how long the tutorial worked.
+6. **Date it.** When a package change broke the step, the failing step runs again from its checkpoint with older releases of that package: the one before a cited version, or the end of each earlier release series, then a short binary search. When older releases can't install on today's Python (pandas 1.x and NumPy before 1.26 can't on 3.12), one more Tavily search looks for the release note itself, and Nemotron 3.5 Lightning reads it. Only a version that exists on PyPI or npm and that the quote (or the release note's own address) states is accepted, and the report says which way it was found. When the releases before a cited one can't install, the releases after it are run instead, so a note that dates a deprecation is not mistaken for the release that removed it. In our runs: "Broke in chalk 5.0.0, released 26 Nov 2021. chalk 4.1.2 still runs this step, and 5.0.0 fails the same way." and "Broke in pandas 2.0.0, released 3 Apr 2023, according to the cited release notes." When the page states its publish date, the report also says how long the tutorial worked.
+
+![The clean replay from scratch passed, so the run is marked Fixed](docs/images/04-fixed-after-replay.jpg)
 
 | Role | Model | Price per 1M tokens (in / out) | Why this size |
 |---|---|---|---|
@@ -56,7 +66,18 @@ After a check, the report offers:
 - **A badge** the author can add to the page.
 - **Check from any page.** Drag the "Check this tutorial" bookmark from the home page to your bookmarks bar, or share a link like `/?url=<tutorial>`. The link only fills in the form; a run always starts with a click.
 
+![The report for the TensorFlow tutorial: the change, the reason, the sources, and a GitHub issue for the author](docs/images/05-report-tell-the-author.jpg)
+
 More detail: [docs/architecture.md](docs/architecture.md).
+
+## Rot Index
+
+How many old tutorials still work? The [Rot Index](https://fix-my-tutorial.onrender.com/index) runs [115 popular Python and JavaScript tutorials published 2013 to 2018](rot_index/list.yaml) step by step with today's packages, and shows what still works, what broke, the fix for each, and which releases broke the most tutorials. The list was picked before any of them ran, and 34 of the 115 were expected to still work, so the index is not filled with known breakages. Each result is checked by hand before it is published. A "fix" that only undoes our own misreading of the page, or that relies on data the tutorial doesn't provide, does not count as a fix.
+
+```bash
+uv run python -m fixmytutorial.rot_index run --limit 40 --concurrency 3   # in slices, inside the daily budget
+uv run python -m fixmytutorial.rot_index export                           # writes rot_index/results.json for the page
+```
 
 ## How we use NVIDIA Nemotron
 
@@ -85,12 +106,18 @@ Research uses Tavily search, then Tavily extract with a focused query on the top
 
 ## Run it locally
 
-Requirements: Python 3.12, [uv](https://docs.astral.sh/uv/), Docker, a Nebius Token Factory key and a Tavily key.
+Requirements: Python 3.12, [uv](https://docs.astral.sh/uv/), Docker (or Nebius Token Factory Sandboxes access), a Nebius Token Factory key and a Tavily key.
 
 ```bash
 uv sync
 cp .env.example .env        # fill in NEBIUS_API_KEY, TAVILY_API_KEY and ADMIN_TOKEN; set SANDBOX_BACKEND=docker
 uv run uvicorn fixmytutorial.web.app:app --reload
+```
+
+To run tutorial code in Nebius Token Factory Sandboxes instead of Docker, as the live demo does, set `SANDBOX_BACKEND=contree`, build the two base images once, and put the two image IDs it prints into `.env` (Sandboxes uses the same `NEBIUS_API_KEY`):
+
+```bash
+uv run python -m fixmytutorial.sandbox.prepare   # prints CONTREE_PYTHON_IMAGE=... and CONTREE_NODE_IMAGE=...
 ```
 
 The Docker sandbox refuses to run until a probe from inside a container shows that private addresses (your LAN, the host, cloud metadata) are unreachable. On a Linux host, set up the firewalled network in [docs/deploy.md](docs/deploy.md). On a laptop, and only for tutorials you trust, set `DOCKER_ALLOW_PRIVATE_EGRESS=true` to skip the probe.
@@ -118,7 +145,8 @@ A bank card sits behind the Token Factory account, so the app is built to never 
 - Python and JavaScript only.
 - Code that calls OpenAI-style APIs talks to a stand-in server inside the sandbox. It proves the SDK calls are correct today, not what a real model would answer.
 - Fixes are checked by running the tutorial, not by reading it. A step with no visible output passes if it exits cleanly.
-- "When it broke" needs an older release that still installs on Python 3.12 or Node.js 22 to be checked by running. Otherwise it rests on the cited release notes, and the report says so.
+- "When it broke" needs an older release that still installs on Python 3.12 or Node.js 22 to be checked by running. Otherwise it rests on the cited release notes, and the report says so. When no source names the exact release, the report leaves it out rather than guess.
+- Each step runs as its own sandbox operation, so a server started in one step is not running for the next. Tutorials built around a long-running server get a start-up check only.
 
 ## Roadmap
 
