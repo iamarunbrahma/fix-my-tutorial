@@ -55,3 +55,21 @@ def test_stub_marker_matches_the_stand_in_server():
     from fixmytutorial.judge import STUB_MARKER
     from fixmytutorial.sandbox import ASSETS_DIR
     assert STUB_MARKER in (ASSETS_DIR / "openai_stub.py").read_text()
+
+
+async def test_a_cosmetic_difference_from_the_shown_output_goes_to_the_lenient_judge(settings, tmp_path):
+    # the review, 16 Oct: Python 3.10 prints "options:" where a 2018 tutorial shows "optional arguments:"
+    client = FakeChatClient(['{"passed": true, "reason": "same help text; the heading was renamed"}'])
+    j = Judge(LLM(settings, Ledger(tmp_path / "l.db", settings), client=client))
+    res = await j.check(step(kind="shell", stdout_contains=["optional arguments:"]), 0,
+                        "usage: x [-h]\n\noptions:\n  -h, --help  show this help", run_id="r", public=True)
+    assert res.passed and "optional arguments:" in client.calls[0]["messages"][1]["content"]
+
+
+async def test_shown_output_that_is_really_missing_still_fails(settings, tmp_path):
+    client = FakeChatClient(['{"passed": false, "reason": "no accuracy printed"}', RuntimeError("down")])
+    j = Judge(LLM(settings, Ledger(tmp_path / "l.db", settings), client=client))
+    s = step(stdout_contains=["Accuracy: 0.97"])
+    assert not (await j.check(s, 0, "Traceback ... but exit 0", run_id="r", public=True)).passed
+    assert not (await j.check(s, 0, "nothing", run_id="r", public=True)).passed  # judge down: the exact check stands
+    assert not (await j.check(s, 1, "Accuracy: 0.97", run_id="r", public=True)).passed  # exit code never goes to it

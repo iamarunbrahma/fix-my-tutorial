@@ -223,6 +223,29 @@ async def test_an_old_release_that_cannot_install_falls_back_to_the_release_note
     assert (bp.first_bad, bp.last_good, bp.how, bp.evidence_id) == ("2.0.0", None, "release_notes", "r1e1")
 
 
+async def test_a_cited_deprecation_is_corrected_by_newer_releases_that_still_run(settings, tmp_path):
+    # the review, 16 Oct: "sparse was renamed to sparse_output in 1.2" was dated 1.2.0, but 1.3.2 still ran the
+    # tutorial; it broke when the old name was removed in 1.4.0. Releases before the cited one couldn't install.
+    outcomes = {
+        "1.5.3": "no_install",
+        "2.0.0": "no_install",
+        "2.0.1": "pass",
+        "2.0.2": "same",
+        "2.0.3": "same",
+        "2.1.0": "same",
+    }
+    bp, calls = await find(settings, tmp_path, outcomes)
+    assert (bp.first_bad, bp.last_good, bp.how) == ("2.0.2", "2.0.1", "ran")
+    assert len(calls) <= 6
+
+
+async def test_a_cited_version_newer_releases_agree_with_keeps_the_release_notes(settings, tmp_path):
+    outcomes = {"1.5.3": "no_install", "2.0.0": "no_install", "2.0.1": "same"}
+    bp, calls = await find(settings, tmp_path, outcomes)
+    assert (bp.first_bad, bp.how, bp.evidence_id) == ("2.0.0", "release_notes", "r1e1")
+    assert "2.0.1" in calls
+
+
 async def test_no_answer_when_the_earlier_release_fails_the_same_way(settings, tmp_path):
     bp, _ = await find(settings, tmp_path, {"1.5.3": "same", "2.0.0": "same"})
     assert bp is None
@@ -505,7 +528,8 @@ async def test_release_notes_are_searched_when_running_cannot_answer(settings, t
     empty = json.dumps({"package": "numpy", "version": "", "evidence_id": ""})
     named = json.dumps({"package": "numpy", "version": "1.24.0", "evidence_id": "b1"})
     outcomes = {"1.26.4": "same", "2.0.0": "same", "1.23.5": "no_install", "1.24.0": "same"}
-    bp = await numpy_find(settings, tmp_path, [empty, named], outcomes, search)
+    # the run's own sources state no version: read twice, then the release note is searched and read
+    bp = await numpy_find(settings, tmp_path, [empty, empty, named], outcomes, search)
     assert (bp.first_bad, bp.how, bp.evidence_id) == ("1.24.0", "release_notes", "b1")
     assert bp.source.url == NOTES_URL and "np.float" in bp.source.quote
     assert [c[0] for c in search.calls] == ["search", "extract"]
@@ -697,6 +721,30 @@ def test_version_matching_is_strict():
     assert _mentions(_address("https://numpy.org/doc/stable/release/1.24.0-notes.html"), "1.24.0")
 
 
+async def test_the_runs_own_sources_are_read_a_second_time_when_the_first_read_passes(settings, tmp_path):
+    # the live demo, 16 Oct: pandas' v2.0.0 what's-new page was a source, Lightning passed on it once (it names 2.0.0
+    # two times in three), old pandas can't install on Python 3.12, and the report lost "When it broke"
+    empty = json.dumps({"package": "", "version": "", "evidence_id": ""})
+    llm = LLM(settings, Ledger(tmp_path / "l.db", settings), client=FakeChatClient([empty, GUESS]))
+
+    async def probe(version):
+        return "no_install"
+
+    bp = await find_break(
+        target(),
+        language="python",
+        llm=llm,
+        registry=FakeRegistry(),
+        probe_for=lambda p: probe,
+        max_probes=6,
+        time_s=30,
+        run_id="r",
+        public=True,
+        search=None,
+    )
+    assert (bp.first_bad, bp.how, bp.evidence_id) == ("2.0.0", "release_notes", "r1e1")
+
+
 async def test_the_release_notes_are_read_a_second_time_when_the_first_read_passes(settings, tmp_path):
     search = FakeSearch(
         [{"url": "https://ex.com/a", "title": "append removed", "content": ""}],
@@ -727,3 +775,18 @@ async def test_the_release_notes_are_read_a_second_time_when_the_first_read_pass
         search=search,
     )
     assert (bp.first_bad, bp.how, bp.evidence_id) == ("2.0.0", "release_notes", "b1")
+
+
+async def test_a_source_naming_the_minor_release_dates_its_first_release(settings, tmp_path):
+    # the live demo, 16 Oct: sources said "obsolete in tensorflow 2.0"; PyPI calls the release 2.0.0
+    ev = [Evidence(id="r1e3", url="https://discuss.example/t/1", title="tf.Session in TF 2",
+                   quote="these lines are now obsolete in tf 2. How do I replace sessions in tensorflow 2.0?")]
+    reply = json.dumps({"package": "pandas", "version": "2.0.0", "evidence_id": "r1e3"})
+    bp, _ = await find(settings, tmp_path, {"1.5.3": "no_install", "2.0.0": "no_install", "2.0.1": "same"},
+                       reply=reply, evidence=ev)
+    assert (bp.first_bad, bp.how, bp.evidence_id) == ("2.0.0", "release_notes", "r1e3")
+    # but "2.0" never stands for a later patch release
+    reply = json.dumps({"package": "pandas", "version": "2.0.1", "evidence_id": "r1e3"})
+    bp, _ = await find(settings, tmp_path, {"1.5.3": "no_install", "2.0.0": "no_install", "2.0.1": "no_install",
+                                            "2.0.2": "same"}, reply=reply, evidence=ev)
+    assert bp is None or bp.first_bad != "2.0.1"

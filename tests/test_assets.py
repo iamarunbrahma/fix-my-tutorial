@@ -113,3 +113,28 @@ def test_silent_cells_do_not_show_values(tmp_path):
     p = run_cells(tmp_path, [{"id": "s1", "code": "'secret-early'"}, {"id": "s2", "code": "print('late')"}],
                   report_from="s2")
     assert "secret-early" not in p.stdout and "late" in p.stdout
+
+
+def _serve_404(port):
+    """A server that is up but has no route at "/" (the review, 16 Oct: an app with only POST /data)."""
+    code = ("import http.server, sys\n"
+            "class H(http.server.BaseHTTPRequestHandler):\n"
+            "    def do_GET(self): self.send_response(404); self.end_headers()\n"
+            "    def log_message(self, *a): pass\n"
+            "http.server.HTTPServer(('127.0.0.1', int(sys.argv[1])), H).serve_forever()\n")
+    return subprocess.Popen([sys.executable, "-c", code, str(port)])
+
+
+def probe(port, status):
+    return subprocess.run([sys.executable, str(ASSETS_DIR / "probe.py"), "--port", str(port), "--path", "/",
+                           "--status", str(status), "--wait", "10"], capture_output=True, text=True, timeout=30)
+
+
+def test_probe_without_a_tutorial_url_counts_any_answer_as_up():
+    port = free_port()
+    proc = _serve_404(port)
+    try:
+        assert probe(port, 0).returncode == 0  # listening: a 404 at "/" is still an answer
+        assert probe(port, 200).returncode == 1  # a URL the tutorial names must still match exactly
+    finally:
+        proc.kill()

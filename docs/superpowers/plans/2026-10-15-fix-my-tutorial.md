@@ -142,7 +142,7 @@ curl -sS https://api.tokenfactory.nebius.com/v1/chat/completions \
 
 Expected: `choices[0].message.content` parses as `{"ok": true, "n": 3}`. Record per model (a) whether `json_schema` is honored, (b) whether a `<think>` block or `reasoning_content` field appears, and (c) the `usage` field. If a model rejects `json_schema`, Task 4's `LLM` uses `{"type":"json_object"}` for that role (set `json_mode_roles` in config).
 
-- [ ] **Step 7: Tavily key.** Sign up at tavily.com with mithubrahma94@gmail.com (free tier, no card) and put the key in `.env`. When Builders Program credits arrive, apply them in the Tavily dashboard.
+- [ ] **Step 7: Tavily key.** Sign up at tavily.com (free tier, no card) and put the key in `.env`. When Builders Program credits arrive, apply them in the Tavily dashboard.
 - [ ] **Step 8: HF token.** Create a fine-grained write token for `heliosbrahma` (Spaces + datasets) and add it to `.env` as `HF_TOKEN`. Generate `ADMIN_TOKEN=$(python3 -c "import secrets;print(secrets.token_urlsafe(24))")`.
 - [ ] **Step 9: Calendar reminders.** Use the Google Calendar connector to create (a) a weekly Monday 10:00 IST event "Check Nebius Token Factory balance (Fix My Tutorial)" recurring until 2026-12-14, and (b) an all-day event on 2026-12-16, "Remove card from Nebius Token Factory".
 - [ ] **Step 10: Start the feedback log** `docs/feedback.md`:

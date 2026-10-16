@@ -201,6 +201,7 @@ def test_server_ports_default_to_the_framework_default():
     assert default_probe("uvicorn main:app --reload", "python").port == 8000
     assert default_probe("npm run dev", "javascript").port == 3000
     assert default_probe("python app.py --port 7000", "python").port == 7000
+    assert default_probe("node index.js", "javascript").expect_status == 0  # no URL from the tutorial: any answer
 
 
 async def test_a_fix_passes_when_its_cell_passes_even_if_a_later_cell_breaks(settings, tmp_path):
@@ -232,3 +233,27 @@ async def test_an_unusable_repair_answer_costs_one_round_not_the_run(settings, t
         plan=PLAN, trace=trace, signature=SIG, evidence=EVID, versions="", run_id="r", public=True, emit=emit)
     assert win is not None and len(record.rounds) == 2 and record.rounds[0].candidates == []
     assert "cut off" in client.calls[2]["messages"][1]["content"]  # the next round is told why
+
+
+def test_validate_rejects_a_fix_that_writes_made_up_data():
+    # the review, 16 Oct: a 404 dataset "fixed" by writing 20 invented rows
+    fake = Candidate(strategy="workaround", rationale="r", edits=[Edit(
+        op="insert_after", step_id="s1", new_kind="write_file", new_path="data/well.csv",
+        new_content="NPHI,RHOB,LITH\n0.2,2.4,shale\n", reason="the dataset is gone", evidence_ids=["r1e1"])])
+    assert validate_candidate(fake, PLAN, {"r1e1"}, "dead_resource") == "edit invents a data file"
+    config = Candidate(strategy="migrate", rationale="r", edits=[Edit(
+        op="insert_after", step_id="s1", new_kind="write_file", new_path="package.json",
+        new_content='{"type": "module"}', reason="ESM", evidence_ids=["r1e1"])])
+    assert validate_candidate(config, PLAN, {"r1e1"}, "version_conflict") is None
+
+
+def test_an_indentation_only_fix_is_a_real_change():
+    # the review, 16 Oct: `  def fit` indented 2 spaces inside a 4-space class got zero candidates in 3 rounds,
+    # because a whitespace-blind comparison called the fix "changes nothing"
+    broken = "class LR:\n    def __init__(self):\n        self.w = 0\n  def fit(self, X):\n        return X\n"
+    fixed = "class LR:\n    def __init__(self):\n        self.w = 0\n    def fit(self, X):\n        return X\n"
+    plan = RunPlan(language="python", runtime="3.12", steps=[S("s1", "run_code", broken)])
+    c = Candidate(strategy="workaround", rationale="r", edits=[edit("s1", fixed)])
+    assert validate_candidate(c, plan, set(), "tutorial_typo") is None
+    same = Candidate(strategy="workaround", rationale="r", edits=[edit("s1", broken + "\n\n")])
+    assert validate_candidate(same, plan, set(), "tutorial_typo") == "edit changes nothing"

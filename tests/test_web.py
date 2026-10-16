@@ -471,3 +471,12 @@ def test_a_direct_visitor_cannot_fake_the_cloudflare_header(env):
     _, deps = env
     deps.settings = deps.settings.model_copy(update={"client_ip_header": "cf-connecting-ip"})
     assert post_with(deps, "8.8.4.4", cf=lambda i: f"203.0.113.{i}")[-1] == 429
+
+
+def test_index_states_when_its_tutorials_were_published(env):
+    client, deps = env
+    idx = json.loads(deps.settings.rot_index_path.read_text())
+    for e, y in zip(idx["entries"], (2014, 2017, "")):
+        e["year"] = y
+    deps.settings.rot_index_path.write_text(json.dumps(idx))
+    assert "published 2014 to 2017" in client.get("/index").text

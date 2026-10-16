@@ -463,6 +463,7 @@ def create_app(deps: Deps | None = None) -> FastAPI:
             for v in ("still_works", "fixed", "could_not_fix", "not_runnable")
         }
         causes = Counter(c for e in entries for c in e.get("categories", [])).most_common()
+        years = [e["year"] for e in entries if isinstance(e.get("year"), int)]
         return templates.TemplateResponse(
             request,
             "index.html",
@@ -473,6 +474,7 @@ def create_app(deps: Deps | None = None) -> FastAPI:
                 "causes": causes,
                 "breaks": break_stats(entries),
                 "generated_at": data.get("generated_at"),
+                "years": (min(years), max(years)) if years else None,
             },
         )
 

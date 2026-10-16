@@ -4,6 +4,7 @@ import re
 
 from .executor import INSTALL_RE
 from .judge import squash
+from .llm import LLMOutputError
 from .models import PlannerOutput, Probe, RunPlan, Step, TutorialDoc
 from .prompts import PLANNER_SYSTEM
 
@@ -25,13 +26,32 @@ def safe_path(path: str | None) -> str | None:
     return "/".join(parts) or None
 
 
+DATA_EXT = (".csv", ".tsv", ".xlsx", ".xls", ".parquet", ".dat", ".data", ".json", ".txt", ".xml")
+CONFIG_FILES = {"package.json", "package-lock.json", "tsconfig.json", "jsconfig.json", "requirements.txt", ".babelrc",
+                ".eslintrc.json", "composer.json"}
+URL_RE = re.compile(r"https?://[^\s'\"<>)]+")
+
+
+def is_data_file(path: str | None) -> bool:
+    name = (path or "").rsplit("/", 1)[-1].lower()
+    return name.endswith(DATA_EXT) and name not in CONFIG_FILES
+
+
+def invents_data(step: Step, shown: str) -> bool:
+    """A step the planner added that makes up data the page never shows, or downloads from a link it never gives."""
+    if step.kind == "write_file" and is_data_file(step.path) and squash(step.content) not in shown:
+        return True
+    if INSTALL_RE.search(step.content):
+        return False  # an install may name a package index (pip --index-url ...)
+    return any(u.rstrip(".,;") not in shown for u in URL_RE.findall(step.content))
+
+
 def default_probe(content: str, language: str) -> Probe:
     """The port a server command listens on: an explicit port, else the framework's default."""
     m = PORT_RE.search(content)
-    if m:
-        return Probe(port=int(m.group(1)))
-    port = next((p for rx, p in FRAMEWORK_PORTS if rx.search(content)), 8000 if language == "python" else 3000)
-    return Probe(port=port)
+    port = int(m.group(1)) if m else next((p for rx, p in FRAMEWORK_PORTS if rx.search(content)),
+                                          8000 if language == "python" else 3000)
+    return Probe(port=port, expect_status=0)  # no URL from the tutorial: any answer means it is up
 
 
 def render_planner_input(doc: TutorialDoc, max_chars: int) -> str:
@@ -68,12 +88,15 @@ def normalize_plan(out: PlannerOutput, max_steps: int = 40, source_text: str | N
             s.probe = default_probe(s.content, out.language)
         if shown is not None:
             s.content = _unflatten(s.content, shown)
+        if shown is not None and s.implicit and invents_data(s, shown):
+            continue  # a stand-in file or a guessed URL would make a fake break, and then a fake fix
         if shown is not None:  # only literals the tutorial actually shows may gate a step
             s.expect.stdout_contains = [x for x in s.expect.stdout_contains if squash(x) and squash(x) in shown]
         # A step is expected to do what the tutorial intends. A planner that predicts the breakage ("exit 1, it will
         # fail because...") would make every working fix look wrong.
         s.expect.exit_code = 0
-        if s.expect.description and (PREDICTED_FAILURE.search(s.expect.description)
+        s.expect.stdout_contains = [x for x in s.expect.stdout_contains if not predicts_failure(x)]
+        if s.expect.description and (predicts_failure(s.expect.description)
                                      or VISUAL.search(s.expect.description)):  # pictures can't be checked from text
             s.expect.description = None
         s.source_excerpt = s.source_excerpt[:1200]
@@ -96,8 +119,12 @@ async def plan_tutorial(doc: TutorialDoc, llm, settings, *, run_id: str, public:
         return RunPlan(language="python", runtime=RUNTIMES["python"], runnable=False,
                        not_runnable_reason="No code found on that page.", steps=[])
     user = render_planner_input(doc, settings.max_tutorial_chars)
-    out = await llm.call("planner", PLANNER_SYSTEM, user, PlannerOutput, run_id=run_id, public=public,
-                         max_tokens=12000, temperature=0.1)
+    try:
+        out = await llm.call("planner", PLANNER_SYSTEM, user, PlannerOutput, run_id=run_id, public=public,
+                             max_tokens=12000, temperature=0.1)
+    except LLMOutputError:  # now and then the answer runs on until it is cut off: one fresh, compact try
+        out = await llm.call("planner", PLANNER_SYSTEM, f"{user}\n\n{COMPACT}", PlannerOutput, run_id=run_id,
+                             public=public, max_tokens=12000, temperature=0.0)
     if not out.runnable and _skipped_for_plots(doc, out.not_runnable_reason):  # charts run headless: ask again
         retry = (f"{user}\n\n=== CHECK ===\nYou set runnable=false because of plots ({out.not_runnable_reason}). "
                  "The sandbox is headless with a non-interactive backend: plt.show() simply returns and figures "
@@ -133,7 +160,17 @@ async def plan_tutorial(doc: TutorialDoc, llm, settings, *, run_id: str, public:
     return plan
 
 
-PREDICTED_FAILURE = re.compile(r"\b(fail|fails|failing|error|exception|crash|raises?|traceback)\b", re.I)
+COMPACT = ("Reply with compact JSON only: no reasoning text, keep each source_excerpt under 200 characters, and do "
+           "not repeat yourself.")
+PREDICTED_FAILURE = re.compile(r"\b(fail|fails|failing|error|errors|exception|crash|raises?|traceback|removed|deprecated|"
+                               r"no longer)\b|\bno (attribute|module)\b", re.I)
+EXCEPTION_NAME = re.compile(r"[a-z](Error|Exception)\b")  # AttributeError, ModuleNotFoundError; case matters here
+
+
+def predicts_failure(text: str) -> bool:
+    """An expectation that names the breakage ("AttributeError: ... has no attribute 'append'") isn't what the
+    tutorial intends, and would reject every working fix."""
+    return bool(PREDICTED_FAILURE.search(text) or EXCEPTION_NAME.search(text))
 VISUAL = re.compile(r"\b(plot|plots|plotted|chart|graph|figure|histogram|scatter|heatmap|image|visuali[sz]ation|"
                     r"legend|axes|line plot|bar plot|pie)\b", re.I)
 PLOT_LIBS = re.compile(r"\b(matplotlib|seaborn|plotly|pyplot|plt\.)")

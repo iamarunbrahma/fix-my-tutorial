@@ -8,7 +8,7 @@ import logging
 from .breakage import BreakTarget, Registry, eligible, find_break, make_probe
 from .executor import ExecState, Executor, Trace, unit_index_of
 from .ingest import IngestError, Source, ingest
-from .judge import Judge, squash
+from .judge import Judge, code_lines, squash
 from .ledger import BudgetExceeded
 from .llm import LLMOutputError
 from .models import RunPlan, RunRecord, RunStatus, Step, StepOutcome, StepStatus, Summary, Verdict, utcnow
@@ -26,6 +26,14 @@ log = logging.getLogger("fixmytutorial.pipeline")
 def step_view(s: Step) -> dict:
     return {"id": s.id, "title": s.title, "kind": s.kind, "implicit": s.implicit, "content": s.content[:2000],
             "path": s.path}
+
+
+def _contains(block: list[tuple[int, str]], lines: list[tuple[int, str]]) -> bool:
+    """The lines appear in a row in the block, indented the same relative to each other."""
+    def rel(seq: list[tuple[int, str]]) -> list[tuple[int, str]]:
+        return [(i - seq[0][0], t) for i, t in seq]
+    n = len(lines)
+    return n == 0 or any(rel(block[k:k + n]) == rel(lines) for k in range(len(block) - n + 1))
 
 
 class Pipeline:
@@ -135,10 +143,19 @@ class Pipeline:
 
     @staticmethod
     def _only_restores_the_page(record: RunRecord, plan: RunPlan, doc) -> bool:
-        original = {s.id: s.content for s in record.plan.steps} if record.plan else {}
-        changed = [s for s in plan.steps if original.get(s.id) != s.content]
+        original = {s.id: (s.content, s.kind, s.path) for s in record.plan.steps} if record.plan else {}
+        changed = [s for s in plan.steps if original.get(s.id) != (s.content, s.kind, s.path)]
         page = squash("\n".join([doc.text, *(b.code for b in doc.code_blocks)]))
-        return bool(changed) and all(squash(s.content) in page for s in changed)
+        blocks = [code_lines(b.code) for b in doc.code_blocks]
+
+        def shown(content: str) -> bool:
+            if squash(content) not in page:
+                return False
+            mine = code_lines(content)  # where a code block shows it, the indentation must match as well
+            hits = [b for b in blocks if squash(content) in squash(" ".join(t for _, t in b))]
+            return not hits or any(_contains(b, mine) for b in hits)
+
+        return bool(changed) and all(shown(s.content) for s in changed)
 
     async def _emit_plan(self, plan: RunPlan, record: RunRecord, emit) -> None:
         await emit({"type": "plan", "title": record.title, "language": plan.language, "runtime": plan.runtime,

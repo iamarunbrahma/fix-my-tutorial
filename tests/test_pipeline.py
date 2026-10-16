@@ -335,3 +335,33 @@ async def test_two_breaks_in_one_cell_group_are_both_repaired(settings, tmp_path
     assert rec.verdict == Verdict.FIXED and [r.step_id for r in rec.repairs] == ["s3", "s4"]
     final = {s.id: s.content for s in rec.final_plan.steps}
     assert "pd.concat" in final["s3"] and "df.items()" in final["s4"]
+
+
+def test_a_fix_that_only_changes_a_steps_kind_is_not_a_fix():
+    # the review, 16 Oct: the planner marked `python scrape_titles.py` as Python code; switching it to a shell step
+    # undid our own misreading, so the tutorial worked as written
+    from fixmytutorial.models import RunPlan, Step, TutorialDoc
+    from fixmytutorial.pipeline import Pipeline
+    misread = RunPlan(language="python", runtime="3.12",
+                      steps=[Step(id="s1", title="run", kind="run_code", content="python scrape_titles.py")])
+    final = misread.model_copy(deep=True)
+    final.steps[0].kind = "shell"
+    rec = new_record().model_copy(update={"plan": misread})
+    doc = TutorialDoc(source="https://ex.com", title="t", text="Run it with python scrape_titles.py", content_hash="h")
+    assert Pipeline._only_restores_the_page(rec, final, doc)
+
+
+def test_fixing_the_pages_own_indentation_is_a_fix_not_a_restore():
+    # the page itself indents `def fit` by 2 spaces inside a 4-space class: correcting it fixes the tutorial
+    from fixmytutorial.models import CodeBlock, RunPlan, Step, TutorialDoc
+    from fixmytutorial.pipeline import Pipeline
+    bad = "class LR:\n    def __init__(self):\n        self.w = 0\n  def fit(self, X):\n        return X"
+    good = bad.replace("\n  def fit", "\n    def fit")
+    orig = RunPlan(language="python", runtime="3.12", steps=[Step(id="s1", title="t", kind="run_code", content=bad)])
+    final = orig.model_copy(deep=True)
+    final.steps[0].content = good
+    doc = TutorialDoc(source="https://ex.com", title="t", text="A class", content_hash="h",
+                      code_blocks=[CodeBlock(lang="python", code=bad)])
+    assert not Pipeline._only_restores_the_page(new_record().model_copy(update={"plan": orig}), final, doc)
+    doc_good = doc.model_copy(update={"code_blocks": [CodeBlock(lang="python", code=good)]})  # we had misread it
+    assert Pipeline._only_restores_the_page(new_record().model_copy(update={"plan": orig}), final, doc_good)
