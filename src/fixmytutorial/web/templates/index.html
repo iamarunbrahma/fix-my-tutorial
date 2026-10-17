@@ -5,7 +5,7 @@
   <span class="eyebrow">Rot Index{% if generated_at %} · updated {{ generated_at }}{% endif %}</span>
   <h1 class="page-title">How many popular tutorials still work?</h1>
   {% if total %}
-  <p class="lead">We ran {{ total }} popular Python and JavaScript tutorials{% if years %}, published {{ years[0] }} to {{ years[1] }},{% endif %} step by step in fresh sandboxes with today's package versions. Here is what still works, what broke, and the fix for each.</p>
+  <p class="lead">We ran {{ total }} popular Python and JavaScript tutorials{% if years %}, published {{ years[0] }} to {{ years[1] }},{% endif %} step by step in fresh sandboxes with today's package versions. Here is what still works, what broke, and the fix for each.{% if excluded %} {{ excluded }} more were left out: checking them by hand showed the failure was in our runner, not in the tutorial.{% endif %}</p>
   {% else %}
   <p class="lead">We are running popular Python and JavaScript tutorials step by step in fresh sandboxes with today's package versions, to see what still works, what broke, and how to fix it.</p>
   {% endif %}

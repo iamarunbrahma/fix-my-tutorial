@@ -480,3 +480,11 @@ def test_index_states_when_its_tutorials_were_published(env):
         e["year"] = y
     deps.settings.rot_index_path.write_text(json.dumps(idx))
     assert "published 2014 to 2017" in client.get("/index").text
+
+
+def test_index_says_how_many_tutorials_were_left_out_and_why(env):
+    client, deps = env
+    idx = json.loads(deps.settings.rot_index_path.read_text())
+    idx["excluded"] = 3
+    deps.settings.rot_index_path.write_text(json.dumps(idx))
+    assert "3 more were left out" in client.get("/index").text

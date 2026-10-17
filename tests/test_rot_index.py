@@ -127,3 +127,18 @@ def test_named_tutorials_rerun_even_when_finished():
     picked = pick_entries(entries, done={"https://t1", "https://t2"}, force=False, limit=None,
                           only={"https://t2", "https://t3"})
     assert [e["url"] for e in picked] == ["https://t2", "https://t3"]
+
+
+def test_hand_review_can_exclude_our_own_failures_and_relabel_still_works(tmp_path):
+    # the review, 16 Oct: some failures were our runner's (a server step, a misread command), not the tutorial's
+    st = Store(tmp_path / "s.db")
+    st.save_run(run("x", "https://x", Verdict.COULD_NOT_FIX))
+    st.save_run(run("y", "https://y", Verdict.FIXED))
+    entries = [
+        {"url": "https://x", "title": "X", "language": "python", "source": "x.dev", "year": 2015, "review": "exclude"},
+        {"url": "https://y", "title": "Y", "language": "python", "source": "y.dev", "year": 2016, "review": "still_works"},
+    ]
+    out = {e["url"]: e for e in export_entries(entries, st)}
+    assert set(out) == {"https://y"}
+    assert out["https://y"]["verdict"] == "still_works" and out["https://y"]["changes"] == 0
+    assert out["https://y"]["categories"] == []

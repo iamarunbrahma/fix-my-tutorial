@@ -61,17 +61,21 @@ def export_entries(entries: list[dict], store: Store) -> list[dict]:
     out = []
     for e in entries:
         rec = latest.get(e["url"])
-        if rec is None or rec.verdict in (None, Verdict.ERROR):
-            continue
+        if rec is None or rec.verdict in (None, Verdict.ERROR) or e.get("review") == "exclude":
+            continue  # excluded by hand review: the failure was our runner's, not the tutorial's
         verdict = rec.verdict.value
         if e.get("review") == "downgrade" and verdict == "fixed":
             verdict = "could_not_fix"
-        b = rec.broke_in
+        relabeled = e.get("review") == "still_works"  # our own misstep failed it; the page's code runs as written
+        if relabeled:
+            verdict = "still_works"
+        b = None if relabeled else rec.broke_in
         out.append({"url": e["url"], "title": e.get("title") or rec.title, "language": e["language"],
                     "source": e["source"], "year": e["year"] or (int(rec.published[:4]) if rec.published else ""),
                     "topic": e.get("topic", ""), "verdict": verdict,
-                    "categories": sorted({r.signature.category for r in rec.repairs}),
-                    "changes": len(build_changes(rec)), "run_id": rec.id, "featured": bool(e.get("featured")),
+                    "categories": [] if relabeled else sorted({r.signature.category for r in rec.repairs}),
+                    "changes": 0 if relabeled else len(build_changes(rec)), "run_id": rec.id,
+                    "featured": bool(e.get("featured")),
                     "published": rec.published,
                     "broke_in": {"package": b.package, "version": b.first_bad, "date": b.first_bad_date.isoformat(),
                                  "how": b.how} if b else None})
@@ -158,7 +162,10 @@ def export() -> None:
     store, _ = _core(s)
     entries = yaml.safe_load(LIST.read_text())["tutorials"]
     out = export_entries(entries, store)
-    RESULTS.write_text(json.dumps({"generated_at": date.today().isoformat(), "entries": out}, indent=1))
+    finished = {r.source for r in store.list_runs(limit=5000) if not r.public and r.status == RunStatus.DONE}
+    excluded = sum(1 for e in entries if e.get("review") == "exclude" and e["url"] in finished)
+    RESULTS.write_text(json.dumps({"generated_at": date.today().isoformat(), "excluded": excluded, "entries": out},
+                                  indent=1))
     print(f"exported {len(out)} entries to {RESULTS}")
 
 
