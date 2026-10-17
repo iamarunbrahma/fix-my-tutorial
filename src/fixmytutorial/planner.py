@@ -82,6 +82,8 @@ def normalize_plan(out: PlannerOutput, max_steps: int = 40, source_text: str | N
         if not ps.content.strip():
             continue
         s = Step(**ps.model_dump())
+        if s.kind == "shell" and (m := IPYTHON_HEREDOC.match(s.content)):
+            s.kind, s.content = "run_code", m.group(2)  # ipython exits 0 even when the code raises
         if s.kind == "write_file":
             ext = "py" if out.language == "python" else "js"
             s.path = safe_path(s.path) or f"file_{len(steps) + 1}.{ext}"
@@ -230,6 +232,7 @@ def unrun_files(plan) -> list[str]:
 
 
 TOKEN_RE = re.compile(r"\w+")
+IPYTHON_HEREDOC = re.compile(r"^\s*ipython3?\b[^\n<]*<<-?\s*['\"]?(\w+)['\"]?\s*\n(.*?)\n\1\s*$", re.S)
 
 
 def restore_page_code(content: str, blocks: list[str]) -> str:
