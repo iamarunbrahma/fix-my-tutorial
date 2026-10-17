@@ -5,114 +5,207 @@ tutorials:
   source: jakevdp.github.io
   year: 2013
   topic: KDE with scipy, statsmodels and scikit-learn
+  review: downgrade
+  categories:
+  - removed_api
 - url: https://jakevdp.github.io/blog/2013/08/28/understanding-the-fft/
   title: Understanding the FFT Algorithm
   language: python
   source: jakevdp.github.io
   year: 2013
   topic: FFT from scratch in NumPy
+  categories:
+  - removed_api
+  broke_in:
+    package: numpy
+    version: 1.12.0
+    date: '2017-01-15'
+    how: NumPy 1.12.0 made float slice bounds an error, and on Python 3 N / 2 is a float
+  featured: true
 - url: https://jakevdp.github.io/blog/2013/08/07/conways-game-of-life/
   title: Conway's Game of Life in Python
   language: python
   source: jakevdp.github.io
   year: 2013
   topic: NumPy Game of Life with matplotlib animation
+  categories:
+  - removed_api
+  broke_in:
+    package: matplotlib
+    version: 3.5.0
+    date: '2021-11-16'
+    how: JSAnimation passes clear_temp to FileMovieWriter.setup(), which matplotlib 3.5.0 removed
 - url: https://jakevdp.github.io/blog/2013/07/10/XKCD-plots-in-matplotlib/
   title: XKCD Plots have Landed in Matplotlib!
   language: python
   source: jakevdp.github.io
   year: 2013
   topic: matplotlib plt.xkcd() styling
+  categories:
+  - removed_api
+  broke_in:
+    package: matplotlib
+    version: 3.6.0
+    date: '2022-09-16'
+    how: Figure.gca() stopped accepting projection= in matplotlib 3.6.0
 - url: https://jakevdp.github.io/blog/2014/03/11/frequentism-and-bayesianism-a-practical-intro/
   title: 'Frequentism and Bayesianism: A Practical Introduction'
   language: python
   source: jakevdp.github.io
   year: 2014
   topic: frequentist vs Bayesian estimation with emcee
+  categories:
+  - removed_api
+  broke_in:
+    package: matplotlib
+    version: 3.2.0
+    date: '2020-03-04'
+    how: matplotlib 3.2.0 removed hist(normed=), replaced by density=
 - url: https://jakevdp.github.io/blog/2014/10/16/how-bad-is-your-colormap/
   title: How Bad Is Your Colormap?
   language: python
   source: jakevdp.github.io
   year: 2014
   topic: matplotlib colormaps and grayscale conversion
+  review: exclude
 - url: https://jakevdp.github.io/blog/2015/07/06/model-complexity-myth/
   title: The Model Complexity Myth
   language: python
   source: jakevdp.github.io
   year: 2015
   topic: overparameterized fits, regularization, emcee
+  review: downgrade
+  categories:
+  - dead_resource
 - url: https://jakevdp.github.io/blog/2017/03/22/group-by-from-scratch/
   title: Group-by From Scratch
   language: python
   source: jakevdp.github.io
   year: 2017
   topic: group-by implementations in pandas, NumPy, scipy.sparse
+  review: downgrade
+  categories:
+  - removed_api
+  broke_in:
+    package: matplotlib
+    version: 3.8.0
+    date: '2023-09-15'
+    how: matplotlib 3.8.0 removed the seaborn-* style names
 - url: https://jakevdp.github.io/blog/2013/05/12/embedding-matplotlib-animations/
   title: Embedding Matplotlib Animations in IPython Notebooks
   language: python
   source: jakevdp.github.io
   year: 2013
   topic: matplotlib animations embedded as HTML5 video
+  categories:
+  - removed_api
+  featured: true
 - url: https://jakevdp.github.io/blog/2013/05/28/a-simple-animation-the-magic-triangle/
   title: 'A Simple Animation: The Magic Triangle'
   language: python
   source: jakevdp.github.io
   year: 2013
   topic: matplotlib animation of a geometry puzzle
+  categories:
+  - removed_api
+  broke_in:
+    package: matplotlib
+    version: 3.5.0
+    date: '2021-11-16'
+    how: JSAnimation passes clear_temp to FileMovieWriter.setup(), which matplotlib 3.5.0 removed
 - url: https://blog.datadive.net/selecting-good-features-part-ii-linear-models-and-regularization/
   title: 'Selecting good features - Part II: linear models and regularization'
   language: python
   source: blog.datadive.net
   year: 2014
   topic: Lasso/Ridge feature selection
+  categories:
+  - removed_api
+  featured: false
 - url: https://blog.datadive.net/selecting-good-features-part-iii-random-forests/
   title: 'Selecting good features - Part III: random forests'
   language: python
   source: blog.datadive.net
   year: 2014
   topic: random forest feature importance
+  categories:
+  - removed_api
+  broke_in:
+    package: scikit-learn
+    version: 1.2.0
+    date: '2022-12-08'
+    how: load_boston was removed in scikit-learn 1.2.0
 - url: https://blog.datadive.net/selecting-good-features-part-iv-stability-selection-rfe-and-everything-side-by-side/
   title: 'Selecting good features - Part IV: stability selection, RFE and everything side by side'
   language: python
   source: blog.datadive.net
   year: 2014
   topic: RandomizedLasso stability selection and RFE
+  categories:
+  - removed_api
+  broke_in:
+    package: setuptools
+    version: 82.0.0
+    date: '2026-02-08'
+    how: minepy's setup.py imports pkg_resources, which setuptools 82.0.0 removed
 - url: https://blog.datadive.net/random-forest-interpretation-with-scikit-learn/
   title: Random forest interpretation with scikit-learn
   language: python
   source: blog.datadive.net
   year: 2015
   topic: treeinterpreter feature contributions
+  categories:
+  - removed_api
+  broke_in:
+    package: Python
+    version: 3.12.0
+    date: '2023-10-02'
+    how: treeinterpreter imports distutils, which Python 3.12 removed
 - url: http://www.gregreda.com/2013/03/03/web-scraping-101-with-python/
   title: Web Scraping 101 with Python
   language: python
   source: gregreda.com
   year: 2013
   topic: BeautifulSoup scraping of Chicago Reader 'Best of'
+  review: downgrade
+  categories:
+  - dead_resource
+  - removed_api
 - url: https://www.kdnuggets.com/2017/03/k-means-clustering-algorithms-intro-python.html
   title: 'K-Means & Other Clustering Algorithms: A Quick Intro with Python'
   language: python
   source: kdnuggets.com
   year: 2017
   topic: clustering Zachary's karate club graph
+  review: downgrade
+  categories:
+  - removed_api
+  broke_in:
+    package: scikit-learn
+    version: 1.3.0
+    date: '2023-06-30'
+    how: affinity_propagation stopped turning an integer similarity matrix into floats in scikit-learn 1.3.0
 - url: https://www.kdnuggets.com/2017/03/simple-xgboost-tutorial-iris-dataset.html
   title: A Simple XGBoost Tutorial Using the Iris Dataset
   language: python
   source: kdnuggets.com
   year: 2017
   topic: XGBoost classifier on iris
+  review: exclude
 - url: https://blog.pythonlibrary.org/2016/07/28/python-201-a-tutorial-on-threads/
   title: 'Python 201: A Tutorial on Threads'
   language: python
   source: blog.pythonlibrary.org
   year: 2016
   topic: threading, locks, queues
+  review: still_works
 - url: https://blog.pythonlibrary.org/2016/08/02/python-201-a-multiprocessing-tutorial/
   title: 'Python 201: A multiprocessing tutorial'
   language: python
   source: blog.pythonlibrary.org
   year: 2016
   topic: multiprocessing Process, Pool, Queue
+  review: still_works
 - url: https://blog.pythonlibrary.org/2014/01/30/how-to-time-small-pieces-of-python-code-with-timeit/
   title: How to Time Small Pieces of Python Code with timeit
   language: python
@@ -167,18 +260,23 @@ tutorials:
   source: stackabuse.com
   year: 2015
   topic: asyncio coroutines and aiohttp
+  categories:
+  - dead_resource
+  - removed_api
 - url: https://blog.dask.org/2016/07/12/dask-learn-part-1
   title: Dask and Scikit-Learn -- Model Parallelism
   language: python
   source: blog.dask.org
   year: 2016
   topic: parallel grid search with dask
+  review: exclude
 - url: https://cambridgecoding.wordpress.com/2016/03/24/misleading-modelling-overfitting-cross-validation-and-the-bias-variance-trade-off/
   title: 'Misleading modelling: overfitting, cross-validation, and the bias-variance trade-off'
   language: python
   source: cambridgecoding.wordpress.com
   year: 2016
   topic: kNN overfitting and cross-validation
+  review: exclude
 - url: https://cambridgecoding.wordpress.com/2016/04/03/scanning-hyperspace-how-to-tune-machine-learning-models/
   title: 'Scanning hyperspace: how to tune machine learning models'
   language: python
@@ -191,36 +289,68 @@ tutorials:
   source: bluewatersql.wordpress.com
   year: 2016
   topic: iris classifiers in scikit-learn
+  broke_in:
+    package: scikit-learn
+    version: 0.20.0
+    date: '2018-09-26'
+    how: scikit-learn 0.20.0 removed the sklearn.cross_validation module
 - url: https://datascienceomar.wordpress.com/2016/07/10/logistic-regression-scikit-learn/
   title: Logistic Regression + Scikit-learn
   language: python
   source: datascienceomar.wordpress.com
   year: 2016
   topic: breast cancer logistic regression
+  review: downgrade
+  categories:
+  - removed_api
+  - tutorial_typo
+  broke_in:
+    package: scikit-learn
+    version: 0.20.0
+    date: '2018-09-26'
+    how: scikit-learn 0.20.0 removed the sklearn.cross_validation module
 - url: https://blog.datadive.net/selecting-good-features-part-i-univariate-selection/
   title: 'Selecting good features - Part I: univariate selection'
   language: python
   source: blog.datadive.net
   year: 2014
   topic: univariate feature selection
+  categories:
+  - removed_api
+  broke_in:
+    package: setuptools
+    version: 82.0.0
+    date: '2026-02-08'
+    how: minepy's setup.py imports pkg_resources, which setuptools 82.0.0 removed
 - url: https://blog.fastforwardlabs.com/2016/02/24/hello-world-in-keras-or-scikit-learn-versus-keras.html
   title: '"Hello world" in Keras (or, Scikit-learn versus Keras)'
   language: python
   source: blog.fastforwardlabs.com
   year: 2016
   topic: Keras vs scikit-learn on iris
+  review: exclude
 - url: http://qingkaikong.blogspot.com/2016/12/machine-learning-8-support-vector.html
   title: Machine learning 8 - Support Vector Machine - Part 2
   language: python
   source: qingkaikong.blogspot.com
   year: 2016
   topic: SVM kernels on iris and toy data
+  broke_in:
+    package: scikit-learn
+    version: 0.20.0
+    date: '2018-09-26'
+    how: scikit-learn 0.20.0 removed the sklearn.cross_validation module
 - url: https://pbpython.com/pandas-list-dict.html
   title: Creating Pandas DataFrames from Lists and Dictionaries
   language: python
   source: pbpython.com
   year: 2016
   topic: building DataFrames, Excel output
+  broke_in:
+    package: pandas
+    version: 1.0.0
+    date: '2020-01-30'
+    how: pandas 1.0.0 removed DataFrame.from_items
 - url: https://pbpython.com/pandas-grouper-agg.html
   title: Pandas Grouper and Agg Functions Explained
   language: python
@@ -275,6 +405,7 @@ tutorials:
   source: sebastianraschka.com
   year: 2014
   topic: PCA from scratch in NumPy
+  review: exclude
 - url: https://sebastianraschka.com/Articles/2014_ensemble_classifier.html
   title: Implementing a Weighted Majority Rule Ensemble Classifier
   language: python
@@ -305,6 +436,9 @@ tutorials:
   source: iamtrask.github.io
   year: 2015
   topic: tiny NumPy neural network
+  categories:
+  - removed_api
+  - tutorial_typo
 - url: https://iamtrask.github.io/2015/07/27/python-network-part2/
   title: A Neural Network in 13 lines of Python (Part 2 - Gradient Descent)
   language: python
@@ -317,12 +451,20 @@ tutorials:
   source: dennybritz.com
   year: 2015
   topic: NumPy neural net on make_moons
+  categories:
+  - removed_api
+  - tutorial_typo
 - url: https://www.freecodecamp.org/news/how-to-scrape-websites-with-python-and-beautifulsoup-5946935d93fe/
   title: How to scrape websites with Python and BeautifulSoup
   language: python
   source: freecodecamp.org
   year: 2017
   topic: scraping Bloomberg index quotes
+  categories:
+  - changed_cli
+  - dead_resource
+  - removed_api
+  - tutorial_typo
 - url: https://www.freecodecamp.org/news/how-to-visualize-the-programming-language-influence-graph-7f1b765b44d1/
   title: Visualize the programming language influence graph
   language: python
@@ -341,6 +483,7 @@ tutorials:
   source: analyticsvidhya.com
   year: 2015
   topic: scraping a Wikipedia table
+  review: exclude
 - url: https://www.analyticsvidhya.com/blog/2017/08/introduction-to-multi-label-classification/
   title: Solving Multi-Label Classification problems
   language: python
@@ -377,6 +520,12 @@ tutorials:
   source: github.com
   year: 2015
   topic: digits with PCA, Isomap, GaussianNB
+  broke_in:
+    package: scikit-learn
+    version: 0.20.0
+    date: '2018-09-26'
+    how: scikit-learn 0.20.0 removed RandomizedPCA and the sklearn.cross_validation module
+  featured: true
 - url: https://github.com/amueller/scipy_2015_sklearn_tutorial/blob/master/notebooks/04.1%20Cross%20Validation.ipynb
   title: 'SciPy 2015 sklearn tutorial: Cross Validation'
   language: python
@@ -419,6 +568,10 @@ tutorials:
   source: smashingmagazine.com
   year: 2015
   topic: request + cheerio word-frequency scraper
+  review: downgrade
+  categories:
+  - dead_resource
+  - tutorial_typo
 - url: https://andycarter.dev/blog/a-beginners-guide-to-the-task-runner-gulp
   title: A Beginners Guide to the Task Runner Gulp
   language: javascript
@@ -431,6 +584,13 @@ tutorials:
   source: codewinds.com
   year: 2013
   topic: zlib/crypto/transform streams
+  categories:
+  - removed_api
+  broke_in:
+    package: Node.js
+    version: 22.0.0
+    date: '2024-04-24'
+    how: Node.js 22 removed crypto.createCipher and crypto.createDecipher
 - url: https://davidwalsh.name/es2015-babel
   title: Getting Started with ES6 (ES2015) and Babel
   language: javascript

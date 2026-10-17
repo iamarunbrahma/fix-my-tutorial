@@ -1,1 +1,625 @@
-{"generated_at": null, "entries": []}
+{
+ "generated_at": "2026-10-17",
+ "excluded": 7,
+ "entries": [
+  {
+   "url": "https://jakevdp.github.io/blog/2013/12/01/kernel-density-estimation/",
+   "title": "Kernel Density Estimation in Python",
+   "language": "python",
+   "source": "jakevdp.github.io",
+   "year": 2013,
+   "topic": "KDE with scipy, statsmodels and scikit-learn",
+   "verdict": "could_not_fix",
+   "categories": [
+    "removed_api"
+   ],
+   "changes": 0,
+   "run_id": null,
+   "featured": false,
+   "published": null,
+   "broke_in": null
+  },
+  {
+   "url": "https://jakevdp.github.io/blog/2013/08/28/understanding-the-fft/",
+   "title": "Understanding the FFT Algorithm",
+   "language": "python",
+   "source": "jakevdp.github.io",
+   "year": 2013,
+   "topic": "FFT from scratch in NumPy",
+   "verdict": "fixed",
+   "categories": [
+    "removed_api"
+   ],
+   "changes": 2,
+   "run_id": "ri-wU-0hfz3",
+   "featured": true,
+   "published": null,
+   "broke_in": {
+    "package": "numpy",
+    "version": "1.12.0",
+    "date": "2017-01-15",
+    "how": "NumPy 1.12.0 made float slice bounds an error, and on Python 3 N / 2 is a float"
+   }
+  },
+  {
+   "url": "https://jakevdp.github.io/blog/2013/08/07/conways-game-of-life/",
+   "title": "Conway's Game of Life in Python",
+   "language": "python",
+   "source": "jakevdp.github.io",
+   "year": 2013,
+   "topic": "NumPy Game of Life with matplotlib animation",
+   "verdict": "could_not_fix",
+   "categories": [
+    "removed_api"
+   ],
+   "changes": 0,
+   "run_id": "ri-95iGUWq-",
+   "featured": false,
+   "published": null,
+   "broke_in": {
+    "package": "matplotlib",
+    "version": "3.5.0",
+    "date": "2021-11-16",
+    "how": "JSAnimation passes clear_temp to FileMovieWriter.setup(), which matplotlib 3.5.0 removed"
+   }
+  },
+  {
+   "url": "https://jakevdp.github.io/blog/2013/07/10/XKCD-plots-in-matplotlib/",
+   "title": "XKCD Plots have Landed in Matplotlib!",
+   "language": "python",
+   "source": "jakevdp.github.io",
+   "year": 2013,
+   "topic": "matplotlib plt.xkcd() styling",
+   "verdict": "fixed",
+   "categories": [
+    "removed_api"
+   ],
+   "changes": 2,
+   "run_id": "ri-CSYZOyRj",
+   "featured": false,
+   "published": null,
+   "broke_in": {
+    "package": "matplotlib",
+    "version": "3.6.0",
+    "date": "2022-09-16",
+    "how": "Figure.gca() stopped accepting projection= in matplotlib 3.6.0"
+   }
+  },
+  {
+   "url": "https://jakevdp.github.io/blog/2014/03/11/frequentism-and-bayesianism-a-practical-intro/",
+   "title": "Frequentism and Bayesianism: A Practical Introduction",
+   "language": "python",
+   "source": "jakevdp.github.io",
+   "year": 2014,
+   "topic": "frequentist vs Bayesian estimation with emcee",
+   "verdict": "fixed",
+   "categories": [
+    "removed_api"
+   ],
+   "changes": 3,
+   "run_id": "ri-UJ8oz23_",
+   "featured": false,
+   "published": null,
+   "broke_in": {
+    "package": "matplotlib",
+    "version": "3.2.0",
+    "date": "2020-03-04",
+    "how": "matplotlib 3.2.0 removed hist(normed=), replaced by density="
+   }
+  },
+  {
+   "url": "https://jakevdp.github.io/blog/2015/07/06/model-complexity-myth/",
+   "title": "The Model Complexity Myth",
+   "language": "python",
+   "source": "jakevdp.github.io",
+   "year": 2015,
+   "topic": "overparameterized fits, regularization, emcee",
+   "verdict": "could_not_fix",
+   "categories": [
+    "dead_resource"
+   ],
+   "changes": 0,
+   "run_id": null,
+   "featured": false,
+   "published": null,
+   "broke_in": null
+  },
+  {
+   "url": "https://jakevdp.github.io/blog/2017/03/22/group-by-from-scratch/",
+   "title": "Group-by From Scratch",
+   "language": "python",
+   "source": "jakevdp.github.io",
+   "year": 2017,
+   "topic": "group-by implementations in pandas, NumPy, scipy.sparse",
+   "verdict": "could_not_fix",
+   "categories": [
+    "removed_api"
+   ],
+   "changes": 0,
+   "run_id": null,
+   "featured": false,
+   "published": null,
+   "broke_in": {
+    "package": "matplotlib",
+    "version": "3.8.0",
+    "date": "2023-09-15",
+    "how": "matplotlib 3.8.0 removed the seaborn-* style names"
+   }
+  },
+  {
+   "url": "https://jakevdp.github.io/blog/2013/05/12/embedding-matplotlib-animations/",
+   "title": "Embedding Matplotlib Animations in IPython Notebooks",
+   "language": "python",
+   "source": "jakevdp.github.io",
+   "year": 2013,
+   "topic": "matplotlib animations embedded as HTML5 video",
+   "verdict": "fixed",
+   "categories": [
+    "removed_api"
+   ],
+   "changes": 2,
+   "run_id": "ri-bbshDjRt",
+   "featured": true,
+   "published": null,
+   "broke_in": null
+  },
+  {
+   "url": "https://jakevdp.github.io/blog/2013/05/28/a-simple-animation-the-magic-triangle/",
+   "title": "A Simple Animation: The Magic Triangle",
+   "language": "python",
+   "source": "jakevdp.github.io",
+   "year": 2013,
+   "topic": "matplotlib animation of a geometry puzzle",
+   "verdict": "could_not_fix",
+   "categories": [
+    "removed_api"
+   ],
+   "changes": 0,
+   "run_id": "ri-jdSJEiOx",
+   "featured": false,
+   "published": null,
+   "broke_in": {
+    "package": "matplotlib",
+    "version": "3.5.0",
+    "date": "2021-11-16",
+    "how": "JSAnimation passes clear_temp to FileMovieWriter.setup(), which matplotlib 3.5.0 removed"
+   }
+  },
+  {
+   "url": "https://blog.datadive.net/selecting-good-features-part-ii-linear-models-and-regularization/",
+   "title": "Selecting good features - Part II: linear models and regularization",
+   "language": "python",
+   "source": "blog.datadive.net",
+   "year": 2014,
+   "topic": "Lasso/Ridge feature selection",
+   "verdict": "fixed",
+   "categories": [
+    "removed_api"
+   ],
+   "changes": 4,
+   "run_id": "ri-mVR6V5gp",
+   "featured": false,
+   "published": "2014-11-12",
+   "broke_in": {
+    "package": "scikit-learn",
+    "version": "1.2.0",
+    "date": "2022-12-08",
+    "how": "release_notes"
+   }
+  },
+  {
+   "url": "https://blog.datadive.net/selecting-good-features-part-iii-random-forests/",
+   "title": "Selecting good features - Part III: random forests",
+   "language": "python",
+   "source": "blog.datadive.net",
+   "year": 2014,
+   "topic": "random forest feature importance",
+   "verdict": "could_not_fix",
+   "categories": [
+    "removed_api"
+   ],
+   "changes": 0,
+   "run_id": "ri-WE27Vey_",
+   "featured": false,
+   "published": "2014-12-01",
+   "broke_in": {
+    "package": "scikit-learn",
+    "version": "1.2.0",
+    "date": "2022-12-08",
+    "how": "load_boston was removed in scikit-learn 1.2.0"
+   }
+  },
+  {
+   "url": "https://blog.datadive.net/selecting-good-features-part-iv-stability-selection-rfe-and-everything-side-by-side/",
+   "title": "Selecting good features - Part IV: stability selection, RFE and everything side by side",
+   "language": "python",
+   "source": "blog.datadive.net",
+   "year": 2014,
+   "topic": "RandomizedLasso stability selection and RFE",
+   "verdict": "could_not_fix",
+   "categories": [
+    "removed_api"
+   ],
+   "changes": 0,
+   "run_id": "ri-n1MpHxSx",
+   "featured": false,
+   "published": "2014-12-20",
+   "broke_in": {
+    "package": "setuptools",
+    "version": "82.0.0",
+    "date": "2026-02-08",
+    "how": "minepy's setup.py imports pkg_resources, which setuptools 82.0.0 removed"
+   }
+  },
+  {
+   "url": "https://blog.datadive.net/random-forest-interpretation-with-scikit-learn/",
+   "title": "Random forest interpretation with scikit-learn",
+   "language": "python",
+   "source": "blog.datadive.net",
+   "year": 2015,
+   "topic": "treeinterpreter feature contributions",
+   "verdict": "could_not_fix",
+   "categories": [
+    "removed_api"
+   ],
+   "changes": 0,
+   "run_id": "ri-E-q2iBf2",
+   "featured": false,
+   "published": "2015-08-12",
+   "broke_in": {
+    "package": "Python",
+    "version": "3.12.0",
+    "date": "2023-10-02",
+    "how": "treeinterpreter imports distutils, which Python 3.12 removed"
+   }
+  },
+  {
+   "url": "http://www.gregreda.com/2013/03/03/web-scraping-101-with-python/",
+   "title": "Web Scraping 101 with Python",
+   "language": "python",
+   "source": "gregreda.com",
+   "year": 2013,
+   "topic": "BeautifulSoup scraping of Chicago Reader 'Best of'",
+   "verdict": "could_not_fix",
+   "categories": [
+    "dead_resource",
+    "removed_api"
+   ],
+   "changes": 0,
+   "run_id": null,
+   "featured": false,
+   "published": null,
+   "broke_in": null
+  },
+  {
+   "url": "https://www.kdnuggets.com/2017/03/k-means-clustering-algorithms-intro-python.html",
+   "title": "K-Means & Other Clustering Algorithms: A Quick Intro with Python",
+   "language": "python",
+   "source": "kdnuggets.com",
+   "year": 2017,
+   "topic": "clustering Zachary's karate club graph",
+   "verdict": "could_not_fix",
+   "categories": [
+    "removed_api"
+   ],
+   "changes": 0,
+   "run_id": null,
+   "featured": false,
+   "published": null,
+   "broke_in": {
+    "package": "scikit-learn",
+    "version": "1.3.0",
+    "date": "2023-06-30",
+    "how": "affinity_propagation stopped turning an integer similarity matrix into floats in scikit-learn 1.3.0"
+   }
+  },
+  {
+   "url": "https://blog.pythonlibrary.org/2016/07/28/python-201-a-tutorial-on-threads/",
+   "title": "Python 201: A Tutorial on Threads",
+   "language": "python",
+   "source": "blog.pythonlibrary.org",
+   "year": 2016,
+   "topic": "threading, locks, queues",
+   "verdict": "still_works",
+   "categories": [],
+   "changes": 0,
+   "run_id": null,
+   "featured": false,
+   "published": "2016-07-28",
+   "broke_in": null
+  },
+  {
+   "url": "https://blog.pythonlibrary.org/2016/08/02/python-201-a-multiprocessing-tutorial/",
+   "title": "Python 201: A multiprocessing tutorial",
+   "language": "python",
+   "source": "blog.pythonlibrary.org",
+   "year": 2016,
+   "topic": "multiprocessing Process, Pool, Queue",
+   "verdict": "still_works",
+   "categories": [],
+   "changes": 0,
+   "run_id": null,
+   "featured": false,
+   "published": "2016-08-02",
+   "broke_in": null
+  },
+  {
+   "url": "https://stackabuse.com/python-async-await-tutorial/",
+   "title": "Python async/await Tutorial",
+   "language": "python",
+   "source": "stackabuse.com",
+   "year": 2015,
+   "topic": "asyncio coroutines and aiohttp",
+   "verdict": "could_not_fix",
+   "categories": [
+    "dead_resource",
+    "removed_api"
+   ],
+   "changes": 0,
+   "run_id": "ri-royl5KTB",
+   "featured": false,
+   "published": "2015-12-17",
+   "broke_in": null
+  },
+  {
+   "url": "https://bluewatersql.wordpress.com/2016/04/04/data-science-day-3-classification-models/",
+   "title": "Data Science Day #3 - Classification Models",
+   "language": "python",
+   "source": "bluewatersql.wordpress.com",
+   "year": 2016,
+   "topic": "iris classifiers in scikit-learn",
+   "verdict": "fixed",
+   "categories": [
+    "removed_api",
+    "tutorial_typo"
+   ],
+   "changes": 6,
+   "run_id": "ri-tKCGLBAY",
+   "featured": false,
+   "published": "2016-04-04",
+   "broke_in": {
+    "package": "scikit-learn",
+    "version": "0.20.0",
+    "date": "2018-09-26",
+    "how": "scikit-learn 0.20.0 removed the sklearn.cross_validation module"
+   }
+  },
+  {
+   "url": "https://datascienceomar.wordpress.com/2016/07/10/logistic-regression-scikit-learn/",
+   "title": "Logistic Regression + Scikit-learn",
+   "language": "python",
+   "source": "datascienceomar.wordpress.com",
+   "year": 2016,
+   "topic": "breast cancer logistic regression",
+   "verdict": "could_not_fix",
+   "categories": [
+    "removed_api",
+    "tutorial_typo"
+   ],
+   "changes": 0,
+   "run_id": null,
+   "featured": false,
+   "published": "2016-07-10",
+   "broke_in": {
+    "package": "scikit-learn",
+    "version": "0.20.0",
+    "date": "2018-09-26",
+    "how": "scikit-learn 0.20.0 removed the sklearn.cross_validation module"
+   }
+  },
+  {
+   "url": "https://blog.datadive.net/selecting-good-features-part-i-univariate-selection/",
+   "title": "Selecting good features - Part I: univariate selection",
+   "language": "python",
+   "source": "blog.datadive.net",
+   "year": 2014,
+   "topic": "univariate feature selection",
+   "verdict": "could_not_fix",
+   "categories": [
+    "removed_api"
+   ],
+   "changes": 5,
+   "run_id": "ri-gzPALeRI",
+   "featured": false,
+   "published": "2014-11-02",
+   "broke_in": {
+    "package": "setuptools",
+    "version": "82.0.0",
+    "date": "2026-02-08",
+    "how": "minepy's setup.py imports pkg_resources, which setuptools 82.0.0 removed"
+   }
+  },
+  {
+   "url": "http://qingkaikong.blogspot.com/2016/12/machine-learning-8-support-vector.html",
+   "title": "Machine learning 8 - Support Vector Machine - Part 2",
+   "language": "python",
+   "source": "qingkaikong.blogspot.com",
+   "year": 2016,
+   "topic": "SVM kernels on iris and toy data",
+   "verdict": "fixed",
+   "categories": [
+    "removed_api"
+   ],
+   "changes": 1,
+   "run_id": "ri-IAYs65jl",
+   "featured": false,
+   "published": null,
+   "broke_in": {
+    "package": "scikit-learn",
+    "version": "0.20.0",
+    "date": "2018-09-26",
+    "how": "scikit-learn 0.20.0 removed the sklearn.cross_validation module"
+   }
+  },
+  {
+   "url": "https://pbpython.com/pandas-list-dict.html",
+   "title": "Creating Pandas DataFrames from Lists and Dictionaries",
+   "language": "python",
+   "source": "pbpython.com",
+   "year": 2016,
+   "topic": "building DataFrames, Excel output",
+   "verdict": "fixed",
+   "categories": [
+    "removed_api"
+   ],
+   "changes": 7,
+   "run_id": "ri-str4U2QJ",
+   "featured": false,
+   "published": null,
+   "broke_in": {
+    "package": "pandas",
+    "version": "1.0.0",
+    "date": "2020-01-30",
+    "how": "pandas 1.0.0 removed DataFrame.from_items"
+   }
+  },
+  {
+   "url": "https://iamtrask.github.io/2015/07/12/basic-python-network/",
+   "title": "A Neural Network in 11 lines of Python (Part 1)",
+   "language": "python",
+   "source": "iamtrask.github.io",
+   "year": 2015,
+   "topic": "tiny NumPy neural network",
+   "verdict": "fixed",
+   "categories": [
+    "removed_api",
+    "tutorial_typo"
+   ],
+   "changes": 3,
+   "run_id": "ri-0l4vsbQW",
+   "featured": false,
+   "published": null,
+   "broke_in": null
+  },
+  {
+   "url": "https://dennybritz.com/posts/wildml/implementing-a-neural-network-from-scratch/",
+   "title": "Implementing a Neural Network from Scratch in Python",
+   "language": "python",
+   "source": "dennybritz.com",
+   "year": 2015,
+   "topic": "NumPy neural net on make_moons",
+   "verdict": "fixed",
+   "categories": [
+    "removed_api",
+    "tutorial_typo"
+   ],
+   "changes": 5,
+   "run_id": "ri-wVF3z-yS",
+   "featured": false,
+   "published": "2015-09-03",
+   "broke_in": null
+  },
+  {
+   "url": "https://www.freecodecamp.org/news/how-to-scrape-websites-with-python-and-beautifulsoup-5946935d93fe/",
+   "title": "How to scrape websites with Python and BeautifulSoup",
+   "language": "python",
+   "source": "freecodecamp.org",
+   "year": 2017,
+   "topic": "scraping Bloomberg index quotes",
+   "verdict": "could_not_fix",
+   "categories": [
+    "changed_cli",
+    "dead_resource",
+    "removed_api",
+    "tutorial_typo"
+   ],
+   "changes": 1,
+   "run_id": "ri-N8kQOe8g",
+   "featured": false,
+   "published": "2017-06-10",
+   "broke_in": null
+  },
+  {
+   "url": "https://galeascience.wordpress.com/2016/09/23/2016-world-cup-of-hockey-nhl-team-captains/",
+   "title": "2016 World Cup of Hockey NHL Team Captains",
+   "language": "python",
+   "source": "galeascience.wordpress.com",
+   "year": 2016,
+   "topic": "Wikipedia scraping + Bokeh bar chart",
+   "verdict": "not_runnable",
+   "categories": [],
+   "changes": 0,
+   "run_id": "ri-7XYAKx0Z",
+   "featured": false,
+   "published": "2016-09-23",
+   "broke_in": null
+  },
+  {
+   "url": "https://github.com/amueller/scipy_2015_sklearn_tutorial/blob/master/notebooks/03.1%20Case%20Study%20-%20Supervised%20Classification%20of%20Handwritten%20Digits.ipynb",
+   "title": "SciPy 2015 sklearn tutorial: Classification of Handwritten Digits",
+   "language": "python",
+   "source": "github.com",
+   "year": 2015,
+   "topic": "digits with PCA, Isomap, GaussianNB",
+   "verdict": "fixed",
+   "categories": [
+    "removed_api"
+   ],
+   "changes": 2,
+   "run_id": "ri-LZxheVYy",
+   "featured": true,
+   "published": null,
+   "broke_in": {
+    "package": "scikit-learn",
+    "version": "0.20.0",
+    "date": "2018-09-26",
+    "how": "scikit-learn 0.20.0 removed RandomizedPCA and the sklearn.cross_validation module"
+   }
+  },
+  {
+   "url": "https://www.smashingmagazine.com/2015/04/web-scraping-with-nodejs/",
+   "title": "Web Scraping With Node.js",
+   "language": "javascript",
+   "source": "smashingmagazine.com",
+   "year": 2015,
+   "topic": "request + cheerio word-frequency scraper",
+   "verdict": "could_not_fix",
+   "categories": [
+    "dead_resource",
+    "tutorial_typo"
+   ],
+   "changes": 0,
+   "run_id": null,
+   "featured": false,
+   "published": "2015-04-08",
+   "broke_in": null
+  },
+  {
+   "url": "http://codewinds.com/blog/2013-08-20-nodejs-transform-streams.html",
+   "title": "Transforming data with Node.js transform streams",
+   "language": "javascript",
+   "source": "codewinds.com",
+   "year": 2013,
+   "topic": "zlib/crypto/transform streams",
+   "verdict": "fixed",
+   "categories": [
+    "removed_api"
+   ],
+   "changes": 4,
+   "run_id": "ri-DoVLq51x",
+   "featured": false,
+   "published": null,
+   "broke_in": {
+    "package": "Node.js",
+    "version": "22.0.0",
+    "date": "2024-04-24",
+    "how": "Node.js 22 removed crypto.createCipher and crypto.createDecipher"
+   }
+  },
+  {
+   "url": "https://davidwalsh.name/es2015-babel",
+   "title": "Getting Started with ES6 (ES2015) and Babel",
+   "language": "javascript",
+   "source": "davidwalsh.name",
+   "year": 2016,
+   "topic": "Babel 6 CLI with es2015 preset",
+   "verdict": "still_works",
+   "categories": [],
+   "changes": 0,
+   "run_id": "ri-F1IdzpP6",
+   "featured": false,
+   "published": "2016-02-06",
+   "broke_in": null
+  }
+ ]
+}
