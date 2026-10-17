@@ -754,6 +754,20 @@ def test_importing_a_script_the_plan_wrote_runs_it_as_a_script():
     assert (steps[2].kind, steps[2].content) == ("run_code", "import os")  # a library import stays as it is
 
 
+def test_a_version_pin_the_page_never_gives_is_dropped():
+    # the re-run, 17 Oct: the planner pinned scikit-learn==0.23.2 for a 2015 post that names no version; 0.23.2 can't
+    # install on Python 3.12, so the run broke on our pin, not on the tutorial
+    out = PlannerOutput.model_validate(json.loads(planner_json([
+        {"id": "a", "title": "t", "kind": "shell", "content": "pip install scikit-learn==0.23.2 treeinterpreter"},
+        {"id": "b", "title": "t", "kind": "shell", "content": "pip install 'pandas<2' numpy==1.26.4 > log.txt"},
+        {"id": "c", "title": "t", "kind": "shell", "content": "npm install chalk@4 @babel/core@7.0.0 express"}])))
+    page = "pip install treeinterpreter\nUse pandas<2 here.\nnpm install @babel/core@7.0.0"
+    a, b, c = normalize_plan(out, 40, source_text=page).steps
+    assert a.content == "pip install scikit-learn treeinterpreter"
+    assert b.content == "pip install 'pandas<2' numpy > log.txt"  # the page pins pandas; `>` is a redirect here
+    assert c.content == "npm install chalk @babel/core@7.0.0 express"
+
+
 def test_an_ipython_heredoc_becomes_a_python_cell_so_errors_count():
     # the review, 17 Oct: `ipython <<EOF ... EOF` exits 0 even when the code raises, so an XKCD tutorial that breaks on
     # matplotlib 3.6 was reported as still working
