@@ -497,5 +497,5 @@ def test_index_shows_tutorials_whose_site_is_gone_on_their_own(env):
     idx["entries"][1]["verdict"] = "gone"
     deps.settings.rot_index_path.write_text(json.dumps(idx))
     page = client.get("/index").text
-    assert "Site is gone" in page and "broke for good: the site it needs is gone" in page
+    assert "Site gone or blocked" in page and "broke for good: the site it needs is gone or now blocks scripts" in page
     assert "50%" in page  # one of two tutorials
