@@ -728,6 +728,19 @@ def test_running_a_written_file_with_ipython_becomes_a_python_cell():
     assert (steps[1].kind, steps[1].content) == ("run_code", "x = 1\n%time y = x + 1")
 
 
+def test_a_step_that_only_writes_a_file_is_not_held_to_the_programs_output():
+    # the review, 17 Oct: "5 doubled to 10 by:" was expected from the step that writes example2.py, which can only
+    # print "wrote example2.py", so a tutorial that runs fine was reported as broken
+    out = PlannerOutput.model_validate(json.loads(planner_json([
+        {"id": "a", "title": "t", "kind": "write_file", "path": "example2.py", "content": "print('5 doubled to 10 by: x')",
+         "expect": {"exit_code": 0, "stdout_contains": ["5 doubled to 10 by: "], "description": "prints the doubles"}},
+        {"id": "b", "title": "t", "kind": "shell", "content": "python example2.py",
+         "expect": {"exit_code": 0, "stdout_contains": ["5 doubled to 10 by: "]}}])))
+    write, run = normalize_plan(out, 40, source_text="print('5 doubled to 10 by: x')\n5 doubled to 10 by: x").steps
+    assert write.expect.stdout_contains == [] and write.expect.description is None
+    assert run.expect.stdout_contains == ["5 doubled to 10 by: "]
+
+
 def test_an_ipython_heredoc_becomes_a_python_cell_so_errors_count():
     # the review, 17 Oct: `ipython <<EOF ... EOF` exits 0 even when the code raises, so an XKCD tutorial that breaks on
     # matplotlib 3.6 was reported as still working
