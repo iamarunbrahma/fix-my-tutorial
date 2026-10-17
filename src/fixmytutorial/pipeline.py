@@ -12,7 +12,7 @@ from .judge import Judge, code_lines, squash
 from .ledger import BudgetExceeded
 from .llm import LLMOutputError
 from .models import RunPlan, RunRecord, RunStatus, Step, StepOutcome, StepStatus, Summary, Verdict, utcnow
-from .planner import plan_tutorial
+from .planner import URL_RE, plan_tutorial
 from .prompts import SUMMARY_SYSTEM
 from .repair import Repairer, run_deadline
 from .report import broke_in_text, partial_note
@@ -187,7 +187,8 @@ class Pipeline:
                 await emit({"type": "diagnosis", "step_id": failing, "category": sig.category,
                             "key_line": sig.key_line, "package": sig.package, "symbol": sig.symbol})
                 evidence = await research(sig, search=self.search, run_id=rid, public=pub,
-                                          id_prefix=f"r{len(record.repairs) + 1}e")
+                                          id_prefix=f"r{len(record.repairs) + 1}e", links=URL_RE.findall(step.content),
+                                          when=record.published.replace("-", "") if record.published else None)
                 await emit({"type": "evidence", "step_id": failing, "items": [e.model_dump() for e in evidence]})
                 versions = await self._versions(plan.language, trace.states[trace.failed_unit])
                 if record.id not in self._break_targets and eligible(plan, trace, sig):

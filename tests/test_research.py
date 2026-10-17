@@ -92,3 +92,38 @@ def test_headings_and_markdown_markers_never_become_the_quote():
             "> Note: As of pandas 2.0, DataFrame.append() has been removed. Use pandas.concat() instead.")
     assert best_passage(text, APPEND_SIG) == ("Note: As of pandas 2.0, DataFrame.append() has been removed. "
                                               "Use pandas.concat() instead.")
+
+
+async def test_a_dead_link_gets_its_archived_copy_as_evidence(settings, tmp_path):
+    # the review, 17 Oct: a dead image was "fixed" with a base64 picture from an unrelated site; the archived copy of
+    # the tutorial's own link is the honest fix, and its address must come from a lookup, never from a guess
+    asked = []
+
+    async def archive(url, when):
+        asked.append((url, when))
+        return (f"https://web.archive.org/web/20131227223743id_/{url}", "2013-12-27") if "wired" in url else None
+
+    sig = FailureSignature(category="dead_resource", error_type="HTTPError", key_line="HTTPError: HTTP Error 403")
+    ev = await research(sig, search=sc(settings, tmp_path, FakeTavily()), run_id="r", public=True, id_prefix="r1e",
+                        links=["http://www.wired.com/a.jpg", "http://gone.example/b.png"], when="20150706",
+                        archive=archive)
+    assert asked == [("http://www.wired.com/a.jpg", "20150706"), ("http://gone.example/b.png", "20150706")]
+    assert [(e.id, e.url) for e in ev] == [("r1e1", "https://web.archive.org/web/20131227223743id_/"
+                                                    "http://www.wired.com/a.jpg")]
+    assert "2013-12-27" in ev[0].quote and "http://www.wired.com/a.jpg" in ev[0].quote
+
+
+async def test_the_archive_is_only_asked_about_dead_resources(settings, tmp_path):
+    async def archive(url, when):
+        raise AssertionError("asked")
+
+    await research(SIG, search=sc(settings, tmp_path, FakeTavily()), run_id="r", public=True,
+                   links=["http://example.com/a.csv"], archive=archive)
+
+
+def test_the_capture_closest_to_the_tutorials_date_is_used():
+    from fixmytutorial.research import closest_capture
+    stamps = ["20111218053713", "20131227223743", "20190101000000"]
+    assert closest_capture(stamps, "20150706") == "20131227223743"
+    assert closest_capture(stamps, None) == "20190101000000"  # no date: the newest copy
+    assert closest_capture([], "20150706") is None
