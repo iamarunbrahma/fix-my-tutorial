@@ -112,13 +112,17 @@ def test_break_stats():
     assert break_stats(entries[:2])["median_months"] is None  # too few to say
 
 
-def test_batch_slices_rotate_through_topics_and_skip_finished_tutorials():
+def test_batch_slices_rotate_through_sites_and_skip_finished_tutorials():
+    # 17 Oct: every tutorial in the 2013-2018 list has its own topic, so rotating by topic was plain list order
+    # (grouped by site) and a budget-cut slice would have been one blog's posts
     from fixmytutorial.rot_index import pick_entries
-    entries = [{"url": f"https://{t}{i}", "topic": t} for t in ("pandas", "jest", "numpy") for i in range(3)]
-    picked = pick_entries(entries, done={"https://pandas0"}, force=False, limit=4)
-    assert [e["url"] for e in picked] == ["https://pandas1", "https://jest0", "https://numpy0", "https://pandas2"]
+    entries = [{"url": f"https://{s}/{i}", "topic": f"{s} post {i}", "source": s}
+               for s in ("jakevdp.github.io", "ponyfoo.com", "pbpython.com") for i in range(3)]
+    picked = pick_entries(entries, done={"https://jakevdp.github.io/0"}, force=False, limit=4)
+    assert [e["url"] for e in picked] == ["https://jakevdp.github.io/1", "https://ponyfoo.com/0", "https://pbpython.com/0",
+                                          "https://jakevdp.github.io/2"]
     assert len(pick_entries(entries, done=set(), force=False, limit=None)) == 9
-    assert pick_entries(entries, done={"https://pandas0"}, force=True, limit=1)[0]["url"] == "https://pandas0"
+    assert pick_entries(entries, done={"https://jakevdp.github.io/0"}, force=True, limit=1)[0]["url"] == "https://jakevdp.github.io/0"
 
 
 def test_named_tutorials_rerun_even_when_finished():
