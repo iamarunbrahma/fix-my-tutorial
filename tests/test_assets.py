@@ -138,3 +138,17 @@ def test_probe_without_a_tutorial_url_counts_any_answer_as_up():
         assert probe(port, 200).returncode == 1  # a URL the tutorial names must still match exactly
     finally:
         proc.kill()
+
+
+def test_pylab_and_timing_magics_run_as_a_notebook_would(tmp_path):
+    # the review, 17 Oct: dropping `%pylab inline` left `plt` undefined (a fake break), and dropping `%timeit` lines
+    # meant the timed code never ran
+    rc = {}  # compiled by hand: importing it would leave a __pycache__ folder among the sandbox assets
+    exec(compile(open(RUNNER).read(), RUNNER, "exec"), rc)
+    assert rc["clean"]("%pylab inline\nx = 1") == (
+        "from pylab import *; from numpy import *; import numpy as np; import matplotlib.pyplot as plt\nx = 1")
+    cells = [{"id": "s1", "code": "%timeit print('timed-ran')\n%time y = 41 + 1\nprint(y)"},
+             {"id": "s2", "code": "%%timeit\nprint('cell-ran')"}]
+    p = run_cells(tmp_path, cells)
+    assert p.returncode == 0, p.stdout + p.stderr
+    assert "timed-ran" in p.stdout and "42" in p.stdout and "cell-ran" in p.stdout
