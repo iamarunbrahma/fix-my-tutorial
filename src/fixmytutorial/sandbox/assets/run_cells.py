@@ -8,6 +8,7 @@ import ast
 import contextlib
 import io
 import json
+import re
 import subprocess
 import sys
 import traceback
@@ -17,11 +18,23 @@ def mark(cell_id, status):
     print("@@FMT " + json.dumps({"cell": cell_id, "status": status}), flush=True)
 
 
+PYLAB = "from pylab import *; from numpy import *; import numpy as np; import matplotlib.pyplot as plt"
+TIMED = re.compile(r"%time(?:it)?\s+(?:-\w(?:\s*\d+)?\s+)*(.+)")
+
+
 def clean(code):
+    """Turn notebook-only lines into plain Python: %pylab imports what IPython would, %time/%timeit lines and
+    %%time/%%timeit cells run their code once, ! lines become shell calls, other magics are dropped."""
     out = []
     for line in code.splitlines():
         stripped = line.strip()
         indent = line[: len(line) - len(line.lstrip())]
+        if stripped.startswith("%pylab"):
+            out.append(indent + PYLAB)
+            continue
+        if m := TIMED.fullmatch(stripped):
+            out.append(indent + m.group(1))
+            continue
         if stripped.startswith("%"):
             continue
         if stripped.startswith("!"):
