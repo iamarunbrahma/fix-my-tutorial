@@ -171,3 +171,16 @@ def test_hand_review_corrects_causes_and_break_dates_and_unlinks_overturned_repo
     assert out["https://d"]["verdict"] == "could_not_fix" and out["https://d"]["categories"] == ["removed_api"]
     assert out["https://d"]["run_id"] is None and out["https://d"]["changes"] == 0
     assert out["https://s"]["run_id"] is None
+
+
+def test_a_rerun_that_could_not_read_the_page_keeps_the_earlier_result(tmp_path):
+    # 17 Oct: a re-run hit HTTP 403 on the page; that says nothing about the tutorial, so the reviewed run stands
+    from datetime import timedelta
+    st = Store(tmp_path / "s.db")
+    old = run("old", "https://k", Verdict.COULD_NOT_FIX)
+    st.save_run(old)
+    st.save_run(run("new", "https://k", Verdict.ERROR).model_copy(
+        update={"status": RunStatus.FAILED, "created_at": old.created_at + timedelta(hours=1)}))
+    entries = [{"url": "https://k", "title": "K", "language": "python", "source": "k.dev", "year": 2017}]
+    out = export_entries(entries, st)
+    assert [(e["run_id"], e["verdict"]) for e in out] == [("old", "could_not_fix")]

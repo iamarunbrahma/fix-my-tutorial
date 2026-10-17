@@ -55,8 +55,8 @@ DISCOVER_QUERIES = [
 
 def export_entries(entries: list[dict], store: Store) -> list[dict]:
     latest: dict[str, RunRecord] = {}
-    for rec in store.list_runs(limit=5000):  # newest first
-        if not rec.public and rec.status in (RunStatus.DONE, RunStatus.FAILED):
+    for rec in store.list_runs(limit=5000):  # newest first; a run that ended in an error says nothing about the page
+        if not rec.public and rec.status in (RunStatus.DONE, RunStatus.FAILED) and rec.verdict != Verdict.ERROR:
             latest.setdefault(rec.source, rec)
     out = []
     for e in entries:
