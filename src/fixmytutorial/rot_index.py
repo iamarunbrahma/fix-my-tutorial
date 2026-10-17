@@ -70,7 +70,11 @@ def export_entries(entries: list[dict], store: Store) -> list[dict]:
         relabeled = e.get("review") == "still_works"  # our own misstep failed it; the page's code runs as written
         if relabeled:
             verdict = "still_works"
-        overturned = downgraded or relabeled  # the run's own report says otherwise, so the index doesn't link it
+        gone = e.get("review") == "gone"  # the site or service it needs no longer exists: no code change helps
+        if gone:
+            verdict = "gone"
+        # the run's own report says otherwise, so the index doesn't link it
+        overturned = downgraded or relabeled or (gone and rec.verdict == Verdict.FIXED)
         b = None if relabeled else rec.broke_in
         broke_in = {"package": b.package, "version": b.first_bad, "date": b.first_bad_date.isoformat(),
                     "how": b.how} if b else None

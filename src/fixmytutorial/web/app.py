@@ -208,6 +208,8 @@ def load_index(settings: Settings) -> dict:
 
 
 def verdict_label(v: str | Verdict | None) -> str:
+    if v == "gone":  # a Rot Index label from hand review, not a run verdict
+        return "Site is gone"
     try:
         return VERDICT_TEXT[Verdict(v)]
     except (ValueError, KeyError):
@@ -460,7 +462,7 @@ def create_app(deps: Deps | None = None) -> FastAPI:
         counts = Counter(e.get("verdict") for e in entries)
         pct = {
             v: round(100 * counts.get(v, 0) / total) if total else 0
-            for v in ("still_works", "fixed", "could_not_fix", "not_runnable")
+            for v in ("still_works", "fixed", "could_not_fix", "gone", "not_runnable")
         }
         causes = Counter(c for e in entries for c in e.get("categories", [])).most_common()
         years = [e["year"] for e in entries if isinstance(e.get("year"), int)]

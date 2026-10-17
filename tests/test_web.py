@@ -488,3 +488,14 @@ def test_index_says_how_many_tutorials_were_left_out_and_why(env):
     idx["excluded"] = 3
     deps.settings.rot_index_path.write_text(json.dumps(idx))
     assert "3 more were left out" in client.get("/index").text
+
+
+def test_index_shows_tutorials_whose_site_is_gone_on_their_own(env):
+    # 17 Oct: a scraper whose target site now blocks scripts can't be fixed by anyone; "could not fix" blamed the tool
+    client, deps = env
+    idx = json.loads(deps.settings.rot_index_path.read_text())
+    idx["entries"][1]["verdict"] = "gone"
+    deps.settings.rot_index_path.write_text(json.dumps(idx))
+    page = client.get("/index").text
+    assert "Site is gone" in page and "broke for good: the site it needs is gone" in page
+    assert "50%" in page  # one of two tutorials

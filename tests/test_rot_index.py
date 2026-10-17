@@ -184,3 +184,15 @@ def test_a_rerun_that_could_not_read_the_page_keeps_the_earlier_result(tmp_path)
     entries = [{"url": "https://k", "title": "K", "language": "python", "source": "k.dev", "year": 2017}]
     out = export_entries(entries, st)
     assert [(e["run_id"], e["verdict"]) for e in out] == [("old", "could_not_fix")]
+
+
+def test_hand_review_marks_a_tutorial_whose_site_is_gone(tmp_path):
+    st = Store(tmp_path / "s.db")
+    st.save_run(run("c", "https://c", Verdict.COULD_NOT_FIX, category="dead_resource"))
+    st.save_run(run("f", "https://f", Verdict.FIXED, category="dead_resource"))  # "fixed" by scraping another site
+    entries = [{"url": u, "title": u, "language": "python", "source": "x.dev", "year": 2015, "review": "gone"}
+               for u in ("https://c", "https://f")]
+    out = {e["url"]: e for e in export_entries(entries, st)}
+    assert out["https://c"]["verdict"] == out["https://f"]["verdict"] == "gone"
+    assert out["https://c"]["run_id"] == "c"  # its report says it could not be fixed, which agrees
+    assert out["https://f"]["run_id"] is None and out["https://f"]["changes"] == 0  # its report claims a fix
