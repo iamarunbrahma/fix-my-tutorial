@@ -79,6 +79,9 @@ def apply_edits(plan: RunPlan, edits: list[Edit]) -> RunPlan:
     return plan.model_copy(update={"steps": steps})
 
 
+INLINE_DATA = re.compile(r"[A-Za-z0-9+/]{300,}=*")
+
+
 def validate_candidate(c: Candidate, plan: RunPlan, evidence_ids: set[str], category: str) -> str | None:
     if not c.edits:
         return "no edits"
@@ -95,6 +98,8 @@ def validate_candidate(c: Candidate, plan: RunPlan, evidence_ids: set[str], cate
             return "edit changes nothing"
         if _hidden_failures(e.new_content) > _hidden_failures(old):
             return "edit hides failures"
+        if set(INLINE_DATA.findall(e.new_content)) - set(INLINE_DATA.findall(old)):
+            return "edit pastes inline data"  # a base64 image or file copied from somewhere is not the tutorial's
         target = by_id[e.step_id]
         kind = e.new_kind or (target.kind if e.op == "replace" else None)
         path = e.new_path or (target.path if e.op == "replace" else None)

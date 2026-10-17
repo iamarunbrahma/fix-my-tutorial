@@ -247,6 +247,17 @@ def test_validate_rejects_a_fix_that_writes_made_up_data():
     assert validate_candidate(config, PLAN, {"r1e1"}, "version_conflict") is None
 
 
+def test_validate_rejects_a_fix_that_pastes_inline_data():
+    # the review, 17 Oct: a dead image link was "fixed" with a base64 PNG copied from an unrelated site
+    plan = RunPlan(language="python", runtime="3.12", steps=[S("s1", "run_code", "Image('http://example.com/a.jpg')")])
+    blob = "iVBORw0KGgoAAAANSUhEUgAA" + "QUJD" * 120
+    pasted = Candidate(strategy="workaround", rationale="r", edits=[edit("s1", f"Image(data=b64decode('{blob}'))")])
+    assert validate_candidate(pasted, plan, {"r1e1"}, "dead_resource") == "edit pastes inline data"
+    archived = Candidate(strategy="workaround", rationale="r", edits=[edit(
+        "s1", "Image('https://web.archive.org/web/20131227000000id_/http://example.com/a.jpg')")])
+    assert validate_candidate(archived, plan, {"r1e1"}, "dead_resource") is None
+
+
 def test_an_indentation_only_fix_is_a_real_change():
     # the review, 16 Oct: `  def fit` indented 2 spaces inside a 4-space class got zero candidates in 3 rounds,
     # because a whitespace-blind comparison called the fix "changes nothing"
