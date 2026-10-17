@@ -90,9 +90,9 @@ Four Nemotron sizes split the work so the expensive model only runs when somethi
 
 Every call uses JSON-schema structured output, validated with pydantic.
 
-**Live evaluation:** 15 fixture tutorials, 13 broken by real library changes (pandas `append` and `iteritems`, NumPy `np.float`, scikit-learn `load_boston` and `OneHotEncoder(sparse=)`, openai 0.x, LangChain `langchain.llms`, Flask `before_first_request`, seaborn styles, chalk and node-fetch ESM, Express 5 wildcards, faker) and 2 that still work. On the final run, all 13 broken tutorials were fixed (12 in the first repair round) and both working tutorials were left untouched. A fixed tutorial cost about $0.012 in model calls on average and took a little over a minute.
+**Live evaluation:** 15 fixture tutorials, 13 broken by real library changes (pandas `append` and `iteritems`, NumPy `np.float`, scikit-learn `load_boston` and `OneHotEncoder(sparse=)`, openai 0.x, LangChain `langchain.llms`, Flask `before_first_request`, seaborn styles, chalk and node-fetch ESM, Express 5 wildcards, faker) and 2 that still work. On the latest run (17 Oct 2026, in Token Factory Sandboxes), all 13 broken tutorials were fixed (12 in the first repair round) and both working tutorials were left untouched. A fixed tutorial cost about $0.017 in model calls on average and took a little over two minutes (median).
 
-Earlier runs during the build scored 12, 11, 13, 11, 13, 13 and 12 out of 13, and one of them called a working tutorial "fixed". Each miss traced back to a gap we then closed in code: the planner inventing output checks, marking outdated code as "not runnable", dropping the tutorial's code block, mangling code into escaped newlines, or never running a file the tutorial only says to run in prose, and our judge rejecting the stand-in API server's placeholder reply.
+Earlier runs during the build scored 12, 11, 13, 11, 13, 13, 12 and 13 out of 13, and one of them called a working tutorial "fixed". Each miss traced back to a gap we then closed in code: the planner inventing output checks, marking outdated code as "not runnable", dropping the tutorial's code block, mangling code into escaped newlines, or never running a file the tutorial only says to run in prose, and our judge rejecting the stand-in API server's placeholder reply.
 
 ## Where Nebius Token Factory accelerated the work
 
