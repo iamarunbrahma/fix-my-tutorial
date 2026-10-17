@@ -473,6 +473,7 @@ def create_app(deps: Deps | None = None) -> FastAPI:
                 "entries": entries,
                 "total": total,
                 "pct": pct,
+                "counts": {v for v, n in counts.items() if n},  # outcomes at least one tutorial has
                 "causes": causes,
                 "breaks": break_stats(entries),
                 "generated_at": data.get("generated_at"),

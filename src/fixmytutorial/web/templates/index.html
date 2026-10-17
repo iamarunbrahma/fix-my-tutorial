@@ -11,8 +11,9 @@
   {% endif %}
 </div>
 {% if total %}
-<div class="mt-8 grid grid-cols-2 gap-3 lg:grid-cols-5">
-  {% for key, label in [("still_works", "still work"), ("fixed", "broke, and we fixed them"), ("could_not_fix", "broke, could not fix"), ("gone", "broke for good: the site it needs is gone or now blocks scripts"), ("not_runnable", "could not run here")] %}
+{% set tiles = [("still_works", "still work"), ("fixed", "broke, and we fixed them"), ("could_not_fix", "broke, could not fix"), ("gone", "broke for good: the site it needs is gone or now blocks scripts"), ("not_runnable", "could not run here")] | selectattr("0", "in", counts) | list %}
+<div class="mt-8 grid grid-cols-2 gap-3 {{ 'lg:grid-cols-5' if tiles | length == 5 else 'lg:grid-cols-4' if tiles | length == 4 else 'lg:grid-cols-3' }}">
+  {% for key, label in tiles %}
   <div class="card gap-1 p-5">
     <span class="text-3xl font-semibold tracking-tight tabular-nums">{{ pct[key] }}%</span>
     <span class="text-muted-foreground text-sm">{{ label }}</span>
