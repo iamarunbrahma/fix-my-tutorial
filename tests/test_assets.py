@@ -153,6 +153,8 @@ def test_pylab_and_timing_magics_run_as_a_notebook_would(tmp_path):
     p = run_cells(tmp_path, cells)
     assert p.returncode == 0, p.stdout + p.stderr
     assert "timed-ran" in p.stdout and "42" in p.stdout and "cell-ran" in p.stdout
+    # and they report a time as IPython does: a step described as "shows the timings" must show some (re-run, 17 Oct)
+    assert p.stdout.count(" per loop ") == 2 and p.stdout.count("Wall time: ") == 1
 
 
 def test_percent_operator_on_a_continuation_line_is_kept(tmp_path):

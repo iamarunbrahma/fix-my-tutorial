@@ -20,22 +20,36 @@ def mark(cell_id, status):
 
 PYLAB = ("import numpy, matplotlib; from matplotlib import pylab, mlab, pyplot; np, plt = numpy, pyplot; "
          "from matplotlib.pylab import *; from numpy import *")  # what IPython's %pylab runs
-TIMED = re.compile(r"%time(?:it)?\s+(?:-\w(?:\s*\d+)?\s+)*(.+)")
+TIMED = re.compile(r"%(time(?:it)?)\s+(?:-\w(?:\s*\d+)?\s+)*(.+)")
+CELL_TIMED = re.compile(r"%%(time(?:it)?)(?:\s+-\w(?:\s*\d+)?)*\s*(.*)")  # the rest of a %%timeit line is setup
+CLOCK = "__import__('time').perf_counter()"
 MAGIC = re.compile(r"%%?[A-Za-z_]")  # a magic's name follows the %; "% (a, b)" on a continuation line is the operator
+
+
+def report(magic):
+    """The line IPython prints after timing, from one run instead of many."""
+    text = "Wall time: {:.3g} ms" if magic == "time" else "{:.3g} ms per loop (1 run, 1 loop each)"
+    return f"print({text!r}.format(({CLOCK} - _fmt_t) * 1e3))"
 
 
 def clean(code):
     """Turn notebook-only lines into plain Python: %pylab imports what IPython would, %time/%timeit lines and
-    %%time/%%timeit cells run their code once, ! lines become shell calls, other magics are dropped."""
-    out = []
+    %%time/%%timeit cells run their code once and print how long it took, ! lines become shell calls, other magics
+    are dropped."""
+    out, cell_magic = [], None
     for line in code.splitlines():
         stripped = line.strip()
         indent = line[: len(line) - len(line.lstrip())]
+        if not any(o.strip() for o in out) and (m := CELL_TIMED.fullmatch(stripped)):
+            cell_magic = m.group(1)
+            out += [m.group(2)] if m.group(2) else []
+            out.append("_fmt_t = " + CLOCK)
+            continue
         if stripped.startswith("%pylab"):
             out.append(indent + PYLAB)
             continue
         if m := TIMED.fullmatch(stripped):
-            out.append(indent + m.group(1))
+            out += [indent + "_fmt_t = " + CLOCK, indent + m.group(2), indent + report(m.group(1))]
             continue
         if MAGIC.match(stripped):
             continue
@@ -43,6 +57,8 @@ def clean(code):
             out.append(f"{indent}__import__('subprocess').run({stripped[1:]!r}, shell=True, check=True)")
             continue
         out.append(line)
+    if cell_magic:
+        out.append(report(cell_magic))
     return "\n".join(out)
 
 
