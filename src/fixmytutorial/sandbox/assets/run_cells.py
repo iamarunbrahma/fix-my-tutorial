@@ -11,6 +11,7 @@ import json
 import re
 import subprocess
 import sys
+import time
 import traceback
 
 
@@ -20,10 +21,31 @@ def mark(cell_id, status):
 
 PYLAB = ("import numpy, matplotlib; from matplotlib import pylab, mlab, pyplot; np, plt = numpy, pyplot; "
          "from matplotlib.pylab import *; from numpy import *")  # what IPython's %pylab runs
-TIMED = re.compile(r"%(time(?:it)?)\s+(?:-\w(?:\s*\d+)?\s+)*(.+)")
-CELL_TIMED = re.compile(r"%%(time(?:it)?)(?:\s+-\w(?:\s*\d+)?)*\s*(.*)")  # the rest of a %%timeit line is setup
+TIMED = re.compile(r"(?:([\w.]+)\s*=\s*)?%(time(?:it)?)\s+((?:-[A-Za-z]+(?:\s*\d+)?\s+)*)(.+)")  # `t = %timeit -o x`
+CELL_TIMED = re.compile(r"%%(time(?:it)?)(?:\s+-[A-Za-z]+(?:\s*\d+)?)*\s*(.*)")  # the rest of a %%timeit line is setup
 CLOCK = "__import__('time').perf_counter()"
 MAGIC = re.compile(r"%%?[A-Za-z_]")  # a magic's name follows the %; "% (a, b)" on a continuation line is the operator
+
+
+class TimeitResult:
+    """What `%timeit -o` hands back, timed from one run instead of many."""
+
+    def __init__(self, seconds):
+        self.best = self.worst = self.average = seconds
+        self.stdev, self.loops, self.repeat, self.compile_time = 0.0, 1, 1, 0.0
+        self.all_runs = self.timings = [seconds]
+
+    def __repr__(self):
+        return f"{self.average * 1e3:.3g} ms per loop (1 run, 1 loop each)"
+
+
+def timeit_once(fn, quiet):
+    start = time.perf_counter()
+    fn()
+    result = TimeitResult(time.perf_counter() - start)
+    if not quiet:
+        print(result)
+    return result
 
 
 def report(magic):
@@ -49,7 +71,13 @@ def clean(code):
             out.append(indent + PYLAB)
             continue
         if m := TIMED.fullmatch(stripped):
-            out += [indent + "_fmt_t = " + CLOCK, indent + m.group(2), indent + report(m.group(1))]
+            target, magic, opts, stmt = m.groups()
+            quiet = any("q" in o for o in re.findall(r"-([A-Za-z]+)", opts))
+            if target and magic == "timeit":  # IPython hands back the timing itself
+                out.append(f"{indent}{target} = _fmt_timeit(lambda: ({stmt}), {quiet})")
+                continue
+            out += [indent + "_fmt_t = " + CLOCK, indent + (f"{target} = {stmt}" if target else stmt)]
+            out += [] if quiet else [indent + report(magic)]
             continue
         if MAGIC.match(stripped):
             continue
@@ -85,7 +113,7 @@ def main():
     cells = json.load(open(sys.argv[1]))
     report_from = sys.argv[3] if len(sys.argv) > 3 and sys.argv[2] == "--report-from" else None
     reporting = report_from is None
-    ns = {"__name__": "__main__", "subprocess": subprocess, "display": display}
+    ns = {"__name__": "__main__", "subprocess": subprocess, "display": display, "_fmt_timeit": timeit_once}
     for cell in cells:
         if cell["id"] == report_from:
             reporting = True
