@@ -268,3 +268,11 @@ def test_an_indentation_only_fix_is_a_real_change():
     assert validate_candidate(c, plan, set(), "tutorial_typo") is None
     same = Candidate(strategy="workaround", rationale="r", edits=[edit("s1", broken + "\n\n")])
     assert validate_candidate(same, plan, set(), "tutorial_typo") == "edit changes nothing"
+
+
+def test_the_repair_prompt_knows_how_old_tutorials_usually_break():
+    # the review, 17 Oct: three rounds failed on packages that import distutils or pkg_resources, an abandoned
+    # matplotlib add-on, and a dead image link with an archived copy
+    from fixmytutorial.prompts import REPAIR_SYSTEM
+    for hint in ("distutils", "pkg_resources", "--no-build-isolation", "built-in replacement", "archived copy"):
+        assert hint in REPAIR_SYSTEM, hint
