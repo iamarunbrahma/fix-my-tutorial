@@ -1,6 +1,6 @@
 {
  "generated_at": "2026-10-17",
- "excluded": 9,
+ "excluded": 19,
  "entries": [
   {
    "url": "https://jakevdp.github.io/blog/2013/08/28/understanding-the-fft/",
@@ -22,28 +22,6 @@
     "version": "1.12.0",
     "date": "2017-01-15",
     "how": "NumPy 1.12.0 made float slice bounds an error, and on Python 3 N / 2 is a float"
-   }
-  },
-  {
-   "url": "https://jakevdp.github.io/blog/2013/08/07/conways-game-of-life/",
-   "title": "Conway's Game of Life in Python",
-   "language": "python",
-   "source": "jakevdp.github.io",
-   "year": 2013,
-   "topic": "NumPy Game of Life with matplotlib animation",
-   "verdict": "could_not_fix",
-   "categories": [
-    "removed_api"
-   ],
-   "changes": 0,
-   "run_id": null,
-   "featured": false,
-   "published": null,
-   "broke_in": {
-    "package": "matplotlib",
-    "version": "3.5.0",
-    "date": "2021-11-16",
-    "how": "JSAnimation passes clear_temp to FileMovieWriter.setup(), which matplotlib 3.5.0 removed"
    }
   },
   {
@@ -257,76 +235,6 @@
    }
   },
   {
-   "url": "http://www.gregreda.com/2013/03/03/web-scraping-101-with-python/",
-   "title": "Web Scraping 101 with Python",
-   "language": "python",
-   "source": "gregreda.com",
-   "year": 2013,
-   "topic": "BeautifulSoup scraping of Chicago Reader 'Best of'",
-   "verdict": "gone",
-   "categories": [
-    "dead_resource",
-    "removed_api"
-   ],
-   "changes": 0,
-   "run_id": null,
-   "featured": false,
-   "published": null,
-   "broke_in": null
-  },
-  {
-   "url": "https://www.kdnuggets.com/2017/03/k-means-clustering-algorithms-intro-python.html",
-   "title": "K-Means & Other Clustering Algorithms: A Quick Intro with Python",
-   "language": "python",
-   "source": "kdnuggets.com",
-   "year": 2017,
-   "topic": "clustering Zachary's karate club graph",
-   "verdict": "could_not_fix",
-   "categories": [
-    "removed_api"
-   ],
-   "changes": 0,
-   "run_id": null,
-   "featured": false,
-   "published": null,
-   "broke_in": {
-    "package": "scikit-learn",
-    "version": "1.3.0",
-    "date": "2023-06-30",
-    "how": "affinity_propagation stopped turning an integer similarity matrix into floats in scikit-learn 1.3.0"
-   }
-  },
-  {
-   "url": "https://blog.pythonlibrary.org/2016/07/28/python-201-a-tutorial-on-threads/",
-   "title": "Python 201: A Tutorial on Threads",
-   "language": "python",
-   "source": "blog.pythonlibrary.org",
-   "year": 2016,
-   "topic": "threading, locks, queues",
-   "verdict": "still_works",
-   "categories": [],
-   "changes": 0,
-   "run_id": null,
-   "featured": false,
-   "published": "2016-07-28",
-   "broke_in": null
-  },
-  {
-   "url": "https://blog.pythonlibrary.org/2016/08/02/python-201-a-multiprocessing-tutorial/",
-   "title": "Python 201: A multiprocessing tutorial",
-   "language": "python",
-   "source": "blog.pythonlibrary.org",
-   "year": 2016,
-   "topic": "multiprocessing Process, Pool, Queue",
-   "verdict": "still_works",
-   "categories": [],
-   "changes": 0,
-   "run_id": null,
-   "featured": false,
-   "published": "2016-08-02",
-   "broke_in": null
-  },
-  {
    "url": "https://blog.pythonlibrary.org/2014/01/30/how-to-time-small-pieces-of-python-code-with-timeit/",
    "title": "How to Time Small Pieces of Python Code with timeit",
    "language": "python",
@@ -399,29 +307,6 @@
    "run_id": "ri-tKCGLBAY",
    "featured": false,
    "published": "2016-04-04",
-   "broke_in": {
-    "package": "scikit-learn",
-    "version": "0.20.0",
-    "date": "2018-09-26",
-    "how": "scikit-learn 0.20.0 removed the sklearn.cross_validation module"
-   }
-  },
-  {
-   "url": "https://datascienceomar.wordpress.com/2016/07/10/logistic-regression-scikit-learn/",
-   "title": "Logistic Regression + Scikit-learn",
-   "language": "python",
-   "source": "datascienceomar.wordpress.com",
-   "year": 2016,
-   "topic": "breast cancer logistic regression",
-   "verdict": "could_not_fix",
-   "categories": [
-    "removed_api",
-    "tutorial_typo"
-   ],
-   "changes": 0,
-   "run_id": null,
-   "featured": false,
-   "published": "2016-07-10",
    "broke_in": {
     "package": "scikit-learn",
     "version": "0.20.0",
@@ -558,23 +443,6 @@
    "broke_in": null
   },
   {
-   "url": "https://iamtrask.github.io/2015/07/27/python-network-part2/",
-   "title": "A Neural Network in 13 lines of Python (Part 2 - Gradient Descent)",
-   "language": "python",
-   "source": "iamtrask.github.io",
-   "year": 2015,
-   "topic": "gradient descent with NumPy",
-   "verdict": "could_not_fix",
-   "categories": [
-    "removed_api"
-   ],
-   "changes": 0,
-   "run_id": null,
-   "featured": false,
-   "published": null,
-   "broke_in": null
-  },
-  {
    "url": "https://dennybritz.com/posts/wildml/implementing-a-neural-network-from-scratch/",
    "title": "Implementing a Neural Network from Scratch in Python",
    "language": "python",
@@ -628,23 +496,6 @@
    "broke_in": null
   },
   {
-   "url": "https://www.analyticsvidhya.com/blog/2017/08/introduction-to-multi-label-classification/",
-   "title": "Solving Multi-Label Classification problems",
-   "language": "python",
-   "source": "analyticsvidhya.com",
-   "year": 2017,
-   "topic": "scikit-multilearn problem transformations",
-   "verdict": "could_not_fix",
-   "categories": [
-    "removed_api"
-   ],
-   "changes": 0,
-   "run_id": null,
-   "featured": false,
-   "published": "2017-08-26",
-   "broke_in": null
-  },
-  {
    "url": "https://galeascience.wordpress.com/2016/09/23/2016-world-cup-of-hockey-nhl-team-captains/",
    "title": "2016 World Cup of Hockey NHL Team Captains",
    "language": "python",
@@ -680,46 +531,6 @@
     "date": "2018-09-26",
     "how": "scikit-learn 0.20.0 removed RandomizedPCA and the sklearn.cross_validation module"
    }
-  },
-  {
-   "url": "https://github.com/amueller/scipy_2015_sklearn_tutorial/blob/master/notebooks/04.1%20Cross%20Validation.ipynb",
-   "title": "SciPy 2015 sklearn tutorial: Cross Validation",
-   "language": "python",
-   "source": "github.com",
-   "year": 2015,
-   "topic": "KFold/StratifiedKFold/ShuffleSplit",
-   "verdict": "could_not_fix",
-   "categories": [
-    "removed_api"
-   ],
-   "changes": 0,
-   "run_id": null,
-   "featured": false,
-   "published": null,
-   "broke_in": {
-    "package": "scikit-learn",
-    "version": "0.20.0",
-    "date": "2018-09-26",
-    "how": "scikit-learn 0.20.0 removed the sklearn.cross_validation module"
-   }
-  },
-  {
-   "url": "https://www.smashingmagazine.com/2015/04/web-scraping-with-nodejs/",
-   "title": "Web Scraping With Node.js",
-   "language": "javascript",
-   "source": "smashingmagazine.com",
-   "year": 2015,
-   "topic": "request + cheerio word-frequency scraper",
-   "verdict": "gone",
-   "categories": [
-    "dead_resource",
-    "tutorial_typo"
-   ],
-   "changes": 0,
-   "run_id": null,
-   "featured": false,
-   "published": "2015-04-08",
-   "broke_in": null
   },
   {
    "url": "http://codewinds.com/blog/2013-08-20-nodejs-transform-streams.html",

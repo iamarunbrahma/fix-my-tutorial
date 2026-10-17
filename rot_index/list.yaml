@@ -35,7 +35,7 @@ tutorials:
     version: 3.5.0
     date: '2021-11-16'
     how: JSAnimation passes clear_temp to FileMovieWriter.setup(), which matplotlib 3.5.0 removed
-  review: downgrade
+  review: exclude
 - url: https://jakevdp.github.io/blog/2013/07/10/XKCD-plots-in-matplotlib/
   title: XKCD Plots have Landed in Matplotlib!
   language: python
@@ -167,7 +167,7 @@ tutorials:
   source: gregreda.com
   year: 2013
   topic: BeautifulSoup scraping of Chicago Reader 'Best of'
-  review: gone
+  review: exclude
   categories:
   - dead_resource
   - removed_api
@@ -178,7 +178,7 @@ tutorials:
   source: kdnuggets.com
   year: 2017
   topic: clustering Zachary's karate club graph
-  review: downgrade
+  review: exclude
   categories:
   - removed_api
   broke_in:
@@ -199,14 +199,14 @@ tutorials:
   source: blog.pythonlibrary.org
   year: 2016
   topic: threading, locks, queues
-  review: still_works
+  review: exclude
 - url: https://blog.pythonlibrary.org/2016/08/02/python-201-a-multiprocessing-tutorial/
   title: 'Python 201: A multiprocessing tutorial'
   language: python
   source: blog.pythonlibrary.org
   year: 2016
   topic: multiprocessing Process, Pool, Queue
-  review: still_works
+  review: exclude
 - url: https://blog.pythonlibrary.org/2014/01/30/how-to-time-small-pieces-of-python-code-with-timeit/
   title: How to Time Small Pieces of Python Code with timeit
   language: python
@@ -312,7 +312,7 @@ tutorials:
   source: datascienceomar.wordpress.com
   year: 2016
   topic: breast cancer logistic regression
-  review: downgrade
+  review: exclude
   categories:
   - removed_api
   - tutorial_typo
@@ -472,7 +472,7 @@ tutorials:
   source: iamtrask.github.io
   year: 2015
   topic: gradient descent with NumPy
-  review: downgrade
+  review: exclude
   categories:
   - removed_api
   broke_in: null
@@ -522,7 +522,7 @@ tutorials:
   source: analyticsvidhya.com
   year: 2017
   topic: scikit-multilearn problem transformations
-  review: downgrade
+  review: exclude
   categories:
   - removed_api
 - url: https://galeascience.wordpress.com/2016/09/23/2016-world-cup-of-hockey-nhl-team-captains/
@@ -568,7 +568,7 @@ tutorials:
   source: github.com
   year: 2015
   topic: KFold/StratifiedKFold/ShuffleSplit
-  review: downgrade
+  review: exclude
   categories:
   - removed_api
   broke_in:
@@ -612,7 +612,7 @@ tutorials:
   source: smashingmagazine.com
   year: 2015
   topic: request + cheerio word-frequency scraper
-  review: gone
+  review: exclude
   categories:
   - dead_resource
   - tutorial_typo

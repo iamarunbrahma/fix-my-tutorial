@@ -62,7 +62,7 @@ def export_entries(entries: list[dict], store: Store) -> list[dict]:
     for e in entries:
         rec = latest.get(e["url"])
         if rec is None or rec.verdict in (None, Verdict.ERROR) or e.get("review") == "exclude":
-            continue  # excluded by hand review: the failure was our runner's, not the tutorial's
+            continue  # left out by hand review: it did not confirm what the run reported
         verdict = rec.verdict.value
         downgraded = e.get("review") == "downgrade" and verdict == "fixed"
         if downgraded:
