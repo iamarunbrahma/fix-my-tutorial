@@ -18,7 +18,8 @@ def mark(cell_id, status):
     print("@@FMT " + json.dumps({"cell": cell_id, "status": status}), flush=True)
 
 
-PYLAB = "from pylab import *; from numpy import *; import numpy as np; import matplotlib.pyplot as plt"
+PYLAB = ("import numpy, matplotlib; from matplotlib import pylab, mlab, pyplot; np, plt = numpy, pyplot; "
+         "from matplotlib.pylab import *; from numpy import *")  # what IPython's %pylab runs
 TIMED = re.compile(r"%time(?:it)?\s+(?:-\w(?:\s*\d+)?\s+)*(.+)")
 
 

@@ -146,7 +146,8 @@ def test_pylab_and_timing_magics_run_as_a_notebook_would(tmp_path):
     rc = {}  # compiled by hand: importing it would leave a __pycache__ folder among the sandbox assets
     exec(compile(open(RUNNER).read(), RUNNER, "exec"), rc)
     assert rc["clean"]("%pylab inline\nx = 1") == (
-        "from pylab import *; from numpy import *; import numpy as np; import matplotlib.pyplot as plt\nx = 1")
+        "import numpy, matplotlib; from matplotlib import pylab, mlab, pyplot; np, plt = numpy, pyplot; "
+        "from matplotlib.pylab import *; from numpy import *\nx = 1")  # IPython's import_pylab, names and order
     cells = [{"id": "s1", "code": "%timeit print('timed-ran')\n%time y = 41 + 1\nprint(y)"},
              {"id": "s2", "code": "%%timeit\nprint('cell-ran')"}]
     p = run_cells(tmp_path, cells)
