@@ -101,6 +101,8 @@ def normalize_plan(out: PlannerOutput, max_steps: int = 40, source_text: str | N
             s.probe = default_probe(s.content, out.language)
         if shown is not None:
             s.content = _unflatten(s.content, shown)
+        if shown is not None and s.kind == "shell" and INSTALL_RE.search(s.content):
+            s.content = unpin(s.content, shown)
         if shown is not None and s.implicit and invents_data(s, shown):
             continue  # a stand-in file or a guessed URL would make a fake break, and then a fake fix
         if shown is not None:  # only literals the tutorial actually shows may gate a step
@@ -242,6 +244,26 @@ def unrun_files(plan) -> list[str]:
 
 
 TOKEN_RE = re.compile(r"\w+")
+QUOTED_PIN = re.compile(r"""(['"])([A-Za-z0-9][\w.\-\[\]]*)\s*((?:==|>=|<=|~=|!=|<|>)[^'"\s]*)\1""")
+BARE_PIN = re.compile(r"(?<![\w@/'\"-])([A-Za-z0-9][\w.\-\[\]]*)((?:==|~=|!=)[\w.*+!\-]+)")
+NPM_PIN = re.compile(r"(?<![\w@/.-])((?:@[\w.\-]+/)?[\w.\-]+)@([\w.^~*\-]+)")
+
+
+def unpin(content: str, shown: str) -> str:
+    """Drop a version pin the tutorial never gives: running today's versions is how a break is found, and an old pin
+    can fail to install on today's Python, which would be our break, not the tutorial's."""
+    page = re.sub(r"\s", "", shown)
+
+    def on_page(spec: str) -> bool:
+        return re.sub(r"\s", "", spec) in page
+
+    content = QUOTED_PIN.sub(lambda m: m.group(0) if on_page(m.group(2) + m.group(3)) else m.group(2), content)
+    content = BARE_PIN.sub(lambda m: m.group(0) if on_page(m.group(0)) else m.group(1), content)
+    if re.search(r"\b(npm|yarn|pnpm)\b", content):
+        content = NPM_PIN.sub(lambda m: m.group(0) if on_page(m.group(0)) else m.group(1), content)
+    return content
+
+
 IMPORT_ONE = re.compile(r"^\s*import\s+(\w+)\s*$")
 IPYTHON_FILE = re.compile(r"^\s*ipython3?\s+(\S+\.py)\s*$")
 IPYTHON_HEREDOC = re.compile(r"^\s*ipython3?\b[^\n<]*<<-?\s*['\"]?(\w+)['\"]?\s*\n(.*?)\n\1\s*$", re.S)
