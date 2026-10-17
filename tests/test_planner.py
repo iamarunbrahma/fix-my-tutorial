@@ -741,6 +741,19 @@ def test_a_step_that_only_writes_a_file_is_not_held_to_the_programs_output():
     assert run.expect.stdout_contains == ["5 doubled to 10 by: "]
 
 
+def test_importing_a_script_the_plan_wrote_runs_it_as_a_script():
+    # the review, 17 Oct: `import threading_basic` never runs the script's `if __name__ == "__main__":` block, which is
+    # where the tutorial's threads start, so nothing the tutorial shows was ever checked
+    out = PlannerOutput.model_validate(json.loads(planner_json([
+        {"id": "a", "title": "t", "kind": "write_file", "path": "threading_basic.py",
+         "content": "def main():\n    print('hi')\n\nif __name__ == '__main__':\n    main()"},
+        {"id": "b", "title": "t", "kind": "run_code", "content": "import threading_basic"},
+        {"id": "c", "title": "t", "kind": "run_code", "content": "import os"}])))
+    steps = normalize_plan(out, 40).steps
+    assert (steps[1].kind, steps[1].content) == ("shell", "python threading_basic.py")
+    assert (steps[2].kind, steps[2].content) == ("run_code", "import os")  # a library import stays as it is
+
+
 def test_an_ipython_heredoc_becomes_a_python_cell_so_errors_count():
     # the review, 17 Oct: `ipython <<EOF ... EOF` exits 0 even when the code raises, so an XKCD tutorial that breaks on
     # matplotlib 3.6 was reported as still working
