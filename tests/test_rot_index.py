@@ -196,3 +196,16 @@ def test_hand_review_marks_a_tutorial_whose_site_is_gone(tmp_path):
     assert out["https://c"]["verdict"] == out["https://f"]["verdict"] == "gone"
     assert out["https://c"]["run_id"] == "c"  # its report says it could not be fixed, which agrees
     assert out["https://f"]["run_id"] is None and out["https://f"]["changes"] == 0  # its report claims a fix
+
+
+def test_an_entry_can_show_the_exact_run_from_the_demo_video(tmp_path):
+    # 17 Oct: the video's run was made on the live site (a public run, from a link variant); the index shows that same
+    # run, so its report matches the video, and batches never run that tutorial again
+    from fixmytutorial.rot_index import pick_entries
+    st = Store(tmp_path / "s.db")
+    st.save_run(run("vid", "https://g.dev/blob/HEAD/hello.ipynb", Verdict.FIXED, public=True))
+    entry = {"url": "https://g.dev/blob/master/hello.ipynb", "title": "Hello", "language": "python",
+             "source": "g.dev", "year": 2016, "run": "vid"}
+    out = export_entries([entry], st)
+    assert [(e["run_id"], e["verdict"], e["url"]) for e in out] == [("vid", "fixed", "https://g.dev/blob/master/hello.ipynb")]
+    assert pick_entries([entry], done=set(), force=False, limit=None) == []
