@@ -703,6 +703,14 @@ def test_code_the_planner_changed_is_restored_from_the_page():
     assert restore_page_code("kmeans.fit(X)\naverage.fit(X)", blocks) == "kmeans.fit(X)\nagglomerative.fit(X)"
 
 
+def test_a_changed_line_hidden_inside_a_page_line_is_still_restored():
+    # the re-run, 17 Oct: `dim, nwalkers = 2, 50` sits inside the page's `ndim, nwalkers = 2, 50`, so a plain
+    # substring check took it for page code and the fake break came back
+    from fixmytutorial.planner import restore_page_code
+    blocks = ["ndim = 1\nnwalkers = 50", "def f(x):\n    return x\n\nndim, nwalkers = 2, 50\nprint(ndim)"]
+    assert restore_page_code("dim, nwalkers = 2, 50\nprint(ndim)", blocks) == "ndim, nwalkers = 2, 50\nprint(ndim)"
+
+
 def test_lines_the_planner_added_are_not_rewritten_into_page_lines():
     from fixmytutorial.planner import restore_page_code
     blocks = ["import numpy as np\nmodel.fit(X)\nprint(model.score(X))"]
