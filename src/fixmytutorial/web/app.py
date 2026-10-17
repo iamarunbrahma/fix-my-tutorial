@@ -209,7 +209,7 @@ def load_index(settings: Settings) -> dict:
 
 def verdict_label(v: str | Verdict | None) -> str:
     if v == "gone":  # a Rot Index label from hand review, not a run verdict
-        return "Site is gone"
+        return "Site gone or blocked"
     try:
         return VERDICT_TEXT[Verdict(v)]
     except (ValueError, KeyError):

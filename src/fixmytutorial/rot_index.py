@@ -70,7 +70,7 @@ def export_entries(entries: list[dict], store: Store) -> list[dict]:
         relabeled = e.get("review") == "still_works"  # our own misstep failed it; the page's code runs as written
         if relabeled:
             verdict = "still_works"
-        gone = e.get("review") == "gone"  # the site or service it needs no longer exists: no code change helps
+        gone = e.get("review") == "gone"  # the site it needs is gone or blocks scripts: no code change helps
         if gone:
             verdict = "gone"
         # the run's own report says otherwise, so the index doesn't link it
