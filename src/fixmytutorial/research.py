@@ -2,7 +2,10 @@
 from __future__ import annotations
 
 import re
+from datetime import date
 from urllib.parse import urlparse
+
+import httpx
 
 from .ledger import BudgetExceeded
 from .models import Evidence, FailureSignature
@@ -49,8 +52,34 @@ def best_passage(text: str, sig: FailureSignature, limit: int = 600) -> str:
     return re.sub(r"\s+", " ", best).strip()[:limit]
 
 
+def closest_capture(stamps: list[str], when: str | None) -> str | None:
+    """The capture nearest the tutorial's date (YYYYMMDD), or the newest one when the date is unknown."""
+    if not stamps:
+        return None
+    if not when:
+        return max(stamps)
+    day = date(int(when[:4]), int(when[4:6]), int(when[6:8]))
+    return min(stamps, key=lambda ts: abs((date(int(ts[:4]), int(ts[4:6]), int(ts[6:8])) - day).days))
+
+
+async def wayback(url: str, when: str | None) -> tuple[str, str] | None:
+    """The Wayback Machine's saved copy of a link, closest to `when` (YYYYMMDD): (raw copy URL, capture date).
+    Lists the captures and picks one here: the archive's own closest-first sort takes about 30 seconds."""
+    params = {"url": url, "output": "json", "filter": "statuscode:200", "limit": "200", "fl": "timestamp"}
+    try:
+        async with httpx.AsyncClient(timeout=30) as client:
+            rows = (await client.get("https://web.archive.org/cdx/search/cdx", params=params)).json()
+        ts = closest_capture([r[0] for r in rows[1:]], when)
+    except Exception:  # the archive is unreachable or answered oddly: no evidence rather than a guess
+        return None
+    if ts is None:
+        return None
+    return f"https://web.archive.org/web/{ts}id_/{url}", f"{ts[:4]}-{ts[4:6]}-{ts[6:8]}"
+
+
 async def research(sig: FailureSignature, *, search, run_id: str, public: bool, id_prefix: str = "e",
-                   max_items: int = 6) -> list[Evidence]:
+                   max_items: int = 6, links: list[str] = (), when: str | None = None,
+                   archive=wayback) -> list[Evidence]:
     if sig.category == "timeout":
         return []
     queries = sig.search_queries[:3] or ([sig.key_line[:200]] if sig.key_line else [])
@@ -84,4 +113,10 @@ async def research(sig: FailureSignature, *, search, run_id: str, public: bool, 
         if quote and (sym is None or sym in quote.lower()):  # a quote that never names the symbol proves nothing
             items.append(Evidence(id=f"{id_prefix}{len(items) + 1}", url=r["url"],
                                   title=(r.get("title") or r["url"])[:200], quote=quote))
+    if sig.category == "dead_resource":  # the tutorial's own dead links, as the archive saved them
+        for link in links[:3]:
+            if found := await archive(link, when):
+                raw, day = found
+                items.append(Evidence(id=f"{id_prefix}{len(items) + 1}", url=raw, title=f"Archived copy of {link}"[:200],
+                                      quote=f"The Wayback Machine saved {link} on {day}. That copy is at {raw}"))
     return items
