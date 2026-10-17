@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import asyncio
 import re
+from difflib import SequenceMatcher
 from contextvars import ContextVar
 from dataclasses import dataclass
 from typing import Awaitable, Callable
@@ -109,7 +110,18 @@ def validate_candidate(c: Candidate, plan: RunPlan, evidence_ids: set[str], cate
         old_lines = [ln for ln in old.splitlines() if ln.strip()]
         if len(old_lines) >= 4 and len([ln for ln in e.new_content.splitlines() if ln.strip()]) < len(old_lines) / 2:
             return "edit removes most of the step"
+        if e.op == "replace" and _deleted_code(old, e.new_content) >= 5:
+            return "edit deletes the tutorial's code"  # a migration swaps lines; it doesn't drop a block of them
     return None
+
+
+def _deleted_code(old: str, new: str) -> int:
+    """Code lines an edit drops without putting anything in their place (comments and blank lines don't count)."""
+    def code(text: str) -> list[str]:
+        return [ln.strip() for ln in text.splitlines() if ln.strip() and not ln.strip().startswith(("#", "//"))]
+    ops = SequenceMatcher(None, code(old), code(new), autojunk=False).get_opcodes()
+    return sum(i2 - i1 for tag, i1, i2, _, _ in ops if tag in ("delete", "replace")) - sum(
+        j2 - j1 for tag, _, _, j1, j2 in ops if tag in ("insert", "replace"))
 
 
 def _same_code(a: str, b: str) -> bool:
