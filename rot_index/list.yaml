@@ -267,7 +267,7 @@ tutorials:
   categories:
   - dead_resource
   - removed_api
-  review: gone
+  review: exclude
 - url: https://blog.dask.org/2016/07/12/dask-learn-part-1
   title: Dask and Scikit-Learn -- Model Parallelism
   language: python
@@ -496,7 +496,7 @@ tutorials:
   - dead_resource
   - removed_api
   - tutorial_typo
-  review: gone
+  review: exclude
 - url: https://www.freecodecamp.org/news/how-to-visualize-the-programming-language-influence-graph-7f1b765b44d1/
   title: Visualize the programming language influence graph
   language: python

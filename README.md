@@ -72,7 +72,7 @@ After a check, the report offers:
 
 ## Rot Index
 
-How many old tutorials still work? The [Rot Index](https://fix-my-tutorial.onrender.com/index) shows 31 popular Python and JavaScript tutorials published 2013 to 2018, each run step by step with today's packages: what still works, what broke, the fix for each, and which releases broke the most tutorials. They come from a [list of 115](rot_index/list.yaml) picked before any of them ran (34 were expected to still work), so the index is not filled with known breakages. Each result is checked by hand before it is published, and a tutorial is left out when that check doesn't confirm what the automatic run reported. A "fix" that only undoes our own misreading of the page, or that relies on data the tutorial doesn't provide, does not count as a fix.
+How many old tutorials still work? The [Rot Index](https://fix-my-tutorial.onrender.com/index) shows 29 popular Python and JavaScript tutorials published 2013 to 2018, each run step by step with today's packages: what still works, what broke, the fix for each, and which releases broke the most tutorials. They come from a [list of 115](rot_index/list.yaml) picked before any of them ran (34 were expected to still work), so the index is not filled with known breakages. Each result is checked by hand before it is published, and a tutorial is left out when that check doesn't confirm what the automatic run reported. A "fix" that only undoes our own misreading of the page, or that relies on data the tutorial doesn't provide, does not count as a fix.
 
 ```bash
 uv run python -m fixmytutorial.rot_index run --limit 40 --concurrency 3   # in slices, inside the daily budget

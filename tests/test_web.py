@@ -510,3 +510,11 @@ def test_pages_use_the_wrench_logo_as_their_icon(env):
     icon = client.get("/favicon.ico")  # browsers ask for this on their own
     assert icon.status_code == 200 and icon.headers["content-type"] in ("image/x-icon", "image/vnd.microsoft.icon")
     assert client.get("/static/favicon.svg").status_code == 200
+
+
+def test_index_hides_an_outcome_no_tutorial_has(env):
+    # 17 Oct: with the two dead-site rows left out, a "0% broke for good" tile would only add noise
+    client, _ = env
+    page = client.get("/index").text  # the fixture has one fixed and one still-working tutorial
+    assert "broke, and we fixed them" in page and "still work" in page
+    assert "broke for good" not in page and "could not run here" not in page

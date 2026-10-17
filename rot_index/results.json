@@ -1,6 +1,6 @@
 {
  "generated_at": "2026-10-17",
- "excluded": 19,
+ "excluded": 21,
  "entries": [
   {
    "url": "https://jakevdp.github.io/blog/2013/08/28/understanding-the-fft/",
@@ -252,24 +252,6 @@
    "broke_in": null
   },
   {
-   "url": "https://stackabuse.com/python-async-await-tutorial/",
-   "title": "Python async/await Tutorial",
-   "language": "python",
-   "source": "stackabuse.com",
-   "year": 2015,
-   "topic": "asyncio coroutines and aiohttp",
-   "verdict": "gone",
-   "categories": [
-    "dead_resource",
-    "removed_api"
-   ],
-   "changes": 0,
-   "run_id": "ri-royl5KTB",
-   "featured": false,
-   "published": "2015-12-17",
-   "broke_in": null
-  },
-  {
    "url": "https://cambridgecoding.wordpress.com/2016/04/03/scanning-hyperspace-how-to-tune-machine-learning-models/",
    "title": "Scanning hyperspace: how to tune machine learning models",
    "language": "python",
@@ -458,26 +440,6 @@
    "run_id": "ri-wVF3z-yS",
    "featured": false,
    "published": "2015-09-03",
-   "broke_in": null
-  },
-  {
-   "url": "https://www.freecodecamp.org/news/how-to-scrape-websites-with-python-and-beautifulsoup-5946935d93fe/",
-   "title": "How to scrape websites with Python and BeautifulSoup",
-   "language": "python",
-   "source": "freecodecamp.org",
-   "year": 2017,
-   "topic": "scraping Bloomberg index quotes",
-   "verdict": "gone",
-   "categories": [
-    "changed_cli",
-    "dead_resource",
-    "removed_api",
-    "tutorial_typo"
-   ],
-   "changes": 1,
-   "run_id": "ri-N8kQOe8g",
-   "featured": false,
-   "published": "2017-06-10",
    "broke_in": null
   },
   {
