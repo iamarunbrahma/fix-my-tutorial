@@ -768,6 +768,19 @@ def test_a_version_pin_the_page_never_gives_is_dropped():
     assert c.content == "npm install chalk @babel/core@7.0.0 express"
 
 
+def test_a_notebook_that_imports_ipython_gets_it_installed():
+    # the re-run, 17 Oct: "No module named 'IPython'" failed the Magic Triangle notebook; anyone reading a notebook has
+    # IPython, so this was our setup, not the tutorial
+    out = PlannerOutput.model_validate(json.loads(planner_json([
+        {"id": "a", "title": "t", "kind": "shell", "content": "pip install matplotlib numpy", "implicit": True},
+        {"id": "b", "title": "t", "kind": "run_code", "content": "from IPython.display import HTML\nHTML('<b>x</b>')"}])))
+    assert normalize_plan(out, 40).steps[0].content == "pip install matplotlib numpy ipython"
+    out = PlannerOutput.model_validate(json.loads(planner_json([
+        {"id": "b", "title": "t", "kind": "run_code", "content": "import IPython\nprint(1)"}])))
+    first = normalize_plan(out, 40).steps[0]
+    assert (first.kind, first.content, first.implicit) == ("shell", "pip install ipython", True)
+
+
 def test_an_ipython_heredoc_becomes_a_python_cell_so_errors_count():
     # the review, 17 Oct: `ipython <<EOF ... EOF` exits 0 even when the code raises, so an XKCD tutorial that breaks on
     # matplotlib 3.6 was reported as still working

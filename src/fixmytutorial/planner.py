@@ -116,6 +116,15 @@ def normalize_plan(out: PlannerOutput, max_steps: int = 40, source_text: str | N
             s.expect.description = None
         s.source_excerpt = s.source_excerpt[:1200]
         steps.append(s)
+    if out.language == "python" and any(s.kind != "shell" and IPYTHON_IMPORT.search(s.content) for s in steps) and not any(
+            s.kind == "shell" and INSTALL_RE.search(s.content) and re.search(r"\bipython\b", s.content, re.I) for s in steps):
+        # anyone reading a notebook has IPython; without it `from IPython.display import ...` fails on our setup
+        pip = next((s for s in steps if s.kind == "shell" and re.search(r"\bpip3? install\b", s.content)), None)
+        if pip:
+            pip.content = pip.content.rstrip() + " ipython"
+        else:
+            steps.insert(0, Step(id="s0", title="Install IPython", kind="shell", content="pip install ipython",
+                                 implicit=True))
     note, truncated = "", len(steps) > max_steps
     if truncated:
         note = f"This tutorial has {len(steps)} steps; only the first {max_steps} were run."
@@ -264,6 +273,7 @@ def unpin(content: str, shown: str) -> str:
     return content
 
 
+IPYTHON_IMPORT = re.compile(r"^\s*(?:from|import)\s+IPython\b", re.M)
 IMPORT_ONE = re.compile(r"^\s*import\s+(\w+)\s*$")
 IPYTHON_FILE = re.compile(r"^\s*ipython3?\s+(\S+\.py)\s*$")
 IPYTHON_HEREDOC = re.compile(r"^\s*ipython3?\b[^\n<]*<<-?\s*['\"]?(\w+)['\"]?\s*\n(.*?)\n\1\s*$", re.S)
