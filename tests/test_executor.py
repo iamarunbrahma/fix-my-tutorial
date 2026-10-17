@@ -27,7 +27,17 @@ def make(handler, settings, events=None):
 
 def test_group_units():
     p = plan(S("s1", "shell", "a"), S("s2", "run_code", "b"), S("s3", "run_code", "c"), S("s4", "shell", "d"))
-    assert [[s.id for s in u] for u in group_units(p.steps)] == [["s1"], ["s2", "s3"], ["s4"]]
+    assert [[s.id for s in u] for u in group_units(p)] == [["s1"], ["s2", "s3"], ["s4"]]
+
+
+async def test_javascript_code_steps_each_run(settings):
+    # the review, 17 Oct: only Python cells run as a group; a JavaScript group ran its first step and called the rest
+    # passed, so a tutorial whose later steps break on today's Node was reported as still working
+    ex, backend = make(lambda s, f, i: (0, "ok", ""), settings)
+    p = plan(S("s1", "run_code", "console.log(1)"), S("s2", "run_code", "console.log(2)"), language="javascript")
+    assert [[s.id for s in u] for u in group_units(p)] == [["s1"], ["s2"]]
+    t = await ex.execute(p, BASE, run_id="r", public=True)
+    assert set(t.results) == {"s1", "s2"} and len(backend.calls) == 2
 
 
 def test_parse_markers():
