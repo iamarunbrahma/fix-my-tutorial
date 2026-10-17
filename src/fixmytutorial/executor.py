@@ -21,10 +21,11 @@ INSTALL_RE = re.compile(r"\b(pip3?|uv pip|npm|npx|yarn|pnpm|apt-get|poetry|conda
 ESM_RE = re.compile(r"^\s*(import\s|export\s)", re.M)
 
 
-def group_units(steps: list[Step]) -> list[list[Step]]:
+def group_units(plan: RunPlan) -> list[list[Step]]:
+    """Consecutive Python code steps run together as notebook cells; every other step is its own unit."""
     units: list[list[Step]] = []
-    for s in steps:
-        if s.kind == "run_code" and units and units[-1][0].kind == "run_code":
+    for s in plan.steps:
+        if plan.language == "python" and s.kind == "run_code" and units and units[-1][0].kind == "run_code":
             units[-1].append(s)
         else:
             units.append([s])
@@ -32,7 +33,7 @@ def group_units(steps: list[Step]) -> list[list[Step]]:
 
 
 def unit_index_of(plan: RunPlan, step_id: str) -> int:
-    for i, unit in enumerate(group_units(plan.steps)):
+    for i, unit in enumerate(group_units(plan)):
         if any(s.id == step_id for s in unit):
             return i
     raise KeyError(step_id)
@@ -192,7 +193,7 @@ class Executor:
     async def execute(self, plan: RunPlan, states: list[ExecState], *, from_unit: int = 0,
                       stop_after: int | None = None, run_id: str, public: bool, phase: str = "run",
                       quiet: bool = False) -> Trace:
-        units = group_units(plan.steps)
+        units = group_units(plan)
         states = list(states[: from_unit + 1])
         results: dict[str, StepResult] = {}
         last = len(units) - 1 if stop_after is None else min(stop_after, len(units) - 1)

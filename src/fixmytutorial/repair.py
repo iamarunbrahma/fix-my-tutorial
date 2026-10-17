@@ -120,7 +120,7 @@ def _sig(unit: list[Step]) -> list[tuple]:
 
 
 def first_changed_unit(old: RunPlan, new: RunPlan) -> int:
-    ou, nu = group_units(old.steps), group_units(new.steps)
+    ou, nu = group_units(old), group_units(new)
     for i, (a, b) in enumerate(zip(ou, nu)):
         if _sig(a) != _sig(b):
             return i

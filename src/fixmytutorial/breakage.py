@@ -302,7 +302,7 @@ def make_probe(
     trace = target.trace
     assert trace is not None and trace.failed_unit, "make_probe needs the trace the step failed in"
     fu = trace.failed_unit
-    prev = group_units(target.plan.steps)[fu - 1][-1]
+    prev = group_units(target.plan)[fu - 1][-1]
     first = trace.results.get(target.step_id)
     original = key_line(failure_output(first)) if first else ""
 
