@@ -146,3 +146,28 @@ def test_hand_review_can_exclude_our_own_failures_and_relabel_still_works(tmp_pa
     assert set(out) == {"https://y"}
     assert out["https://y"]["verdict"] == "still_works" and out["https://y"]["changes"] == 0
     assert out["https://y"]["categories"] == []
+
+
+def test_hand_review_corrects_causes_and_break_dates_and_unlinks_overturned_reports(tmp_path):
+    # the review, 17 Oct: Python 2 prints were filed as tutorial typos, real breaks went undated, and a report saying
+    # "Fixed" next to a hand-downgraded "Could not fix" would contradict the index
+    from datetime import date
+    st = Store(tmp_path / "s.db")
+    st.save_run(run("k", "https://k", Verdict.COULD_NOT_FIX))
+    st.save_run(run("d", "https://d", Verdict.FIXED, category="tutorial_typo"))
+    st.save_run(run("s", "https://s", Verdict.COULD_NOT_FIX))
+    entries = [
+        {"url": "https://k", "title": "K", "language": "python", "source": "k.dev", "year": 2013,
+         "categories": ["removed_api"], "broke_in": {"package": "matplotlib", "version": "3.5.0",
+                                                     "date": date(2021, 11, 16), "how": "clear_temp was removed"}},
+        {"url": "https://d", "title": "D", "language": "python", "source": "d.dev", "year": 2014, "review": "downgrade",
+         "categories": ["removed_api"]},
+        {"url": "https://s", "title": "S", "language": "python", "source": "s.dev", "year": 2016, "review": "still_works"},
+    ]
+    out = {e["url"]: e for e in export_entries(entries, st)}
+    assert out["https://k"]["categories"] == ["removed_api"] and out["https://k"]["run_id"] == "k"
+    assert out["https://k"]["broke_in"] == {"package": "matplotlib", "version": "3.5.0", "date": "2021-11-16",
+                                            "how": "clear_temp was removed"}
+    assert out["https://d"]["verdict"] == "could_not_fix" and out["https://d"]["categories"] == ["removed_api"]
+    assert out["https://d"]["run_id"] is None and out["https://d"]["changes"] == 0
+    assert out["https://s"]["run_id"] is None
