@@ -487,7 +487,9 @@ def test_index_says_how_many_tutorials_were_left_out_and_why(env):
     idx = json.loads(deps.settings.rot_index_path.read_text())
     idx["excluded"] = 3
     deps.settings.rot_index_path.write_text(json.dumps(idx))
-    assert "3 more were left out" in client.get("/index").text
+    page = client.get("/index").text
+    # 17 Oct: also left out are runs whose own report says something checking by hand didn't confirm
+    assert "3 more were left out because checking them by hand didn't confirm what the automatic run reported" in page
 
 
 def test_index_shows_tutorials_whose_site_is_gone_on_their_own(env):
