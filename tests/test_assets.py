@@ -153,3 +153,11 @@ def test_pylab_and_timing_magics_run_as_a_notebook_would(tmp_path):
     p = run_cells(tmp_path, cells)
     assert p.returncode == 0, p.stdout + p.stderr
     assert "timed-ran" in p.stdout and "42" in p.stdout and "cell-ran" in p.stdout
+
+
+def test_percent_operator_on_a_continuation_line_is_kept(tmp_path):
+    # the review, 17 Oct: a line starting with the % operator was dropped as a magic, leaving "'(' was never closed"
+    cells = [{"id": "s1", "code": "score = 0.5\nprint('Accuracy: %.2f'\n      % score)\n%matplotlib inline"}]
+    p = run_cells(tmp_path, cells)
+    assert p.returncode == 0, p.stdout + p.stderr
+    assert "Accuracy: 0.50" in p.stdout

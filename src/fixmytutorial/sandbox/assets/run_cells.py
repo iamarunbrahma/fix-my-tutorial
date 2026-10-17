@@ -21,6 +21,7 @@ def mark(cell_id, status):
 PYLAB = ("import numpy, matplotlib; from matplotlib import pylab, mlab, pyplot; np, plt = numpy, pyplot; "
          "from matplotlib.pylab import *; from numpy import *")  # what IPython's %pylab runs
 TIMED = re.compile(r"%time(?:it)?\s+(?:-\w(?:\s*\d+)?\s+)*(.+)")
+MAGIC = re.compile(r"%%?[A-Za-z_]")  # a magic's name follows the %; "% (a, b)" on a continuation line is the operator
 
 
 def clean(code):
@@ -36,7 +37,7 @@ def clean(code):
         if m := TIMED.fullmatch(stripped):
             out.append(indent + m.group(1))
             continue
-        if stripped.startswith("%"):
+        if MAGIC.match(stripped):
             continue
         if stripped.startswith("!"):
             out.append(f"{indent}__import__('subprocess').run({stripped[1:]!r}, shell=True, check=True)")
