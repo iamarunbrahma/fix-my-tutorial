@@ -163,3 +163,13 @@ def test_percent_operator_on_a_continuation_line_is_kept(tmp_path):
     p = run_cells(tmp_path, cells)
     assert p.returncode == 0, p.stdout + p.stderr
     assert "Accuracy: 0.50" in p.stdout
+
+
+def test_a_timing_magic_can_hand_its_result_to_a_variable(tmp_path):
+    # the re-run, 17 Oct: `t = %timeit -oq f(x)` then `return t.best` (Group-by From Scratch) was a SyntaxError of ours
+    cells = [{"id": "s1", "code": "def f(n):\n    return sum(range(n))\n\ndef bench():\n    t = %timeit -oq f(1000)\n"
+                                  "    return t.best\n\nprint('best is a number:', bench() >= 0)\ny = %time f(10)\nprint(y)"}]
+    p = run_cells(tmp_path, cells)
+    assert p.returncode == 0, p.stdout + p.stderr
+    assert "best is a number: True" in p.stdout and "45" in p.stdout and "Wall time: " in p.stdout
+    assert " per loop " not in p.stdout  # -q: quiet, as in IPython
