@@ -207,8 +207,8 @@ async def test_setup_only_plan_is_retried_even_without_language_labels(settings,
     plan = await plan_tutorial(unlabeled, llm, settings, run_id="r", public=True)
     assert (
         len(client.calls) == 2
-        and "never ran the tutorial's code" in client.calls[1]["messages"][1]["content"]
-    )
+        and "left out these code blocks: [block 2]" in client.calls[1]["messages"][1]["content"]
+    )  # untagged blocks count as code now, so the retry names the block it skipped
     assert plan.runnable
 
 
@@ -677,3 +677,17 @@ def test_the_planner_is_told_never_to_invent_data_or_background_processes():
     from fixmytutorial.prompts import PLANNER_SYSTEM
 
     assert "Never invent data" in PLANNER_SYSTEM and "background" in PLANNER_SYSTEM
+
+
+def test_untagged_code_blocks_count_toward_coverage_but_output_blocks_do_not():
+    # the review, 17 Oct: a 2013 blog with 18 untagged blocks had 1 planned, yet coverage said 1.0
+    from fixmytutorial.planner import code_coverage
+    doc = TutorialDoc(source="https://ex.com", title="t", text="", content_hash="h", code_blocks=[
+        CodeBlock(lang="", code="import numpy as np\nx = np.linspace(0, 1, 10)"),
+        CodeBlock(lang="", code="def kde(x):\n    return np.exp(-x ** 2)"),
+        CodeBlock(lang="", code="Mean after standardization:\nAlcohol=0.00, Malic acid=0.00"),
+    ])
+    out = PlannerOutput.model_validate(json.loads(planner_json([
+        {"id": "a", "title": "t", "kind": "run_code", "content": "import numpy as np\nx = np.linspace(0, 1, 10)"}])))
+    ratio, missing = code_coverage(doc, out)
+    assert ratio < 1.0 and missing == [2]  # the function block was left out; the output block is not code
