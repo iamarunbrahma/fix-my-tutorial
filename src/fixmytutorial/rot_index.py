@@ -111,15 +111,16 @@ def check_batch_backend(settings) -> None:
 
 def pick_entries(entries: list[dict], done: set[str], force: bool, limit: int | None,
                  only: set[str] | None = None) -> list[dict]:
-    """Tutorials still to run, taken round-robin across topics, so a short slice covers many kinds of breakage.
+    """Tutorials still to run, taken round-robin across sites, so a short or budget-cut slice covers many blogs,
+    both languages and every year instead of one site's posts.
     Tutorials named in `only` run again even if finished (after a fix to how pages are read, say)."""
     if only:
         return [e for e in entries if e["url"] in only]
-    by_topic: dict[str, list[dict]] = {}
+    by_site: dict[str, list[dict]] = {}
     for e in entries:
         if force or e["url"] not in done:
-            by_topic.setdefault(e.get("topic", ""), []).append(e)
-    queues, out = list(by_topic.values()), []
+            by_site.setdefault(e.get("source") or e.get("topic", ""), []).append(e)
+    queues, out = list(by_site.values()), []
     while any(queues):
         for q in queues:
             if q:
@@ -185,7 +186,7 @@ def main() -> None:
     ap.add_argument("--force", action="store_true")
     ap.add_argument("--bootstrap", action="store_true")
     ap.add_argument("--concurrency", type=int, default=4)
-    ap.add_argument("--limit", type=int, default=None, help="run at most N tutorials (round-robin across topics)")
+    ap.add_argument("--limit", type=int, default=None, help="run at most N tutorials (round-robin across sites)")
     ap.add_argument("--only", nargs="+", default=None, help="run exactly these tutorial URLs, even if finished")
     a = ap.parse_args()
     if a.command == "discover":
