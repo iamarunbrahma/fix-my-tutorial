@@ -475,6 +475,7 @@ def create_app(deps: Deps | None = None) -> FastAPI:
                 "breaks": break_stats(entries),
                 "generated_at": data.get("generated_at"),
                 "years": (min(years), max(years)) if years else None,
+                "excluded": int(data.get("excluded") or 0),
             },
         )
 
