@@ -60,7 +60,7 @@ def export_entries(entries: list[dict], store: Store) -> list[dict]:
             latest.setdefault(rec.source, rec)
     out = []
     for e in entries:
-        rec = latest.get(e["url"])
+        rec = store.get_run(e["run"]) if e.get("run") else latest.get(e["url"])  # `run:` shows that exact run
         if rec is None or rec.verdict in (None, Verdict.ERROR) or e.get("review") == "exclude":
             continue  # left out by hand review: it did not confirm what the run reported
         verdict = rec.verdict.value
@@ -128,7 +128,7 @@ def pick_entries(entries: list[dict], done: set[str], force: bool, limit: int | 
         return [e for e in entries if e["url"] in only]
     by_site: dict[str, list[dict]] = {}
     for e in entries:
-        if force or e["url"] not in done:
+        if (force or e["url"] not in done) and not e.get("run"):  # an entry pinned to a run is never re-run
             by_site.setdefault(e.get("source") or e.get("topic", ""), []).append(e)
     queues, out = list(by_site.values()), []
     while any(queues):

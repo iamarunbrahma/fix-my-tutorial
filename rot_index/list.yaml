@@ -594,6 +594,14 @@ tutorials:
   source: github.com
   year: 2016
   topic: TensorFlow 1.x session hello world
+  run: CgyYcY2AMNk
+  categories:
+  - removed_api
+  broke_in:
+    package: tensorflow
+    version: 2.0.0
+    date: '2019-09-30'
+    how: TensorFlow 2 removed tf.Session; code runs eagerly instead
 - url: https://github.com/aymericdamien/TensorFlow-Examples/blob/master/notebooks/1_Introduction/basic_operations.ipynb
   title: 'TensorFlow-Examples: Basic Operations'
   language: python

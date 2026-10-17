@@ -533,6 +533,28 @@
    }
   },
   {
+   "url": "https://github.com/aymericdamien/TensorFlow-Examples/blob/master/notebooks/1_Introduction/helloworld.ipynb",
+   "title": "TensorFlow-Examples: Simple hello world using TensorFlow",
+   "language": "python",
+   "source": "github.com",
+   "year": 2016,
+   "topic": "TensorFlow 1.x session hello world",
+   "verdict": "fixed",
+   "categories": [
+    "removed_api"
+   ],
+   "changes": 3,
+   "run_id": "CgyYcY2AMNk",
+   "featured": false,
+   "published": null,
+   "broke_in": {
+    "package": "tensorflow",
+    "version": "2.0.0",
+    "date": "2019-09-30",
+    "how": "TensorFlow 2 removed tf.Session; code runs eagerly instead"
+   }
+  },
+  {
    "url": "http://codewinds.com/blog/2013-08-20-nodejs-transform-streams.html",
    "title": "Transforming data with Node.js transform streams",
    "language": "javascript",
