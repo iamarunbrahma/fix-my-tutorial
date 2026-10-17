@@ -194,7 +194,7 @@ class Repairer:
                 RepairProposal,
                 run_id=run_id,
                 public=public,
-                max_tokens=9000,
+                max_tokens=16000,  # the model reasons before answering; 9,000 ran out mid-answer on long tutorials
                 temperature=0.3,
             )
         except LLMOutputError:  # a cut-off or malformed answer costs this round, not the whole run

@@ -276,3 +276,22 @@ def test_the_repair_prompt_knows_how_old_tutorials_usually_break():
     from fixmytutorial.prompts import REPAIR_SYSTEM
     for hint in ("distutils", "pkg_resources", "--no-build-isolation", "built-in replacement", "archived copy"):
         assert hint in REPAIR_SYSTEM, hint
+
+
+async def test_the_repair_model_has_room_to_reason_and_still_answer(settings, tmp_path):
+    # the re-runs, 17 Oct: the repair model reasons before it answers, and on long tutorials 9,000 tokens ran out
+    # mid-answer, so whole rounds were thrown away (datadive part III lost rounds 2 and 3 this way)
+    backend = FakeBackend(cells_handler(fail_cell=bad_append))
+    ex = Executor(backend, settings, Judge(None))
+    trace = await failing_trace(ex)
+    good = {"candidates": [{"strategy": "migrate", "rationale": "b", "edits": [
+        {"op": "replace", "step_id": "s3", "new_content": "df = pd.concat([df])\nprint(1)", "reason": "r",
+         "evidence_ids": ["r1e1"]}]}]}
+    client = FakeChatClient([json.dumps(good)])
+    llm = LLM(settings, Ledger(tmp_path / "l.db", settings), client=client)
+
+    async def emit(ev):
+        pass
+    await Repairer(llm, ex, settings).repair_step(
+        plan=PLAN, trace=trace, signature=SIG, evidence=EVID, versions="", run_id="r", public=True, emit=emit)
+    assert client.calls[0]["max_tokens"] >= 16000
