@@ -691,3 +691,20 @@ def test_untagged_code_blocks_count_toward_coverage_but_output_blocks_do_not():
         {"id": "a", "title": "t", "kind": "run_code", "content": "import numpy as np\nx = np.linspace(0, 1, 10)"}])))
     ratio, missing = code_coverage(doc, out)
     assert ratio < 1.0 and missing == [2]  # the function block was left out; the output block is not code
+
+
+def test_code_the_planner_changed_is_restored_from_the_page():
+    # the review, 17 Oct: the planner wrote `x.dim` for the page's `x.ndim` and `average.fit` for
+    # `agglomerative.fit`; each caused a fake break and then a fake fix
+    from fixmytutorial.planner import restore_page_code
+    blocks = ["import numpy as np\nfor i in range(x.ndim):\n    print(i)",
+              "kmeans.fit(X)\nagglomerative.fit(X)\naffinity.fit(X)"]
+    assert restore_page_code("for i in range(x.dim):\n    print(i)", blocks) == "for i in range(x.ndim):\n    print(i)"
+    assert restore_page_code("kmeans.fit(X)\naverage.fit(X)", blocks) == "kmeans.fit(X)\nagglomerative.fit(X)"
+
+
+def test_lines_the_planner_added_are_not_rewritten_into_page_lines():
+    from fixmytutorial.planner import restore_page_code
+    blocks = ["import numpy as np\nmodel.fit(X)\nprint(model.score(X))"]
+    added = "import pandas as pd\nmodel.fit(X)\nmodel.predict(X)"
+    assert restore_page_code(added, blocks) == added
