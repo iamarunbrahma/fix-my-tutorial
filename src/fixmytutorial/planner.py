@@ -149,10 +149,9 @@ async def plan_tutorial(doc: TutorialDoc, llm, settings, *, run_id: str, public:
     except LLMOutputError:  # now and then the answer runs on until it is cut off: one fresh, compact try
         out = await llm.call("planner", PLANNER_SYSTEM, f"{user}\n\n{COMPACT}", PlannerOutput, run_id=run_id,
                              public=public, max_tokens=12000, temperature=0.0)
-    if not out.runnable and _skipped_for_plots(doc, out.not_runnable_reason):  # charts run headless: ask again
-        retry = (f"{user}\n\n=== CHECK ===\nYou set runnable=false because of plots ({out.not_runnable_reason}). "
-                 "The sandbox is headless with a non-interactive backend: plt.show() simply returns and figures "
-                 "render fine. Plan the tutorial as runnable unless something else in rule 5 applies.")
+    if not out.runnable and (rebuttal := _skip_rebuttal(doc, out.not_runnable_reason)):  # the sandbox handles it
+        retry = (f"{user}\n\n=== CHECK ===\nYou set runnable=false ({out.not_runnable_reason}). {rebuttal} "
+                 "Plan the tutorial as runnable unless something else in rule 5 applies.")
         again = await llm.call("planner", PLANNER_SYSTEM, retry, PlannerOutput, run_id=run_id, public=public,
                                max_tokens=12000, temperature=0.1)
         if again.runnable:
@@ -203,8 +202,28 @@ PLOT_LIBS = re.compile(r"\b(matplotlib|seaborn|plotly|pyplot|plt\.)")
 PLOT_REASON = re.compile(r"show\(|plot|chart|figure|display|gui|headless|window|graphic", re.I)
 
 
+NOTEBOOK_REASON = re.compile(r"ipython|jupyter|notebook|magic|%matplotlib|%pylab|%time", re.I)
+MISTAKE_REASON = re.compile(r"undefined|not defined|typo|syntax|bug|mistake|outdated|deprecated|removed|python ?2", re.I)
+
+
 def _skipped_for_plots(doc: TutorialDoc, reason: str | None) -> bool:
     return bool(reason and PLOT_REASON.search(reason) and any(PLOT_LIBS.search(b.code) for b in doc.code_blocks))
+
+
+def _skip_rebuttal(doc: TutorialDoc, reason: str | None) -> str | None:
+    """What to tell the planner when it skipped a tutorial for something the sandbox handles."""
+    if not reason:
+        return None
+    if NOTEBOOK_REASON.search(reason):
+        return ("Notebook code runs here: consecutive run_code steps share one namespace like notebook cells, "
+                "%matplotlib, %pylab, %time and %timeit work, and display() and IPython.display work.")
+    if MISTAKE_REASON.search(reason):
+        return ("An error in the tutorial's own code (an undefined name, a typo, Python 2 syntax, an outdated or "
+                "removed API) is exactly what running it should show; we report or fix it. Plan the code as written.")
+    if _skipped_for_plots(doc, reason):
+        return ("The sandbox is headless with a non-interactive backend: plt.show() simply returns and figures "
+                "render fine.")
+    return None
 
 
 CODE_SIGN = re.compile(r"^\s*(?:>>>\s*)?(?:import \w|from [\w.]+ import |def \w|class \w|print\s*\(|print \"|for \w+ in |"

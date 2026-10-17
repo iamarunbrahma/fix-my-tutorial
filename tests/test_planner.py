@@ -790,3 +790,19 @@ def test_an_ipython_heredoc_becomes_a_python_cell_so_errors_count():
     st = normalize_plan(out, 40).steps[0]
     assert st.kind == "run_code"
     assert st.content == "import matplotlib.pyplot as plt\nax = plt.figure().gca(projection='3d')"
+
+
+async def test_notebook_code_and_tutorial_mistakes_are_never_reasons_to_skip(settings, tmp_path):
+    # the re-runs, 17 Oct: KDE was skipped as "requires an IPython/Jupyter notebook environment" (notebook cells and
+    # magics run here) and a logistic regression post as "uses an undefined variable" (a tutorial's own mistake is
+    # what a run should report, not refuse)
+    full = planner_json([{"id": "a", "title": "t", "kind": "run_code", "content": "print(1)"}])
+    for reason, hint in (("The tutorial requires an IPython/Jupyter notebook environment to run the magics",
+                          "notebook cells"),
+                         ("the tutorial uses an undefined variable 'dimensions'", "the tutorial's own code")):
+        skipped = json.dumps({"language": "python", "runnable": False, "steps": [], "not_runnable_reason": reason})
+        client = FakeChatClient([skipped, full])
+        llm = LLM(settings, Ledger(tmp_path / f"{hint[:4]}.db", settings), client=client)
+        plan = await plan_tutorial(doc(), llm, settings, run_id="r", public=True)
+        assert len(client.calls) == 2 and hint in client.calls[1]["messages"][1]["content"], reason
+        assert plan.runnable
