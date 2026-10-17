@@ -112,10 +112,6 @@ class Evidence(BaseModel):
     quote: str
 
 
-class EvidenceList(BaseModel):
-    items: list[Evidence] = Field(default_factory=list)
-
-
 class Edit(BaseModel):
     op: Literal["replace", "insert_after"] = "replace"
     step_id: str
