@@ -295,3 +295,28 @@ async def test_the_repair_model_has_room_to_reason_and_still_answer(settings, tm
     await Repairer(llm, ex, settings).repair_step(
         plan=PLAN, trace=trace, signature=SIG, evidence=EVID, versions="", run_id="r", public=True, emit=emit)
     assert client.calls[0]["max_tokens"] >= 16000
+
+
+def test_validate_rejects_made_up_data_in_any_common_data_format():
+    # the review, 17 Oct: a missing yeast-train.arff was "fixed" by writing five invented rows
+    fake = Candidate(strategy="workaround", rationale="r", edits=[Edit(
+        op="insert_after", step_id="s1", new_kind="write_file", new_path="yeast-train.arff",
+        new_content="@relation yeast\n@data\n1.0,2.0,0\n", reason="the file is missing", evidence_ids=["r1e1"])])
+    assert validate_candidate(fake, PLAN, {"r1e1"}, "dead_resource") == "edit invents a data file"
+
+
+def test_validate_rejects_a_fix_that_quietly_deletes_the_tutorials_code():
+    # the review, 17 Oct: Python 2 print fixes that also dropped a network's whole backpropagation block, so the script
+    # "ran" without learning anything
+    head = ["import numpy as np", "X = np.ones((4, 3))", "y = np.ones((4, 1))", "w0 = np.zeros((3, 1))",
+            "w1 = np.zeros((1, 1))", "count = 0", "for j in xrange(100):", "    l1 = np.dot(X, w0)"]
+    backprop = ["    err = y - l1", "    delta = err * l1", "    w1 += l1.T.dot(delta)", "    w0 += X.T.dot(delta)",
+                "    count += 1", "    last = err"]
+    old = "\n".join(head + backprop + ["print 'done'", "print w0"])
+    plan = RunPlan(language="python", runtime="3.12", steps=[S("s1", "run_code", old)])
+    gutted = "\n".join(head + ["print('done')", "print(w0)"]).replace("xrange", "range")
+    cand = Candidate(strategy="migrate", rationale="r", edits=[edit("s1", gutted)])
+    assert validate_candidate(cand, plan, {"r1e1"}, "removed_api") == "edit deletes the tutorial's code"
+    honest = old.replace("xrange", "range").replace("print 'done'", "print('done')").replace("print w0", "print(w0)")
+    assert validate_candidate(Candidate(strategy="migrate", rationale="r", edits=[edit("s1", honest)]), plan,
+                              {"r1e1"}, "removed_api") is None

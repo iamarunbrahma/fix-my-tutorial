@@ -27,7 +27,8 @@ def safe_path(path: str | None) -> str | None:
     return "/".join(parts) or None
 
 
-DATA_EXT = (".csv", ".tsv", ".xlsx", ".xls", ".parquet", ".dat", ".data", ".json", ".txt", ".xml")
+DATA_EXT = (".csv", ".tsv", ".xlsx", ".xls", ".parquet", ".dat", ".data", ".json", ".txt", ".xml", ".arff", ".npy",
+            ".npz", ".mat", ".h5", ".hdf5", ".feather", ".pkl", ".pickle", ".jsonl", ".ndjson", ".sqlite", ".db")
 CONFIG_FILES = {"package.json", "package-lock.json", "tsconfig.json", "jsconfig.json", "requirements.txt", ".babelrc",
                 ".eslintrc.json", "composer.json"}
 URL_RE = re.compile(r"https?://[^\s'\"<>)]+")
