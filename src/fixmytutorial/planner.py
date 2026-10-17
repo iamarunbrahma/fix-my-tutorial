@@ -181,6 +181,20 @@ def _skipped_for_plots(doc: TutorialDoc, reason: str | None) -> bool:
     return bool(reason and PLOT_REASON.search(reason) and any(PLOT_LIBS.search(b.code) for b in doc.code_blocks))
 
 
+CODE_SIGN = re.compile(r"^\s*(?:>>>\s*)?(?:import \w|from [\w.]+ import |def \w|class \w|print\s*\(|print \"|for \w+ in |"
+                       r"while |with |try:|function\b|const \w|let \w|var \w|require\(|console\.|module\.exports|"
+                       r"(?:np|pd|plt|sns|tf|torch)\.\w)", re.M)
+
+
+def is_code_block(b) -> bool:
+    """A block a reader runs: tagged as code, or untagged (older blogs rarely tag) with an unmistakable code line.
+    Printed output has none, so it never counts."""
+    lang = (b.lang or "").lower()
+    if lang in CODE_LANGS:
+        return True
+    return lang in ("", "text", "none", "code", "plaintext") and bool(CODE_SIGN.search(b.code))
+
+
 def _code_lines(code: str) -> list[str]:
     raw = [ln.strip() for ln in code.splitlines()]
     if any(ln.startswith(">>>") for ln in raw):  # an interactive session: lines without a prompt are output
@@ -193,7 +207,7 @@ def missing_lines(doc: TutorialDoc, plan, limit: int = 12) -> list[str]:
     planned = squash("\n".join(s.content for s in plan.steps))
     out: list[str] = []
     for b in doc.code_blocks[:MAX_BLOCKS]:
-        if b.lang.lower() in CODE_LANGS:
+        if is_code_block(b):
             out += [ln for ln in _code_lines(b.code) if ln not in planned and ln not in out]
     return out[:limit]
 
@@ -220,7 +234,7 @@ def code_coverage(doc: TutorialDoc, plan) -> tuple[float, list[int]]:
     total = covered = 0
     missing: list[int] = []
     for i, b in enumerate(doc.code_blocks[:MAX_BLOCKS], 1):
-        lines = _code_lines(b.code) if b.lang.lower() in CODE_LANGS else []
+        lines = _code_lines(b.code) if is_code_block(b) else []
         hits = sum(ln in planned for ln in lines)
         total, covered = total + len(lines), covered + hits
         if lines and not hits:
