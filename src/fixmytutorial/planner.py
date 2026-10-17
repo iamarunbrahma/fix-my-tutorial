@@ -91,6 +91,8 @@ def normalize_plan(out: PlannerOutput, max_steps: int = 40, source_text: str | N
         if s.kind == "write_file":
             ext = "py" if out.language == "python" else "js"
             s.path = safe_path(s.path) or f"file_{len(steps) + 1}.{ext}"
+            # writing a file prints nothing of the program; the step that runs it carries the expected output
+            s.expect.stdout_contains, s.expect.description = [], None
         if s.kind == "serve" and s.probe is None:
             s.probe = default_probe(s.content, out.language)
         if shown is not None:
