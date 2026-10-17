@@ -5,7 +5,7 @@ tutorials:
   source: jakevdp.github.io
   year: 2013
   topic: KDE with scipy, statsmodels and scikit-learn
-  review: downgrade
+  review: exclude
   categories:
   - removed_api
 - url: https://jakevdp.github.io/blog/2013/08/28/understanding-the-fft/
@@ -35,6 +35,7 @@ tutorials:
     version: 3.5.0
     date: '2021-11-16'
     how: JSAnimation passes clear_temp to FileMovieWriter.setup(), which matplotlib 3.5.0 removed
+  review: downgrade
 - url: https://jakevdp.github.io/blog/2013/07/10/XKCD-plots-in-matplotlib/
   title: XKCD Plots have Landed in Matplotlib!
   language: python
@@ -83,7 +84,6 @@ tutorials:
   source: jakevdp.github.io
   year: 2017
   topic: group-by implementations in pandas, NumPy, scipy.sparse
-  review: downgrade
   categories:
   - removed_api
   broke_in:
@@ -171,6 +171,7 @@ tutorials:
   categories:
   - dead_resource
   - removed_api
+  broke_in: null
 - url: https://www.kdnuggets.com/2017/03/k-means-clustering-algorithms-intro-python.html
   title: 'K-Means & Other Clustering Algorithms: A Quick Intro with Python'
   language: python
@@ -212,6 +213,9 @@ tutorials:
   source: blog.pythonlibrary.org
   year: 2014
   topic: timeit module and CLI
+  categories:
+  - removed_api
+  broke_in: null
 - url: https://blog.pythonlibrary.org/2014/06/18/python-create-fake-data-with-faker/
   title: 'Python: Create Fake Data with Faker'
   language: python
@@ -284,6 +288,13 @@ tutorials:
   source: cambridgecoding.wordpress.com
   year: 2016
   topic: random forest hyperparameter tuning
+  categories:
+  - removed_api
+  broke_in:
+    package: scikit-learn
+    version: 0.20.0
+    date: '2018-09-26'
+    how: scikit-learn 0.20.0 removed the cross_validation and grid_search modules
 - url: https://bluewatersql.wordpress.com/2016/04/04/data-science-day-3-classification-models/
   title: 'Data Science Day #3 - Classification Models'
   language: python
@@ -358,6 +369,14 @@ tutorials:
   source: pbpython.com
   year: 2017
   topic: resample, Grouper, agg
+  categories:
+  - removed_api
+  broke_in:
+    package: pandas
+    version: 3.0.0
+    date: '2026-01-21'
+    how: pandas 3.0.0 removed the M and A frequency aliases in favour of ME and YE
+  featured: true
 - url: https://pbpython.com/amortization-model.html
   title: Building a Financial Model with Pandas
   language: python
@@ -413,6 +432,13 @@ tutorials:
   source: sebastianraschka.com
   year: 2015
   topic: custom ensemble classifier
+  categories:
+  - removed_api
+  broke_in:
+    package: scikit-learn
+    version: 0.20.0
+    date: '2018-09-26'
+    how: scikit-learn 0.20.0 removed the sklearn.cross_validation module
 - url: https://sebastianraschka.com/Articles/2014_about_feature_scaling.html
   title: About Feature Scaling and Normalization
   language: python
@@ -446,6 +472,10 @@ tutorials:
   source: iamtrask.github.io
   year: 2015
   topic: gradient descent with NumPy
+  review: downgrade
+  categories:
+  - removed_api
+  broke_in: null
 - url: https://dennybritz.com/posts/wildml/implementing-a-neural-network-from-scratch/
   title: Implementing a Neural Network from Scratch in Python
   language: python
@@ -492,6 +522,9 @@ tutorials:
   source: analyticsvidhya.com
   year: 2017
   topic: scikit-multilearn problem transformations
+  review: downgrade
+  categories:
+  - removed_api
 - url: https://galeascience.wordpress.com/2016/09/23/2016-world-cup-of-hockey-nhl-team-captains/
   title: 2016 World Cup of Hockey NHL Team Captains
   language: python
@@ -504,6 +537,7 @@ tutorials:
   source: stackabuse.com
   year: 2018
   topic: PCA + random forest on iris
+  review: exclude
 - url: https://stackabuse.com/implementing-lda-in-python-with-scikit-learn/
   title: Linear Discriminant Analysis (LDA) in Python with Scikit-Learn
   language: python
@@ -534,6 +568,14 @@ tutorials:
   source: github.com
   year: 2015
   topic: KFold/StratifiedKFold/ShuffleSplit
+  review: downgrade
+  categories:
+  - removed_api
+  broke_in:
+    package: scikit-learn
+    version: 0.20.0
+    date: '2018-09-26'
+    how: scikit-learn 0.20.0 removed the sklearn.cross_validation module
 - url: https://github.com/amueller/scipy_2015_sklearn_tutorial/blob/master/notebooks/04.3%20Analyzing%20Model%20Capacity.ipynb
   title: 'SciPy 2015 sklearn tutorial: Learning Curves and Validation Curves'
   language: python
@@ -605,6 +647,8 @@ tutorials:
   source: davidwalsh.name
   year: 2015
   topic: mocking HTTP with nock
+  categories:
+  - version_conflict
 - url: https://davidwalsh.name/promises-callbacks-promisifynode
   title: Use Promises Instead of Callbacks with promisify-node
   language: javascript
@@ -665,6 +709,13 @@ tutorials:
   source: dev.to
   year: 2018
   topic: chalk, figlet, inquirer, shelljs CLI
+  categories:
+  - version_conflict
+  broke_in:
+    package: chalk
+    version: 5.0.0
+    date: '2021-11-26'
+    how: chalk 5 is ESM-only, so require('chalk') no longer returns the functions
 - url: https://dev.to/flaviocopes/pass-arguments-from-the-command-line-to-a-node-script-1kmn
   title: Pass arguments from the command line to a Node script
   language: javascript

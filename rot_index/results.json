@@ -1,24 +1,7 @@
 {
  "generated_at": "2026-10-17",
- "excluded": 7,
+ "excluded": 9,
  "entries": [
-  {
-   "url": "https://jakevdp.github.io/blog/2013/12/01/kernel-density-estimation/",
-   "title": "Kernel Density Estimation in Python",
-   "language": "python",
-   "source": "jakevdp.github.io",
-   "year": 2013,
-   "topic": "KDE with scipy, statsmodels and scikit-learn",
-   "verdict": "could_not_fix",
-   "categories": [
-    "removed_api"
-   ],
-   "changes": 0,
-   "run_id": null,
-   "featured": false,
-   "published": null,
-   "broke_in": null
-  },
   {
    "url": "https://jakevdp.github.io/blog/2013/08/28/understanding-the-fft/",
    "title": "Understanding the FFT Algorithm",
@@ -53,7 +36,7 @@
     "removed_api"
    ],
    "changes": 0,
-   "run_id": "ri-95iGUWq-",
+   "run_id": null,
    "featured": false,
    "published": null,
    "broke_in": {
@@ -119,7 +102,7 @@
     "dead_resource"
    ],
    "changes": 0,
-   "run_id": null,
+   "run_id": "ri-d_F-ERyc",
    "featured": false,
    "published": null,
    "broke_in": null
@@ -136,7 +119,7 @@
     "removed_api"
    ],
    "changes": 0,
-   "run_id": null,
+   "run_id": "ri-YNzMf-et",
    "featured": false,
    "published": null,
    "broke_in": {
@@ -174,8 +157,8 @@
    "categories": [
     "removed_api"
    ],
-   "changes": 0,
-   "run_id": "ri-jdSJEiOx",
+   "changes": 1,
+   "run_id": "ri-4EsuhdyI",
    "featured": false,
    "published": null,
    "broke_in": {
@@ -218,8 +201,8 @@
    "categories": [
     "removed_api"
    ],
-   "changes": 0,
-   "run_id": "ri-WE27Vey_",
+   "changes": 3,
+   "run_id": "ri-qutTee0B",
    "featured": false,
    "published": "2014-12-01",
    "broke_in": {
@@ -263,7 +246,7 @@
     "removed_api"
    ],
    "changes": 0,
-   "run_id": "ri-E-q2iBf2",
+   "run_id": "ri-T8TUrzam",
    "featured": false,
    "published": "2015-08-12",
    "broke_in": {
@@ -344,6 +327,23 @@
    "broke_in": null
   },
   {
+   "url": "https://blog.pythonlibrary.org/2014/01/30/how-to-time-small-pieces-of-python-code-with-timeit/",
+   "title": "How to Time Small Pieces of Python Code with timeit",
+   "language": "python",
+   "source": "blog.pythonlibrary.org",
+   "year": 2014,
+   "topic": "timeit module and CLI",
+   "verdict": "fixed",
+   "categories": [
+    "removed_api"
+   ],
+   "changes": 1,
+   "run_id": "ri-ZyxfTtnp",
+   "featured": false,
+   "published": "2014-01-30",
+   "broke_in": null
+  },
+  {
    "url": "https://stackabuse.com/python-async-await-tutorial/",
    "title": "Python async/await Tutorial",
    "language": "python",
@@ -360,6 +360,28 @@
    "featured": false,
    "published": "2015-12-17",
    "broke_in": null
+  },
+  {
+   "url": "https://cambridgecoding.wordpress.com/2016/04/03/scanning-hyperspace-how-to-tune-machine-learning-models/",
+   "title": "Scanning hyperspace: how to tune machine learning models",
+   "language": "python",
+   "source": "cambridgecoding.wordpress.com",
+   "year": 2016,
+   "topic": "random forest hyperparameter tuning",
+   "verdict": "fixed",
+   "categories": [
+    "removed_api"
+   ],
+   "changes": 3,
+   "run_id": "ri-ktfPw61V",
+   "featured": false,
+   "published": "2016-04-03",
+   "broke_in": {
+    "package": "scikit-learn",
+    "version": "0.20.0",
+    "date": "2018-09-26",
+    "how": "scikit-learn 0.20.0 removed the cross_validation and grid_search modules"
+   }
   },
   {
    "url": "https://bluewatersql.wordpress.com/2016/04/04/data-science-day-3-classification-models/",
@@ -474,6 +496,50 @@
    }
   },
   {
+   "url": "https://pbpython.com/pandas-grouper-agg.html",
+   "title": "Pandas Grouper and Agg Functions Explained",
+   "language": "python",
+   "source": "pbpython.com",
+   "year": 2017,
+   "topic": "resample, Grouper, agg",
+   "verdict": "fixed",
+   "categories": [
+    "removed_api"
+   ],
+   "changes": 4,
+   "run_id": "ri-gwPkO5hr",
+   "featured": true,
+   "published": null,
+   "broke_in": {
+    "package": "pandas",
+    "version": "3.0.0",
+    "date": "2026-01-21",
+    "how": "pandas 3.0.0 removed the M and A frequency aliases in favour of ME and YE"
+   }
+  },
+  {
+   "url": "https://sebastianraschka.com/Articles/2014_ensemble_classifier.html",
+   "title": "Implementing a Weighted Majority Rule Ensemble Classifier",
+   "language": "python",
+   "source": "sebastianraschka.com",
+   "year": 2015,
+   "topic": "custom ensemble classifier",
+   "verdict": "could_not_fix",
+   "categories": [
+    "removed_api"
+   ],
+   "changes": 0,
+   "run_id": "ri-4Mmhb45v",
+   "featured": false,
+   "published": "2015-01-11",
+   "broke_in": {
+    "package": "scikit-learn",
+    "version": "0.20.0",
+    "date": "2018-09-26",
+    "how": "scikit-learn 0.20.0 removed the sklearn.cross_validation module"
+   }
+  },
+  {
    "url": "https://iamtrask.github.io/2015/07/12/basic-python-network/",
    "title": "A Neural Network in 11 lines of Python (Part 1)",
    "language": "python",
@@ -487,6 +553,23 @@
    ],
    "changes": 3,
    "run_id": "ri-0l4vsbQW",
+   "featured": false,
+   "published": null,
+   "broke_in": null
+  },
+  {
+   "url": "https://iamtrask.github.io/2015/07/27/python-network-part2/",
+   "title": "A Neural Network in 13 lines of Python (Part 2 - Gradient Descent)",
+   "language": "python",
+   "source": "iamtrask.github.io",
+   "year": 2015,
+   "topic": "gradient descent with NumPy",
+   "verdict": "could_not_fix",
+   "categories": [
+    "removed_api"
+   ],
+   "changes": 0,
+   "run_id": null,
    "featured": false,
    "published": null,
    "broke_in": null
@@ -530,6 +613,38 @@
    "broke_in": null
   },
   {
+   "url": "https://www.freecodecamp.org/news/how-to-visualize-the-programming-language-influence-graph-7f1b765b44d1/",
+   "title": "Visualize the programming language influence graph",
+   "language": "python",
+   "source": "freecodecamp.org",
+   "year": 2017,
+   "topic": "Wikipedia scraping into a Gephi edge list",
+   "verdict": "not_runnable",
+   "categories": [],
+   "changes": 0,
+   "run_id": "ri-08HpbOcm",
+   "featured": false,
+   "published": "2017-12-30",
+   "broke_in": null
+  },
+  {
+   "url": "https://www.analyticsvidhya.com/blog/2017/08/introduction-to-multi-label-classification/",
+   "title": "Solving Multi-Label Classification problems",
+   "language": "python",
+   "source": "analyticsvidhya.com",
+   "year": 2017,
+   "topic": "scikit-multilearn problem transformations",
+   "verdict": "could_not_fix",
+   "categories": [
+    "removed_api"
+   ],
+   "changes": 0,
+   "run_id": null,
+   "featured": false,
+   "published": "2017-08-26",
+   "broke_in": null
+  },
+  {
    "url": "https://galeascience.wordpress.com/2016/09/23/2016-world-cup-of-hockey-nhl-team-captains/",
    "title": "2016 World Cup of Hockey NHL Team Captains",
    "language": "python",
@@ -564,6 +679,28 @@
     "version": "0.20.0",
     "date": "2018-09-26",
     "how": "scikit-learn 0.20.0 removed RandomizedPCA and the sklearn.cross_validation module"
+   }
+  },
+  {
+   "url": "https://github.com/amueller/scipy_2015_sklearn_tutorial/blob/master/notebooks/04.1%20Cross%20Validation.ipynb",
+   "title": "SciPy 2015 sklearn tutorial: Cross Validation",
+   "language": "python",
+   "source": "github.com",
+   "year": 2015,
+   "topic": "KFold/StratifiedKFold/ShuffleSplit",
+   "verdict": "could_not_fix",
+   "categories": [
+    "removed_api"
+   ],
+   "changes": 0,
+   "run_id": null,
+   "featured": false,
+   "published": null,
+   "broke_in": {
+    "package": "scikit-learn",
+    "version": "0.20.0",
+    "date": "2018-09-26",
+    "how": "scikit-learn 0.20.0 removed the sklearn.cross_validation module"
    }
   },
   {
@@ -620,6 +757,50 @@
    "featured": false,
    "published": "2016-02-06",
    "broke_in": null
+  },
+  {
+   "url": "https://davidwalsh.name/nock",
+   "title": "Intercept HTTP Requests with Node.js nock",
+   "language": "javascript",
+   "source": "davidwalsh.name",
+   "year": 2015,
+   "topic": "mocking HTTP with nock",
+   "verdict": "fixed",
+   "categories": [
+    "version_conflict"
+   ],
+   "changes": 1,
+   "run_id": "ri-tw4nawKY",
+   "featured": false,
+   "published": "2015-08-05",
+   "broke_in": {
+    "package": "nock",
+    "version": "15.0.1",
+    "date": "2026-10-06",
+    "how": "ran"
+   }
+  },
+  {
+   "url": "https://dev.to/hugodias/building-your-first-interactive-node-js-cli-1g2c",
+   "title": "Building your first interactive Node JS CLI",
+   "language": "javascript",
+   "source": "dev.to",
+   "year": 2018,
+   "topic": "chalk, figlet, inquirer, shelljs CLI",
+   "verdict": "could_not_fix",
+   "categories": [
+    "version_conflict"
+   ],
+   "changes": 0,
+   "run_id": "ri-CUhlTq__",
+   "featured": false,
+   "published": "2018-07-10",
+   "broke_in": {
+    "package": "chalk",
+    "version": "5.0.0",
+    "date": "2021-11-26",
+    "how": "chalk 5 is ESM-only, so require('chalk') no longer returns the functions"
+   }
   }
  ]
 }
