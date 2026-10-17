@@ -501,3 +501,12 @@ def test_index_shows_tutorials_whose_site_is_gone_on_their_own(env):
     page = client.get("/index").text
     assert "Site gone or blocked" in page and "broke for good: the site it needs is gone or now blocks scripts" in page
     assert "50%" in page  # one of two tutorials
+
+
+def test_pages_use_the_wrench_logo_as_their_icon(env):
+    client, _ = env
+    page = client.get("/").text
+    assert 'rel="icon"' in page and "favicon.svg" in page and 'rel="apple-touch-icon"' in page
+    icon = client.get("/favicon.ico")  # browsers ask for this on their own
+    assert icon.status_code == 200 and icon.headers["content-type"] in ("image/x-icon", "image/vnd.microsoft.icon")
+    assert client.get("/static/favicon.svg").status_code == 200
