@@ -11,8 +11,8 @@
   {% endif %}
 </div>
 {% if total %}
-<div class="mt-8 grid grid-cols-2 gap-3 lg:grid-cols-4">
-  {% for key, label in [("still_works", "still work"), ("fixed", "broke, and we fixed them"), ("could_not_fix", "broke, could not fix"), ("not_runnable", "could not run here")] %}
+<div class="mt-8 grid grid-cols-2 gap-3 lg:grid-cols-5">
+  {% for key, label in [("still_works", "still work"), ("fixed", "broke, and we fixed them"), ("could_not_fix", "broke, could not fix"), ("gone", "broke for good: the site it needs is gone"), ("not_runnable", "could not run here")] %}
   <div class="card gap-1 p-5">
     <span class="text-3xl font-semibold tracking-tight tabular-nums">{{ pct[key] }}%</span>
     <span class="text-muted-foreground text-sm">{{ label }}</span>
