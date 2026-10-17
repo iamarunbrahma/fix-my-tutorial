@@ -241,7 +241,11 @@ def restore_page_code(content: str, blocks: list[str]) -> str:
     the planner added (an extra import, a call the page never makes) have no such twin and stay as they are."""
     page = squash("\n".join(blocks))
     lines = content.split("\n")
-    off = [i for i, ln in enumerate(lines) if ln.strip() and squash(ln) not in page]
+
+    def on_page(ln: str) -> bool:  # whole words only: `dim, n = 2` is not on a page that says `ndim, n = 2`
+        return re.search(rf"(?<!\w){re.escape(squash(ln))}(?!\w)", page) is not None
+
+    off = [i for i, ln in enumerate(lines) if ln.strip() and not on_page(ln)]
     present = {squash(ln) for ln in lines if ln.strip()}
     if not off or not blocks:
         return content
