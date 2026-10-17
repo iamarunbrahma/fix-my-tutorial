@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import re
+from difflib import SequenceMatcher
 
 from .executor import INSTALL_RE
 from .judge import squash
@@ -133,6 +134,7 @@ async def plan_tutorial(doc: TutorialDoc, llm, settings, *, run_id: str, public:
                                max_tokens=12000, temperature=0.1)
         if again.runnable:
             out = again
+    out = restore_steps(out, doc)
     ratio, missing = code_coverage(doc, out)
     if out.runnable and ratio < 1.0:  # dropped or quietly "modernized" code would hide the rot: ask once more
         unrun = unrun_files(out)
@@ -148,6 +150,7 @@ async def plan_tutorial(doc: TutorialDoc, llm, settings, *, run_id: str, public:
                  + (f" These lines are missing or changed:\n{lines}" if lines else ""))
         again = await llm.call("planner", PLANNER_SYSTEM, retry, PlannerOutput, run_id=run_id, public=public,
                                max_tokens=12000, temperature=0.1)
+        again = restore_steps(again, doc)
         ratio_again, _ = code_coverage(doc, again)
         if ratio_again >= ratio:
             out, ratio = again, ratio_again
@@ -223,6 +226,47 @@ def unrun_files(plan) -> list[str]:
         others = "\n".join(o.content for j, o in enumerate(plan.steps) if j != i)
         if base not in others and not (len(stem) >= 3 and re.search(rf"\b{re.escape(stem)}\b", others)):
             out.append(s.path)
+    return out
+
+
+TOKEN_RE = re.compile(r"\w+")
+
+
+def restore_page_code(content: str, blocks: list[str]) -> str:
+    """Put back page code the planner changed (`x.dim` for the page's `x.ndim`): a line not on the page becomes the
+    line of the step's own block with the same shape and one word different, if that word is close enough. Lines
+    the planner added (an extra import, a call the page never makes) have no such twin and stay as they are."""
+    page = squash("\n".join(blocks))
+    lines = content.split("\n")
+    off = [i for i, ln in enumerate(lines) if ln.strip() and squash(ln) not in page]
+    present = {squash(ln) for ln in lines if ln.strip()}
+    if not off or not blocks:
+        return content
+    best = max(blocks, key=lambda b: sum(1 for p in present if p in squash(b)))
+    if not any(p in squash(best) for p in present):
+        return content  # the step shares nothing with the page: nothing to restore from
+    twins = [ln.strip() for ln in best.split("\n") if ln.strip()]
+    for i in off:
+        line = lines[i].strip()
+        shape, words = TOKEN_RE.sub("x", line), TOKEN_RE.findall(line)
+        choice, score = None, 0.5
+        for t in twins:
+            if squash(t) in present or TOKEN_RE.sub("x", t) != shape:
+                continue
+            diff = [(a, b) for a, b in zip(words, TOKEN_RE.findall(t)) if a != b]
+            if len(diff) == 1 and (r := SequenceMatcher(None, *diff[0]).ratio()) >= score:
+                choice, score = t, r
+        if choice:
+            lines[i] = lines[i][: len(lines[i]) - len(lines[i].lstrip())] + choice
+            present.add(squash(choice))
+    return "\n".join(lines)
+
+
+def restore_steps(out: PlannerOutput, doc: TutorialDoc) -> PlannerOutput:
+    blocks = [b.code for b in doc.code_blocks[:MAX_BLOCKS] if is_code_block(b)]
+    for st in out.steps:
+        if not st.implicit and st.kind in ("run_code", "write_file"):
+            st.content = restore_page_code(st.content, blocks)
     return out
 
 
