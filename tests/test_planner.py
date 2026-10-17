@@ -718,6 +718,16 @@ def test_lines_the_planner_added_are_not_rewritten_into_page_lines():
     assert restore_page_code(added, blocks) == added
 
 
+def test_running_a_written_file_with_ipython_becomes_a_python_cell():
+    # the re-run, 17 Oct: `ipython tutorial.py` runs a .py file as plain Python, so the notebook's `%time` became a
+    # SyntaxError of ours; the cell runner handles magics the way a notebook does
+    out = PlannerOutput.model_validate(json.loads(planner_json([
+        {"id": "a", "title": "t", "kind": "write_file", "path": "tutorial.py", "content": "x = 1\n%time y = x + 1"},
+        {"id": "b", "title": "t", "kind": "shell", "content": "ipython tutorial.py"}])))
+    steps = normalize_plan(out, 40).steps
+    assert (steps[1].kind, steps[1].content) == ("run_code", "x = 1\n%time y = x + 1")
+
+
 def test_an_ipython_heredoc_becomes_a_python_cell_so_errors_count():
     # the review, 17 Oct: `ipython <<EOF ... EOF` exits 0 even when the code raises, so an XKCD tutorial that breaks on
     # matplotlib 3.6 was reported as still working
