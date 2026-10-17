@@ -84,6 +84,10 @@ def normalize_plan(out: PlannerOutput, max_steps: int = 40, source_text: str | N
         s = Step(**ps.model_dump())
         if s.kind == "shell" and (m := IPYTHON_HEREDOC.match(s.content)):
             s.kind, s.content = "run_code", m.group(2)  # ipython exits 0 even when the code raises
+        if s.kind == "run_code" and out.language == "python" and (m := IMPORT_ONE.match(s.content)):
+            if any(w.kind == "write_file" and w.path == f"{m.group(1)}.py" for w in steps):
+                # importing a script skips its `if __name__ == "__main__":` block; the tutorial runs it as a script
+                s.kind, s.content = "shell", f"python {m.group(1)}.py"
         if s.kind == "shell" and (m := IPYTHON_FILE.match(s.content)):
             written = [w for w in steps if w.kind == "write_file" and w.path == safe_path(m.group(1))]
             if written:  # ipython runs a .py file as plain Python, so its notebook magics would be syntax errors
@@ -238,6 +242,7 @@ def unrun_files(plan) -> list[str]:
 
 
 TOKEN_RE = re.compile(r"\w+")
+IMPORT_ONE = re.compile(r"^\s*import\s+(\w+)\s*$")
 IPYTHON_FILE = re.compile(r"^\s*ipython3?\s+(\S+\.py)\s*$")
 IPYTHON_HEREDOC = re.compile(r"^\s*ipython3?\b[^\n<]*<<-?\s*['\"]?(\w+)['\"]?\s*\n(.*?)\n\1\s*$", re.S)
 
