@@ -708,3 +708,14 @@ def test_lines_the_planner_added_are_not_rewritten_into_page_lines():
     blocks = ["import numpy as np\nmodel.fit(X)\nprint(model.score(X))"]
     added = "import pandas as pd\nmodel.fit(X)\nmodel.predict(X)"
     assert restore_page_code(added, blocks) == added
+
+
+def test_an_ipython_heredoc_becomes_a_python_cell_so_errors_count():
+    # the review, 17 Oct: `ipython <<EOF ... EOF` exits 0 even when the code raises, so an XKCD tutorial that breaks on
+    # matplotlib 3.6 was reported as still working
+    out = PlannerOutput.model_validate(json.loads(planner_json([
+        {"id": "a", "title": "t", "kind": "shell",
+         "content": "ipython <<'EOF'\nimport matplotlib.pyplot as plt\nax = plt.figure().gca(projection='3d')\nEOF"}])))
+    st = normalize_plan(out, 40).steps[0]
+    assert st.kind == "run_code"
+    assert st.content == "import matplotlib.pyplot as plt\nax = plt.figure().gca(projection='3d')"
