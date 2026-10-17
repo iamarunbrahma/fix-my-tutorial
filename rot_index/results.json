@@ -280,7 +280,7 @@
    "source": "gregreda.com",
    "year": 2013,
    "topic": "BeautifulSoup scraping of Chicago Reader 'Best of'",
-   "verdict": "could_not_fix",
+   "verdict": "gone",
    "categories": [
     "dead_resource",
     "removed_api"
@@ -350,7 +350,7 @@
    "source": "stackabuse.com",
    "year": 2015,
    "topic": "asyncio coroutines and aiohttp",
-   "verdict": "could_not_fix",
+   "verdict": "gone",
    "categories": [
     "dead_resource",
     "removed_api"
@@ -516,7 +516,7 @@
    "source": "freecodecamp.org",
    "year": 2017,
    "topic": "scraping Bloomberg index quotes",
-   "verdict": "could_not_fix",
+   "verdict": "gone",
    "categories": [
     "changed_cli",
     "dead_resource",
@@ -573,7 +573,7 @@
    "source": "smashingmagazine.com",
    "year": 2015,
    "topic": "request + cheerio word-frequency scraper",
-   "verdict": "could_not_fix",
+   "verdict": "gone",
    "categories": [
     "dead_resource",
     "tutorial_typo"
