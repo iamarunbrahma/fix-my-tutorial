@@ -481,6 +481,11 @@ def create_app(deps: Deps | None = None) -> FastAPI:
             },
         )
 
+    @app.get("/favicon.ico", include_in_schema=False)
+    async def favicon():  # browsers ask for this path on their own, whatever the page links
+        return Response((HERE / "static" / "favicon.ico").read_bytes(), media_type="image/x-icon",
+                        headers={"Cache-Control": "max-age=86400"})
+
     @app.get("/healthz")
     async def healthz():
         return {"ok": True}
